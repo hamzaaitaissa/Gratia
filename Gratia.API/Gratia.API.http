@@ -1,0 +1,6 @@
+@Gratia.API_HostAddress = http://localhost:5290
+
+GET {{Gratia.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

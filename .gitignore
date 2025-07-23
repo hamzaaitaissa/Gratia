@@ -1,0 +1,40 @@
+# Visual Studio
+.vs/
+*.user
+*.suo
+
+# Build Results
+bin/
+obj/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# ASP.NET Core Secrets
+**/appsettings.Development.json
+**/appsettings.Local.json
+secrets.json
+
+# User-specific files
+*.userprefs
+*.userosscache
+
+# Log files
+*.log
+
+# EF Migrations snapshots
+Migrations/
+
+# JetBrains Rider
+.idea/
+
+# Optional: Ignore global tools
+.dotnet/tools/
+
+# Optional: Ignore test results
+TestResults/
+
+# NuGet
+*.nupkg
+packages/
