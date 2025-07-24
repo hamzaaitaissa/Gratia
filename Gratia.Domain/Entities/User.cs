@@ -29,6 +29,17 @@ namespace Gratia.Domain.Entities
             NumberOfPointsAvailable = numberofpointsavailable;
         }
 
+        public void Update(string fullname, string email, string hashedpassword, string jobtitle, string role, int numberofpointsacquired, int numberofpointsavailable)
+        {
+            FullName = fullname;
+            Email = email;
+            HashedPassword = hashedpassword;
+            JobTitle = jobtitle;
+            Role = role;
+            NumberOfPointsAcquired = numberofpointsacquired;
+            NumberOfPointsAvailable = numberofpointsavailable;
+        }
+
 
 
     }

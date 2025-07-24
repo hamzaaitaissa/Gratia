@@ -6,4 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Gratia.Domain\Gratia.Domain.csproj" />
+  </ItemGroup>
+
 </Project>

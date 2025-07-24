@@ -3,7 +3,42 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.14.36301.6 d17.14
 MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gratia.Domain", "Gratia.Domain\Gratia.Domain.csproj", "{C1E00E3E-B953-4610-822D-4584DBAA7044}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gratia.Application", "Gratia.Application\Gratia.Application.csproj", "{7CAC5989-09A2-4ECB-A73C-B28132BCF636}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gratia.Infrastructure", "Gratia.Infrastructure\Gratia.Infrastructure.csproj", "{088101CF-D6F4-40A8-BEDD-ABB2B4E4AA41}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gratia.API", "Gratia.API\Gratia.API.csproj", "{9B3517DC-DB91-4B48-8AFB-5BDBD17E94E2}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{8EC462FD-D22E-90A8-E5CE-7E832BA40C5D}"
+	ProjectSection(SolutionItems) = preProject
+		.gitignore = .gitignore
+	EndProjectSection
+EndProject
 Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C1E00E3E-B953-4610-822D-4584DBAA7044}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C1E00E3E-B953-4610-822D-4584DBAA7044}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C1E00E3E-B953-4610-822D-4584DBAA7044}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C1E00E3E-B953-4610-822D-4584DBAA7044}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7CAC5989-09A2-4ECB-A73C-B28132BCF636}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7CAC5989-09A2-4ECB-A73C-B28132BCF636}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7CAC5989-09A2-4ECB-A73C-B28132BCF636}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7CAC5989-09A2-4ECB-A73C-B28132BCF636}.Release|Any CPU.Build.0 = Release|Any CPU
+		{088101CF-D6F4-40A8-BEDD-ABB2B4E4AA41}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{088101CF-D6F4-40A8-BEDD-ABB2B4E4AA41}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{088101CF-D6F4-40A8-BEDD-ABB2B4E4AA41}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{088101CF-D6F4-40A8-BEDD-ABB2B4E4AA41}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9B3517DC-DB91-4B48-8AFB-5BDBD17E94E2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9B3517DC-DB91-4B48-8AFB-5BDBD17E94E2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9B3517DC-DB91-4B48-8AFB-5BDBD17E94E2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9B3517DC-DB91-4B48-8AFB-5BDBD17E94E2}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
