@@ -9,13 +9,32 @@ namespace Gratia.Domain.Entities
 {
     internal class Transaction : BaseEntity
     {
-        public int SenderId { get; set; }
-        public int ReceiverId { get; set; }
-        public User User { get; set; }
+        public Guid SenderId { get; set; }
+        public User Sender { get; set; }
+        public Guid ReceiverId { get; set; }
+        public User Receiver { get; set; }
         public int Amount { get; set; }
         public string Message { get; set; }
-        public string TypeOfdonation { get; set; }
+        public string TypeOfDonation { get; set; }
 
+
+        public Transaction(Guid senderId, Guid receiverId, int amount, string message, string typeOfDonation)
+        {
+            senderId = SenderId;
+            receiverId = ReceiverId;
+            amount = Amount;
+            message = Message;
+            typeOfDonation = TypeOfDonation;
+        }
+
+        public void Update(Guid senderId, Guid receiverId, int amount, string message, string typeOfDonation)
+        {
+            senderId = SenderId;
+            receiverId = ReceiverId;
+            amount = Amount;
+            message = Message;
+            typeOfDonation = TypeOfDonation;
+        }
 
     }
 }
