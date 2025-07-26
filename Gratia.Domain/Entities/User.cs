@@ -16,7 +16,8 @@ namespace Gratia.Domain.Entities
         public string Role { get; set; }
         public int NumberOfPointsAcquired { get; set; }
         public int NumberOfPointsAvailable { get; set; }
-        //public int CompanyId { get; set; }
+        public int CompanyId { get; set; }
+        public Company Company { get; set; }
 
         public User(string fullname, string email, string hashedpassword, string jobtitle, string role, int numberofpointsacquired, int numberofpointsavailable)
         {

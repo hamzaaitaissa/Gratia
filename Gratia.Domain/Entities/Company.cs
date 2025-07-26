@@ -14,6 +14,8 @@ namespace Gratia.Domain.Entities
         public string PrimaryColor { get; set; }
         public string SecondaryCololr { get; set; }
 
+        public ICollection<User> users { get; set; }
+
         public Company(string name, string logoUrl, string primaryColor, string secondaryColor)
         {
             Name = name;
