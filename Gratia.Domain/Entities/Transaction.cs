@@ -20,20 +20,20 @@ namespace Gratia.Domain.Entities
 
         public Transaction(Guid senderId, Guid receiverId, int amount, string message, string typeOfDonation)
         {
-            senderId = SenderId;
-            receiverId = ReceiverId;
-            amount = Amount;
-            message = Message;
-            typeOfDonation = TypeOfDonation;
+            SenderId = senderId;
+            ReceiverId = receiverId;
+            Amount = amount;
+            Message = message;
+            TypeOfDonation = typeOfDonation;
         }
 
         public void Update(Guid senderId, Guid receiverId, int amount, string message, string typeOfDonation)
         {
-            senderId = SenderId;
-            receiverId = ReceiverId;
-            amount = Amount;
-            message = Message;
-            typeOfDonation = TypeOfDonation;
+            SenderId = senderId;
+            ReceiverId = receiverId;
+            Amount = amount;
+            Message = message;
+            TypeOfDonation = typeOfDonation;
         }
 
     }
