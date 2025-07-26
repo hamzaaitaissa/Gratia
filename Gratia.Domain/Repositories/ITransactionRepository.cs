@@ -7,10 +7,10 @@ using System.Threading.Tasks;
 
 namespace Gratia.Domain.Repositories
 {
-    internal interface ICompanyRepository
+    internal interface ITransactionRepository
     {
-        Task<Company> AddAsync(Company company);
-        Task<Company> UpdateAsync(Company company);
-        Task DeleteAsync();
+        Task<User> AddAsync(Transaction transaction);
+        Task<IEnumerable<Transaction>> GetAllAsync();
+        Task<Transaction> GetByIdAsync(int id);
     }
 }

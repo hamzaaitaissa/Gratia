@@ -7,6 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.7" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Gratia.Application\Gratia.Application.csproj" />
     <ProjectReference Include="..\Gratia.Domain\Gratia.Domain.csproj" />
   </ItemGroup>

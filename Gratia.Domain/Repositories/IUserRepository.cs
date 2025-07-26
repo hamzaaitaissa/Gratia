@@ -9,9 +9,9 @@ namespace Gratia.Domain.Repositories
 {
     internal interface IUserRepository
     {
-        Task AddAsync(User user);
+        Task<User> AddAsync(User user);
         Task<IEnumerable<User>> GetAllAsync();
-        Task GetAsync(int id);
+        Task<User> GetByIdAsync(int id);
         Task DeleteAsync(int id);
     }
 }
