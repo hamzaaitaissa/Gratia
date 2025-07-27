@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Gratia.Domain.Entities
 {
-    internal class Transaction : BaseEntity
+    public class Transaction : BaseEntity
     {
         public Guid SenderId { get; set; }
         public User Sender { get; set; }

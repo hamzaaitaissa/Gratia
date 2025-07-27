@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Gratia.Domain.Entities
 {
-    internal class Company : BaseEntity
+    public class Company : BaseEntity
     {
         public string Name { get; set; }
         public string LogoUrl { get; set; }
