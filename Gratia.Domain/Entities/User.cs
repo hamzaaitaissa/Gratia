@@ -17,9 +17,11 @@ namespace Gratia.Domain.Entities
         public int NumberOfPointsAcquired { get; set; }
         public int NumberOfPointsAvailable { get; set; }
         public int CompanyId { get; set; }
+        
+        //navigation
         public Company Company { get; set; }
 
-        public User(string fullname, string email, string hashedpassword, string jobtitle, string role, int numberofpointsacquired, int numberofpointsavailable)
+        public User(string fullname, string email, string hashedpassword, string jobtitle, string role, int numberofpointsacquired, int numberofpointsavailable, int companyId)
         {
             FullName = fullname;
             Email = email;
@@ -28,9 +30,10 @@ namespace Gratia.Domain.Entities
             Role = role;
             NumberOfPointsAcquired = numberofpointsacquired;
             NumberOfPointsAvailable = numberofpointsavailable;
+            CompanyId = companyId;
         }
 
-        public void Update(string fullname, string email, string hashedpassword, string jobtitle, string role, int numberofpointsacquired, int numberofpointsavailable)
+        public void Update(string fullname, string email, string hashedpassword, string jobtitle, string role, int numberofpointsacquired, int numberofpointsavailable,int companyId)
         {
             FullName = fullname;
             Email = email;
@@ -39,6 +42,7 @@ namespace Gratia.Domain.Entities
             Role = role;
             NumberOfPointsAcquired = numberofpointsacquired;
             NumberOfPointsAvailable = numberofpointsavailable;
+            CompanyId = companyId;
         }
 
 
