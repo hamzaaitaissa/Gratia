@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Gratia.Domain.Repositories
 {
-    internal interface IUserRepository
+    public interface IUserRepository
     {
         Task<User> AddAsync(User user);
         Task<IEnumerable<User>> GetAllAsync();

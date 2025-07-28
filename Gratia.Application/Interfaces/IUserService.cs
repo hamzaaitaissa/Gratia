@@ -9,8 +9,8 @@ namespace Gratia.Application.Interfaces
 {
     internal interface IUserService
     {
-        Task<RegisterUserDto> AddUserAsync(RegisterUserDto registerUserDto);
-        Task<UpdateUserDto> UpdateUserAsync(UpdateUserDto updateUserDto);
+        Task<ReadUserDto> AddUserAsync(RegisterUserDto registerUserDto);
+        Task<ReadUserDto> UpdateUserAsync(UpdateUserDto updateUserDto);
         Task<IEnumerable<ReadUserDto>> GetAllUsersAsync();
     }
 }
