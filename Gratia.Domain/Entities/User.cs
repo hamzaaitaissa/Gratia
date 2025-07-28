@@ -1,6 +1,7 @@
 ﻿using Gratia.Domain.Common;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -17,9 +18,12 @@ namespace Gratia.Domain.Entities
         public int NumberOfPointsAcquired { get; set; }
         public int NumberOfPointsAvailable { get; set; }
         public int CompanyId { get; set; }
-        
+
         //navigation
+        [ForeignKey(nameof(CompanyId))]
         public Company Company { get; set; }
+        public ICollection<Transaction> SentTransactions { get; set; }
+        public ICollection<Transaction> ReceivedTransactions { get; set; }
 
         public User(string fullname, string email, string hashedpassword, string jobtitle, string role, int numberofpointsacquired, int numberofpointsavailable, int companyId)
         {
