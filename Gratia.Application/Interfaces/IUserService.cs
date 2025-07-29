@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Gratia.Application.Interfaces
 {
-    internal interface IUserService
+    public interface IUserService
     {
         Task<ReadUserDto> AddUserAsync(RegisterUserDto registerUserDto);
         Task<ReadUserDto> UpdateUserAsync(UpdateUserDto updateUserDto);

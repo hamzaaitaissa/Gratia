@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Gratia.Application.DTOs.UserDTO
 {
-    internal class UpdateUserDto
+    public class UpdateUserDto
     {
         public Guid Id { get; set; }
         [Required]

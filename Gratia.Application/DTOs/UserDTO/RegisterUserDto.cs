@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Gratia.Application.DTOs.UserDTO
 {
-    internal class RegisterUserDto
+    public class RegisterUserDto
     {
         [Required]
         public string FullName { get; set; }

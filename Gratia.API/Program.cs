@@ -1,9 +1,20 @@
+using Gratia.Application.Interfaces;
+using Gratia.Application.Services;
+using Gratia.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+//adding dbcontext
+builder.Services.AddDbContext<GratiaDbContext>(options =>
+{
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
+});
 
+
+// Add services to the container.
+builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
