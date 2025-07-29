@@ -37,16 +37,13 @@ namespace Gratia.Domain.Entities
             CompanyId = companyId;
         }
 
-        public void Update(string fullname, string email, string hashedpassword, string jobtitle, string role, int numberofpointsacquired, int numberofpointsavailable,int companyId)
+        public void Update(string fullname, string email, string hashedpassword, string jobtitle, string role)
         {
             FullName = fullname;
             Email = email;
             HashedPassword = hashedpassword;
             JobTitle = jobtitle;
             Role = role;
-            NumberOfPointsAcquired = numberofpointsacquired;
-            NumberOfPointsAvailable = numberofpointsavailable;
-            CompanyId = companyId;
         }
 
 

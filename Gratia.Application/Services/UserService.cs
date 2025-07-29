@@ -4,6 +4,7 @@ using Gratia.Domain.Entities;
 using Gratia.Domain.Repositories;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -18,6 +19,7 @@ namespace Gratia.Application.Services
         {
             _userRepository = userRepository;
         }
+
         async Task<ReadUserDto> IUserService.AddUserAsync(RegisterUserDto registerUserDto)
         {
             //Input DTO comes in → Convert to Entity → Work with Entity → Convert back to Output DTO
@@ -68,9 +70,35 @@ namespace Gratia.Application.Services
             });
         }
 
-        Task<ReadUserDto> IUserService.UpdateUserAsync(UpdateUserDto updateUserDto)
+        async Task<ReadUserDto> IUserService.UpdateUserAsync(UpdateUserDto updateUserDto)
         {
-            throw new NotImplementedException();
+            var user = await _userRepository.GetByIdAsync(updateUserDto.Id);
+            if(user == null)
+            {
+                throw new KeyNotFoundException($"User with this email {updateUserDto.Email} does not exist.");
+            }
+            user.Update
+                (
+                    updateUserDto.FullName,
+                    updateUserDto.Email,
+                    updateUserDto.HashedPassword,
+                    updateUserDto.JobTitle,
+                    updateUserDto.Role
+                );
+            var userUpdated = await _userRepository.UpdateAsync( user );
+            var readUserDto = new ReadUserDto
+            {
+                FullName = updateUserDto.FullName,
+                Email = updateUserDto.Email,
+                JobTitle = updateUserDto.JobTitle,
+                Role = updateUserDto.Role,
+            };
+            return readUserDto;
+        }
+
+        public async Task DeleteUserAsync(Guid id)
+        {
+             await _userRepository.DeleteAsync(id);
         }
     }
 }

@@ -12,5 +12,6 @@ namespace Gratia.Application.Interfaces
         Task<ReadUserDto> AddUserAsync(RegisterUserDto registerUserDto);
         Task<ReadUserDto> UpdateUserAsync(UpdateUserDto updateUserDto);
         Task<IEnumerable<ReadUserDto>> GetAllUsersAsync();
+        Task DeleteUserAsync(Guid id);
     }
 }

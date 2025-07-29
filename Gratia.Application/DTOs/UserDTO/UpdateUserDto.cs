@@ -9,6 +9,7 @@ namespace Gratia.Application.DTOs.UserDTO
 {
     internal class UpdateUserDto
     {
+        public Guid Id { get; set; }
         [Required]
         public string FullName { get; set; }
         [Required, EmailAddress]

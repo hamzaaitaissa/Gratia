@@ -11,7 +11,9 @@ namespace Gratia.Domain.Repositories
     {
         Task<User> AddAsync(User user);
         Task<IEnumerable<User>> GetAllAsync();
-        Task<User> GetByIdAsync(int id);
-        Task DeleteAsync(int id);
+        Task<User> GetByIdAsync(Guid id);
+        Task DeleteAsync(Guid id);
+        Task<User> UpdateAsync(User user);
+        Task<User> GetByEmail(string email);
     }
 }

@@ -23,6 +23,10 @@ namespace Gratia.Infrastructure.Data
         {
             base.OnModelCreating(modelBuilder);
 
+            modelBuilder.Entity<User>()
+                .HasIndex(u => u.Email)
+                .IsUnique();
+
             modelBuilder.Entity<Transaction>()
                 .HasOne(t => t.Sender)
                 .WithMany(u => u.SentTransactions)
