@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Gratia.Infrastructure.Repositories
 {
-    internal class UserRepository : IUserRepository
+    public class UserRepository : IUserRepository
     {
         private readonly GratiaDbContext _gratiaDbContext;
 

@@ -1,6 +1,8 @@
 using Gratia.Application.Interfaces;
 using Gratia.Application.Services;
+using Gratia.Domain.Repositories;
 using Gratia.Infrastructure.Data;
+using Gratia.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -14,6 +16,7 @@ builder.Services.AddDbContext<GratiaDbContext>(options =>
 
 // Add services to the container.
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
