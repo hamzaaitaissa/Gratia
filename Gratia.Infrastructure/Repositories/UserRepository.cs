@@ -1,28 +1,34 @@
 ﻿using Gratia.Domain.Entities;
 using Gratia.Domain.Repositories;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Gratia.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace Gratia.Infrastructure.Repositories
 {
     internal class UserRepository : IUserRepository
     {
-        public Task<User> AddAsync(User user)
+        private readonly GratiaDbContext _gratiaDbContext;
+        public async Task<User> AddAsync(User user)
         {
-            throw new NotImplementedException();
+            await _gratiaDbContext.Users.AddAsync(user);
+            await _gratiaDbContext.SaveChangesAsync();
+            return user;
         }
 
-        public Task DeleteAsync(Guid id)
+        public async Task DeleteAsync(Guid id)
         {
-            throw new NotImplementedException();
+            var user = await _gratiaDbContext.Users.FindAsync(id);
+            if(user != null)
+            {
+                _gratiaDbContext.Users.Remove(user);
+                await _gratiaDbContext.SaveChangesAsync();
+            }
         }
 
-        public Task<IEnumerable<User>> GetAllAsync()
+        public async Task<IEnumerable<User>> GetAllAsync()
         {
-            throw new NotImplementedException();
+           var users = await _gratiaDbContext.Users.ToListAsync();
+            return users;
         }
 
         public Task<User> GetByEmail(string email)
@@ -30,14 +36,17 @@ namespace Gratia.Infrastructure.Repositories
             throw new NotImplementedException();
         }
 
-        public Task<User> GetByIdAsync(Guid id)
+        public async Task<User> GetByIdAsync(Guid id)
         {
-            throw new NotImplementedException();
+            var user = await _gratiaDbContext.Users.FindAsync(id);
+            return user;
         }
 
-        public Task<User> UpdateAsync(User user)
+        public async Task<User> UpdateAsync(User user)
         {
-            throw new NotImplementedException();
+            _gratiaDbContext.Users.Update(user);
+            await _gratiaDbContext.SaveChangesAsync();
+            return user;
         }
     }
 }
