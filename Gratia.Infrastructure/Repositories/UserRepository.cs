@@ -8,6 +8,11 @@ namespace Gratia.Infrastructure.Repositories
     internal class UserRepository : IUserRepository
     {
         private readonly GratiaDbContext _gratiaDbContext;
+
+        public UserRepository(GratiaDbContext gratiaDbContext)
+        {
+            _gratiaDbContext = gratiaDbContext;
+        }
         public async Task<User> AddAsync(User user)
         {
             await _gratiaDbContext.Users.AddAsync(user);
