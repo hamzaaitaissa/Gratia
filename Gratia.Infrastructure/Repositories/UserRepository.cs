@@ -22,8 +22,8 @@ namespace Gratia.Infrastructure.Repositories
 
         public async Task DeleteAsync(Guid id)
         {
-            var user = await _gratiaDbContext.Users.FindAsync(id);
-            if(user != null)
+            var user = await _gratiaDbContext.Users.FirstOrDefaultAsync(u => u.Id == id);
+            if (user != null)
             {
                 _gratiaDbContext.Users.Remove(user);
                 await _gratiaDbContext.SaveChangesAsync();
@@ -32,7 +32,7 @@ namespace Gratia.Infrastructure.Repositories
 
         public async Task<IEnumerable<User>> GetAllAsync()
         {
-           var users = await _gratiaDbContext.Users.ToListAsync();
+           var users = await _gratiaDbContext.Users.AsNoTracking().ToListAsync();
             return users;
         }
 
@@ -43,7 +43,7 @@ namespace Gratia.Infrastructure.Repositories
 
         public async Task<User> GetByIdAsync(Guid id)
         {
-            var user = await _gratiaDbContext.Users.FindAsync(id);
+            var user = await _gratiaDbContext.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == id);
             return user;
         }
 
