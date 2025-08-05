@@ -42,9 +42,7 @@ namespace Gratia.API.Controllers
             //get the user
             var user = await _userService.GetUserById(userId);
             //return 200 ok reponse
-            return Ok(
-                user
-                );
+            return user is null ? NotFound() : Ok(user);
         }
 
         [HttpGet]
@@ -53,9 +51,8 @@ namespace Gratia.API.Controllers
             //get all the users
             var users = await _userService.GetAllUsersAsync();
             //return 200 response
-            return Ok(
-                users
-                );
+            return users is null ? NotFound() : Ok(users);
+
         }
     }
 }
