@@ -42,6 +42,7 @@ namespace Gratia.Application.Services
             // Step 3: Convert saved User to ReadUserDto
             var readUserDto = new ReadUserDto
             {
+                Id = savedUser.Id,
                 FullName = savedUser.FullName,
                 Email = savedUser.Email,
                 JobTitle = savedUser.JobTitle,
@@ -60,6 +61,7 @@ namespace Gratia.Application.Services
 
             return users.Select(user => new ReadUserDto
             {
+                Id = user.Id,
                 FullName = user.FullName,
                 Email = user.Email,
                 JobTitle = user.JobTitle,
@@ -88,10 +90,14 @@ namespace Gratia.Application.Services
             var userUpdated = await _userRepository.UpdateAsync( user );
             var readUserDto = new ReadUserDto
             {
+                Id = user.Id,
                 FullName = updateUserDto.FullName,
                 Email = updateUserDto.Email,
                 JobTitle = updateUserDto.JobTitle,
                 Role = updateUserDto.Role,
+                NumberOfPointsAcquired = user.NumberOfPointsAcquired,
+                NumberOfPointsAvailable = user.NumberOfPointsAvailable,
+                CompanyId = user.CompanyId
             };
             return readUserDto;
         }
@@ -99,6 +105,23 @@ namespace Gratia.Application.Services
         public async Task DeleteUserAsync(Guid id)
         {
              await _userRepository.DeleteAsync(id);
+        }
+
+        public async Task<ReadUserDto> GetUserById(Guid Id)
+        {
+            var user = await _userRepository.GetByIdAsync(Id);
+            var userReturned = new ReadUserDto
+            {
+                Id = user.Id,
+                FullName = user.FullName,
+                Email = user.Email,
+                JobTitle = user.JobTitle,
+                Role = user.Role,
+                NumberOfPointsAcquired = user.NumberOfPointsAcquired,
+                NumberOfPointsAvailable = user.NumberOfPointsAvailable,
+                CompanyId = user.CompanyId
+            };
+            return userReturned;
         }
     }
 }

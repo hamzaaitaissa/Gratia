@@ -10,6 +10,7 @@ namespace Gratia.Application.Interfaces
     public interface IUserService
     {
         Task<ReadUserDto> AddUserAsync(RegisterUserDto registerUserDto);
+        Task<ReadUserDto> GetUserById(Guid Id);
         Task<ReadUserDto> UpdateUserAsync(UpdateUserDto updateUserDto);
         Task<IEnumerable<ReadUserDto>> GetAllUsersAsync();
         Task DeleteUserAsync(Guid id);
