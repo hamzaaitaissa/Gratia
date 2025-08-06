@@ -12,16 +12,20 @@ namespace Gratia.Domain.Entities
         public string Name { get; set; }
         public string LogoUrl { get; set; }
         public string PrimaryColor { get; set; }
-        public string SecondaryCololr { get; set; }
+        public string SecondaryColor { get; set; }
 
-        public ICollection<User> users { get; set; }
+        public ICollection<User> Users { get; set; }
 
+        public Company()
+        {
+            
+        }
         public Company(string name, string logoUrl, string primaryColor, string secondaryColor)
         {
             Name = name;
             LogoUrl = logoUrl;
             PrimaryColor = primaryColor;
-            SecondaryCololr = secondaryColor;
+            SecondaryColor = secondaryColor;
         }
 
         public void Update(string name, string logoUrl, string primaryColor, string secondaryColor)
@@ -29,7 +33,7 @@ namespace Gratia.Domain.Entities
             Name = name;
             LogoUrl = logoUrl;
             PrimaryColor = primaryColor;
-            SecondaryCololr = secondaryColor;
+            SecondaryColor = secondaryColor;
         }
     }
 }

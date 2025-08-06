@@ -41,7 +41,7 @@ namespace Gratia.Infrastructure.Data
 
             modelBuilder.Entity<User>()
                 .HasOne(u => u.Company)
-                .WithMany(c => c.users)
+                .WithMany(c => c.Users)
                 .HasForeignKey(u => u.CompanyId);
 
         }

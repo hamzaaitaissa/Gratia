@@ -24,6 +24,6 @@ namespace Gratia.Application.DTOs.UserDTO
         [Required]
         public int NumberOfPointsAvailable { get; set; }
         [Required]
-        public int CompanyId { get; set; }
+        public Guid CompanyId { get; set; }
     }
 }

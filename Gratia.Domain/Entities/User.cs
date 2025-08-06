@@ -17,7 +17,7 @@ namespace Gratia.Domain.Entities
         public string Role { get; set; }
         public int NumberOfPointsAcquired { get; set; }
         public int NumberOfPointsAvailable { get; set; }
-        public int CompanyId { get; set; }
+        public Guid CompanyId { get; set; }
 
         //navigation
         [ForeignKey(nameof(CompanyId))]
@@ -25,7 +25,12 @@ namespace Gratia.Domain.Entities
         public ICollection<Transaction> SentTransactions { get; set; }
         public ICollection<Transaction> ReceivedTransactions { get; set; }
 
-        public User(string fullname, string email, string hashedpassword, string jobtitle, string role, int numberofpointsacquired, int numberofpointsavailable, int companyId)
+        public User()
+        {
+            
+        }
+
+        public User(string fullname, string email, string hashedpassword, string jobtitle, string role, int numberofpointsacquired, int numberofpointsavailable, Guid companyId)
         {
             FullName = fullname;
             Email = email;

@@ -17,6 +17,10 @@ namespace Gratia.Domain.Entities
         public string Message { get; set; }
         public string TypeOfDonation { get; set; }
 
+        public Transaction()
+        {
+            
+        }
 
         public Transaction(Guid senderId, Guid receiverId, int amount, string message, string typeOfDonation)
         {
