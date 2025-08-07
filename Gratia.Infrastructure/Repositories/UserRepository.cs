@@ -15,6 +15,7 @@ namespace Gratia.Infrastructure.Repositories
         }
         public async Task<User> AddAsync(User user)
         {
+            if(user == null) throw new ArgumentNullException(nameof(user));
             await _gratiaDbContext.Users.AddAsync(user);
             await _gratiaDbContext.SaveChangesAsync();
             return user;
