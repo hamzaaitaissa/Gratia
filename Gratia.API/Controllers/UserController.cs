@@ -12,9 +12,9 @@ namespace Gratia.API.Controllers
     public class UserController : ControllerBase
     {
         private readonly IUserService _userService;
-        private readonly ILogger _logger;
+        private readonly ILogger<UserController> _logger;
 
-        public UserController(IUserService userService, ILogger logger)
+        public UserController(IUserService userService, ILogger<UserController> logger)
         {
             _userService = userService;
             _logger = logger;
@@ -53,6 +53,32 @@ namespace Gratia.API.Controllers
             //return 200 response
             return users is null ? NotFound() : Ok(users);
 
+        }
+        [HttpDelete("{id:guid}")]
+        public async Task<IActionResult> Delete(Guid id)
+        {
+            var user = await _userService.GetUserById(id);
+            if (user == null)
+                return NotFound();
+
+            await _userService.DeleteUserAsync(id);
+            return NoContent();
+        }
+
+        [HttpPut("{id:guid}")]
+        public async Task<IActionResult> Update(Guid id, [FromBody] UpdateUserDto updateUserDto)
+        {
+            if (id != updateUserDto.Id)
+                return BadRequest("Id in route and body do not match.");
+
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var user = await _userService.UpdateUserAsync(updateUserDto);
+            if (user == null)
+                return NotFound();
+
+            return Ok(user);
         }
     }
 }
