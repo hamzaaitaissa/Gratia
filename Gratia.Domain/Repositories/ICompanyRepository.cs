@@ -11,6 +11,6 @@ namespace Gratia.Domain.Repositories
     {
         Task<Company> AddAsync(Company company);
         Task<Company> UpdateAsync(Company company);
-        Task DeleteAsync();
+        Task DeleteAsync(Guid Id);
     }
 }
