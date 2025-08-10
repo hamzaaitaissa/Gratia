@@ -32,14 +32,14 @@ namespace Gratia.Application.Services
             //adding
             var companyAdd = await _companyRepository.AddAsync(company);
             //from model to dto
-            var companyRead = new ReadCompanyDto
-            {
-                Name = companyAdd.Name,
-                PrimaryColor = companyAdd.PrimaryColor,
-                SecondaryColor = companyAdd.SecondaryColor,
-                LogoUrl = companyAdd.LogoUrl,
-            };
-            return companyRead;
+            //var companyRead = new ReadCompanyDto
+            //{
+            //    Name = companyAdd.Name,
+            //    PrimaryColor = companyAdd.PrimaryColor,
+            //    SecondaryColor = companyAdd.SecondaryColor,
+            //    LogoUrl = companyAdd.LogoUrl,
+            //};
+            return MapToReadDto(companyAdd);
         }
 
         public async Task DeleteCompanyAsync(Guid id)
@@ -47,19 +47,51 @@ namespace Gratia.Application.Services
             await _companyRepository.DeleteAsync(id);
         }
 
-        public Task<IEnumerable<ReadCompanyDto>> GetAllCompaniesAsync()
+        public async Task<IEnumerable<ReadCompanyDto>> GetAllCompaniesAsync()
         {
-            throw new NotImplementedException();
+            var companies = await _companyRepository.GetAllAsync();
+            var companyRead = new List<ReadCompanyDto>();
+            foreach(var company in companies)
+            {
+                companyRead.Add(MapToReadDto(company));
+            }
+            return companyRead;
+           
         }
 
-        public Task<ReadCompanyDto> GetCompanyAsync(Guid id)
+        public async Task<ReadCompanyDto> GetCompanyAsync(Guid id)
         {
-            throw new NotImplementedException();
+            var company = await _companyRepository.GetAsync(id);
+            return MapToReadDto(company);
         }
 
-        public Task<ReadCompanyDto> UpdateCompanyAsync(UpdateCompanyDto updateCompanyDto)
+        public async Task<ReadCompanyDto> UpdateCompanyAsync(UpdateCompanyDto updateCompanyDto)
         {
-            throw new NotImplementedException();
+            if (updateCompanyDto == null)
+                throw new ArgumentNullException(nameof(updateCompanyDto));
+
+            var company = new Company();
+            company.Update(
+                updateCompanyDto.Name,
+                updateCompanyDto.LogoUrl,
+                updateCompanyDto.PrimaryColor,
+                updateCompanyDto.SecondaryColor
+            );
+
+            var updatedCompany = await _companyRepository.UpdateAsync(company);
+            return MapToReadDto(updatedCompany);
+        }
+
+        private static ReadCompanyDto MapToReadDto(Company company)
+        {
+            return new ReadCompanyDto
+            {
+                Id = company.Id,
+                Name = company.Name,
+                PrimaryColor = company.PrimaryColor,
+                SecondaryColor = company.SecondaryColor,
+                LogoUrl = company.LogoUrl,
+            };
         }
     }
 }

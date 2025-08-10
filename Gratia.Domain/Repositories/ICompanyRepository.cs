@@ -12,5 +12,7 @@ namespace Gratia.Domain.Repositories
         Task<Company> AddAsync(Company company);
         Task<Company> UpdateAsync(Company company);
         Task DeleteAsync(Guid Id);
+        Task<Company> GetAsync(Guid Id);
+        Task<IEnumerable<Company>> GetAllAsync();
     }
 }

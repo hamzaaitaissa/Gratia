@@ -46,11 +46,26 @@ namespace Gratia.Infrastructure.Repositories
             }
         }
 
+        public async Task<IEnumerable<Company>> GetAllAsync()
+        {
+            return await _gratiaDbContext.Companies.AsNoTracking().ToListAsync();
+        }
+
+        public async Task<Company> GetAsync(Guid Id)
+        {
+            if(Id == Guid.Empty)
+            {
+                throw new ArgumentNullException("Invalid Company Id",nameof(Id));
+            }
+            var company = await _gratiaDbContext.Companies.FindAsync(Id);
+            return company;
+        }
+
         public async Task<Company> UpdateAsync(Company company)
         {
             if(company == null) throw new ArgumentNullException(nameof(company));
-            var companz = await _gratiaDbContext.Companies.AnyAsync(c => c.Id == company.Id);
-            if(company == null)
+            var companExist = await _gratiaDbContext.Companies.AnyAsync(c => c.Id == company.Id);
+            if(!companExist)
             {
                 throw new InvalidOperationException("Company does not exist");
             }
