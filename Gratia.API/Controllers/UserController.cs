@@ -23,6 +23,8 @@ namespace Gratia.API.Controllers
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] RegisterUserDto registerUserDto)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
             //create the user
             var user = await _userService.AddUserAsync(registerUserDto);
             //return 201 created response

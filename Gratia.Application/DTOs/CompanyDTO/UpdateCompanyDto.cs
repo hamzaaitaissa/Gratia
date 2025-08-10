@@ -9,6 +9,8 @@ namespace Gratia.Application.DTOs.CompanyDTO
 {
     public class UpdateCompanyDto
     {
+        [Required, Key]
+        public Guid Id { get; set; }
         [Required(ErrorMessage = "Company name is required.")]
         [StringLength(100, ErrorMessage = "Company name cannot exceed 100 characters.")]
         public string Name { get; set; }
