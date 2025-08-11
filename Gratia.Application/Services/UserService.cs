@@ -3,12 +3,6 @@ using Gratia.Application.Interfaces;
 using Gratia.Domain.Entities;
 using Gratia.Domain.Repositories;
 using Microsoft.AspNetCore.Identity;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Gratia.Application.Services
 {
@@ -38,8 +32,12 @@ namespace Gratia.Application.Services
             );
             //step 2 check if user already exists
             var userExist = await _userRepository.GetByEmailAsync(registerUserDto.Email);
+            if(userExist == null)
+            {
+                throw new KeyNotFoundException($"User with this email {registerUserDto.Email} does not exist");
+            }
             // Step 3: hash psd and save user
-            var hashedPassword = new PasswordHasher<User>().HashPassword(user,registerUserDto.HashedPassword);
+            var hashedPassword = new PasswordHasher<User>().HashPassword(user, registerUserDto.HashedPassword);
             user.HashedPassword = hashedPassword;
             var savedUser = await _userRepository.AddAsync(user);
 
@@ -79,19 +77,21 @@ namespace Gratia.Application.Services
         async Task<ReadUserDto> IUserService.UpdateUserAsync(UpdateUserDto updateUserDto)
         {
             var user = await _userRepository.GetByIdAsync(updateUserDto.Id);
-            if(user == null)
+            if (user == null)
             {
                 throw new KeyNotFoundException($"User with this email {updateUserDto.Email} does not exist.");
             }
+            var hashedPassword = new PasswordHasher<User>().HashPassword(user, updateUserDto.HashedPassword);
+
             user.Update
                 (
                     updateUserDto.FullName,
                     updateUserDto.Email,
-                    updateUserDto.HashedPassword,
+                    hashedPassword,
                     updateUserDto.JobTitle,
                     updateUserDto.Role
                 );
-            var userUpdated = await _userRepository.UpdateAsync( user );
+            var userUpdated = await _userRepository.UpdateAsync(user);
             var readUserDto = new ReadUserDto
             {
                 Id = user.Id,
@@ -108,7 +108,7 @@ namespace Gratia.Application.Services
 
         public async Task DeleteUserAsync(Guid id)
         {
-             await _userRepository.DeleteAsync(id);
+            await _userRepository.DeleteAsync(id);
         }
 
         public async Task<ReadUserDto> GetUserById(Guid Id)
@@ -126,6 +126,21 @@ namespace Gratia.Application.Services
                 CompanyId = user.CompanyId
             };
             return userReturned;
+        }
+
+        public async Task<bool> LoginUser(LoginDto loginDto)
+        {
+            var userExistWithEmail = await _userRepository.GetByEmailAsync(loginDto.Email);
+            if (userExistWithEmail == null)
+            {
+                return false;
+            }
+            if(new PasswordHasher<User>().VerifyHashedPassword(userExistWithEmail,userExistWithEmail.HashedPassword, loginDto.HashedPassword) == PasswordVerificationResult.Failed)
+            {
+                return false;
+            }
+            return true;
+
         }
     }
 }

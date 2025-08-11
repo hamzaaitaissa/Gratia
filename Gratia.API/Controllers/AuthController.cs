@@ -1,5 +1,10 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Gratia.Application.DTOs.UserDTO;
+using Gratia.Application.Interfaces;
+using Gratia.Domain.Entities;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using System.Threading.Tasks;
 
 namespace Gratia.API.Controllers
 {
@@ -7,6 +12,25 @@ namespace Gratia.API.Controllers
     [ApiController]
     public class AuthController : ControllerBase
     {
+        private readonly IUserService _userService;
+
+        public AuthController(IUserService userService)
+        {
+            _userService = userService;
+        }
+
+        [HttpPost("login")]
+        public async Task<IActionResult> Login(LoginDto loginDto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if(!await _userService.LoginUser(loginDto))
+            {
+                return BadRequest("Email or Password are incorrect");
+            }
+
+        }
 
     }
 }
