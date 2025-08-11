@@ -30,6 +30,14 @@ namespace Gratia.API.Controllers
                 return BadRequest("Email or Password are incorrect");
             }
 
+            string token = "success";
+
+            return Ok(token);
+        }
+
+        public string CreateToken(LoginDto loginDto)
+        {
+
         }
 
     }
