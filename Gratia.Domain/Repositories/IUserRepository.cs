@@ -14,6 +14,6 @@ namespace Gratia.Domain.Repositories
         Task<User> GetByIdAsync(Guid id);
         Task DeleteAsync(Guid id);
         Task<User> UpdateAsync(User user);
-        Task<User> GetByEmail(string email);
+        Task<User> GetByEmailAsync(string email);
     }
 }

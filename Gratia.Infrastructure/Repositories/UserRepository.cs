@@ -37,13 +37,15 @@ namespace Gratia.Infrastructure.Repositories
             return users;
         }
 
-        public Task<User> GetByEmail(string email)
+        public async Task<User> GetByEmailAsync(string email)
         {
-            throw new NotImplementedException();
+            if (string.IsNullOrWhiteSpace(email)) throw new ArgumentException("Email cannot be empty.", nameof(email));
+            return await _gratiaDbContext.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Email == email);
         }
 
         public async Task<User> GetByIdAsync(Guid id)
         {
+            if (id == Guid.Empty) throw new ArgumentNullException("User id cannot be empty", nameof(id));
             var user = await _gratiaDbContext.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == id);
             return user;
         }

@@ -2,6 +2,7 @@
 using Gratia.Application.Interfaces;
 using Gratia.Domain.Entities;
 using Gratia.Domain.Repositories;
+using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -35,8 +36,11 @@ namespace Gratia.Application.Services
                 registerUserDto.NumberOfPointsAvailable,
                 registerUserDto.CompanyId
             );
-
-            // Step 2: Save to database (returns User entity)
+            //step 2 check if user already exists
+            var userExist = await _userRepository.GetByEmailAsync(registerUserDto.Email);
+            // Step 3: hash psd and save user
+            var hashedPassword = new PasswordHasher<User>().HashPassword(user,registerUserDto.HashedPassword);
+            user.HashedPassword = hashedPassword;
             var savedUser = await _userRepository.AddAsync(user);
 
             // Step 3: Convert saved User to ReadUserDto
