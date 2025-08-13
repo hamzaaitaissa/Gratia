@@ -15,5 +15,6 @@ namespace Gratia.Application.Interfaces
         Task<IEnumerable<ReadUserDto>> GetAllUsersAsync();
         Task DeleteUserAsync(Guid id);
         Task<bool> LoginUser(LoginDto loginDto);
+        Task<ReadUserDto> GetUserByEmail(string email);
     }
 }

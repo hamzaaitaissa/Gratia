@@ -3,6 +3,8 @@ using Gratia.Application.Interfaces;
 using Gratia.Domain.Entities;
 using Gratia.Domain.Repositories;
 using Microsoft.AspNetCore.Identity;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace Gratia.Application.Services
 {
@@ -140,6 +142,28 @@ namespace Gratia.Application.Services
                 return false;
             }
             return true;
+
+        }
+
+        public async Task<ReadUserDto> GetUserByEmail(string email)
+        {
+            var user = await _userRepository.GetByEmailAsync(email);
+            if (user == null)
+            {
+                throw new KeyNotFoundException("User with this Email not found");
+            }
+            var userReturned = new ReadUserDto
+            {
+                Id = user.Id,
+                FullName = user.FullName,
+                Email = user.Email,
+                JobTitle = user.JobTitle,
+                Role = user.Role,
+                NumberOfPointsAcquired = user.NumberOfPointsAcquired,
+                NumberOfPointsAvailable = user.NumberOfPointsAvailable,
+                CompanyId = user.CompanyId
+            };
+            return userReturned;
 
         }
     }
