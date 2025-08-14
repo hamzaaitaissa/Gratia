@@ -34,9 +34,9 @@ namespace Gratia.Application.Services
             );
             //step 2 check if user already exists
             var userExist = await _userRepository.GetByEmailAsync(registerUserDto.Email);
-            if(userExist == null)
+            if(userExist != null)
             {
-                throw new KeyNotFoundException($"User with this email {registerUserDto.Email} does not exist");
+                throw new KeyNotFoundException($"User with this email {registerUserDto.Email} already exists");
             }
             // Step 3: hash psd and save user
             var hashedPassword = new PasswordHasher<User>().HashPassword(user, registerUserDto.HashedPassword);
