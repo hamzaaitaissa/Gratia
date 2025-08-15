@@ -17,6 +17,9 @@ namespace Gratia.Domain.Entities
         public string Role { get; set; }
         public int NumberOfPointsAcquired { get; set; }
         public int NumberOfPointsAvailable { get; set; }
+
+        public string? RefreshToken { get; set; }
+        public DateTime? RefreshTokenExpiryTime { get; set; }
         public Guid CompanyId { get; set; }
 
         //navigation
