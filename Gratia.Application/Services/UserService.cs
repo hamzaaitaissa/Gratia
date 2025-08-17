@@ -1,4 +1,5 @@
-﻿using Gratia.Application.DTOs.UserDTO;
+﻿using Gratia.Application.DTOs.Token;
+using Gratia.Application.DTOs.UserDTO;
 using Gratia.Application.Interfaces;
 using Gratia.Domain.Entities;
 using Gratia.Domain.Repositories;
@@ -11,10 +12,12 @@ namespace Gratia.Application.Services
     public class UserService : IUserService
     {
         private readonly IUserRepository _userRepository;
+        private readonly ITokenService _tokenService;
 
-        public UserService(IUserRepository userRepository)
+        public UserService(IUserRepository userRepository, ITokenService tokenService)
         {
             _userRepository = userRepository;
+            _tokenService = tokenService;
         }
 
         async Task<ReadUserDto> IUserService.AddUserAsync(RegisterUserDto registerUserDto)
@@ -165,6 +168,53 @@ namespace Gratia.Application.Services
             };
             return userReturned;
 
+        }
+
+        public async Task<TokenResponseDto> RefreshTokenAsync(string refreshToken)
+        {
+            var user = await _userRepository.GetUserByRefreshTokenAsync(refreshToken);
+            if(user == null || user.RefreshToken != refreshToken || user.RefreshTokenExpiryTime <= DateTime.UtcNow)
+            {
+                return null;
+            }
+            var userDto = new ReadUserDto
+            {
+                Id = user.Id,
+                FullName = user.FullName,
+                Email = user.Email,
+                JobTitle = user.JobTitle,
+                Role = user.Role,
+                NumberOfPointsAcquired = user.NumberOfPointsAcquired,
+                NumberOfPointsAvailable = user.NumberOfPointsAvailable,
+                CompanyId = user.CompanyId
+            };
+            var tokenResponse = _tokenService.GenerateTokens(userDto);
+            user.RefreshToken = tokenResponse.RefreshToken;
+            user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
+
+            await _userRepository.UpdateAsync(user);
+
+            return tokenResponse;
+        }
+
+        public async Task RevokeRefreshTokenAsync(string email)
+        {
+            var user = await _userRepository.GetByEmailAsync(email);
+            if (user == null) return;
+
+            user.RefreshToken = null;
+            user.RefreshTokenExpiryTime = null;
+
+            await _userRepository.UpdateAsync(user);
+        }
+
+        public async Task SaveRefreshTokenAsync(string email, string refreshToken)
+        {
+            var user = await _userRepository.GetByEmailAsync(email);
+            if (user == null) throw new InvalidOperationException("User not found");
+            user.RefreshToken = refreshToken;
+            user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
+            await _userRepository.UpdateAsync(user);
         }
     }
 }

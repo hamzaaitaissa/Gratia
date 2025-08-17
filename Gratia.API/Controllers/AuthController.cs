@@ -1,13 +1,16 @@
 ﻿using Gratia.Application.DTOs.UserDTO;
 using Gratia.Application.Interfaces;
 using Gratia.Domain.Entities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using System.Data.SqlTypes;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -19,11 +22,13 @@ namespace Gratia.API.Controllers
     {
         private readonly IUserService _userService;
         private readonly IConfiguration _configuration;
+        private readonly ITokenService _tokenService;
 
-        public AuthController(IUserService userService, IConfiguration configuration)
+        public AuthController(IUserService userService, IConfiguration configuration, ITokenService tokenService)
         {
             _userService = userService;
             _configuration = configuration;
+            _tokenService = tokenService;
         }
 
         [HttpPost("login")]
@@ -38,32 +43,33 @@ namespace Gratia.API.Controllers
             }
             var user = await _userService.GetUserByEmail(loginDto.Email);
 
-            string token = CreateToken(user);
+            var tokenResponse = _tokenService.GenerateTokens(user);
+            //savin refresh token to user
+            await _userService.SaveRefreshTokenAsync(user.Email, tokenResponse.RefreshToken);
 
-            return Ok(token);
+            return Ok(tokenResponse);
+        }
+        [HttpPost("refresh-token")]
+        public async Task<IActionResult> RefreshToken([FromBody] string refreshToken)
+        {
+            if (string.IsNullOrEmpty(refreshToken))
+                return BadRequest("Invalid client request");
+
+            var tokenResponse = await _userService.RefreshTokenAsync(refreshToken);
+
+            if (tokenResponse == null)
+                return Unauthorized("Invalid refresh token");
+
+            return Ok(tokenResponse);
         }
 
-        private string CreateToken(ReadUserDto user)
+        [HttpPost("revoke-token")]
+        [Authorize]
+        public async Task<IActionResult> RevokeToken()
         {
-            var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Email, user.Email),
-                new Claim(ClaimTypes.Role, user.Role)
-            };
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration.GetValue<string>("AppSettings:Token")!));
-
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512);
-
-            var jwtDescriptor = new JwtSecurityToken(
-                issuer: _configuration.GetValue<string>("AppSettings:Issuer"),
-                audience: _configuration.GetValue<string>("AppSettings:Audience"),
-                claims:claims,
-                expires: DateTime.UtcNow.AddHours(1),
-                signingCredentials:creds    
-                ); 
-
-            return new JwtSecurityTokenHandler().WriteToken(jwtDescriptor);
+            var email = User.FindFirst(ClaimTypes.Email)?.Value;
+            await _userService.RevokeRefreshTokenAsync(email);
+            return NoContent();
         }
     }
 

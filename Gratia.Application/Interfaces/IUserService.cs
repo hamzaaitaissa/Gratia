@@ -1,4 +1,5 @@
-﻿using Gratia.Application.DTOs.UserDTO;
+﻿using Gratia.Application.DTOs.Token;
+using Gratia.Application.DTOs.UserDTO;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,5 +17,8 @@ namespace Gratia.Application.Interfaces
         Task DeleteUserAsync(Guid id);
         Task<bool> LoginUser(LoginDto loginDto);
         Task<ReadUserDto> GetUserByEmail(string email);
+        Task<TokenResponseDto> RefreshTokenAsync(string refreshToken);
+        Task RevokeRefreshTokenAsync(string email);
+        Task SaveRefreshTokenAsync(string email, string refreshToken);
     }
 }

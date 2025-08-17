@@ -50,6 +50,12 @@ namespace Gratia.Infrastructure.Repositories
             return user;
         }
 
+        public async Task<User> GetUserByRefreshTokenAsync(string refreshToken)
+        {
+            var user = await _gratiaDbContext.Users.FirstOrDefaultAsync(u => u.RefreshToken == refreshToken);
+            return user;
+        }
+
         public async Task<User> UpdateAsync(User user)
         {
             _gratiaDbContext.Users.Update(user);
