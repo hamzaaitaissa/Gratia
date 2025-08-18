@@ -84,5 +84,5 @@ namespace Gratia.API.Controllers
         }
     }
 }
-// TODO: Add authentication
+
 //TODO: add authorization for super admin 

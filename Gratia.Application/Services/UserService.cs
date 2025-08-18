@@ -53,7 +53,7 @@ namespace Gratia.Application.Services
                 FullName = savedUser.FullName,
                 Email = savedUser.Email,
                 JobTitle = savedUser.JobTitle,
-                Role = savedUser.Role,
+                Role = savedUser.Role.ToString(),
                 NumberOfPointsAcquired = savedUser.NumberOfPointsAcquired,
                 NumberOfPointsAvailable = savedUser.NumberOfPointsAvailable,
                 CompanyId = savedUser.CompanyId
@@ -72,7 +72,7 @@ namespace Gratia.Application.Services
                 FullName = user.FullName,
                 Email = user.Email,
                 JobTitle = user.JobTitle,
-                Role = user.Role,
+                Role = user.Role.ToString(),
                 NumberOfPointsAcquired = user.NumberOfPointsAcquired,
                 NumberOfPointsAvailable = user.NumberOfPointsAvailable,
                 CompanyId = user.CompanyId
@@ -103,7 +103,7 @@ namespace Gratia.Application.Services
                 FullName = updateUserDto.FullName,
                 Email = updateUserDto.Email,
                 JobTitle = updateUserDto.JobTitle,
-                Role = updateUserDto.Role,
+                Role = updateUserDto.Role.ToString(),
                 NumberOfPointsAcquired = user.NumberOfPointsAcquired,
                 NumberOfPointsAvailable = user.NumberOfPointsAvailable,
                 CompanyId = user.CompanyId
@@ -125,7 +125,7 @@ namespace Gratia.Application.Services
                 FullName = user.FullName,
                 Email = user.Email,
                 JobTitle = user.JobTitle,
-                Role = user.Role,
+                Role = user.Role.ToString(),
                 NumberOfPointsAcquired = user.NumberOfPointsAcquired,
                 NumberOfPointsAvailable = user.NumberOfPointsAvailable,
                 CompanyId = user.CompanyId
@@ -161,7 +161,7 @@ namespace Gratia.Application.Services
                 FullName = user.FullName,
                 Email = user.Email,
                 JobTitle = user.JobTitle,
-                Role = user.Role,
+                Role = user.Role.ToString(),
                 NumberOfPointsAcquired = user.NumberOfPointsAcquired,
                 NumberOfPointsAvailable = user.NumberOfPointsAvailable,
                 CompanyId = user.CompanyId
@@ -183,7 +183,7 @@ namespace Gratia.Application.Services
                 FullName = user.FullName,
                 Email = user.Email,
                 JobTitle = user.JobTitle,
-                Role = user.Role,
+                Role = user.Role.ToString(),
                 NumberOfPointsAcquired = user.NumberOfPointsAcquired,
                 NumberOfPointsAvailable = user.NumberOfPointsAvailable,
                 CompanyId = user.CompanyId

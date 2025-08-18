@@ -1,4 +1,5 @@
 ﻿using Gratia.Domain.Common;
+using Gratia.Domain.Enum;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -14,7 +15,7 @@ namespace Gratia.Domain.Entities
         public string Email { get; set; }
         public string HashedPassword { get; set; }
         public string JobTitle { get; set; }
-        public string Role { get; set; }
+        public UserRole Role { get; set; }
         public int NumberOfPointsAcquired { get; set; }
         public int NumberOfPointsAvailable { get; set; }
 
@@ -33,7 +34,7 @@ namespace Gratia.Domain.Entities
             
         }
 
-        public User(string fullname, string email, string hashedpassword, string jobtitle, string role, int numberofpointsacquired, int numberofpointsavailable, Guid companyId)
+        public User(string fullname, string email, string hashedpassword, string jobtitle, UserRole role, int numberofpointsacquired, int numberofpointsavailable, Guid companyId)
         {
             FullName = fullname;
             Email = email;
@@ -45,7 +46,7 @@ namespace Gratia.Domain.Entities
             CompanyId = companyId;
         }
 
-        public void Update(string fullname, string email, string hashedpassword, string jobtitle, string role)
+        public void Update(string fullname, string email, string hashedpassword, string jobtitle, UserRole role)
         {
             FullName = fullname;
             Email = email;
@@ -57,5 +58,5 @@ namespace Gratia.Domain.Entities
 
 
     }
-    //TODO: Add refresh Token
+    
 }

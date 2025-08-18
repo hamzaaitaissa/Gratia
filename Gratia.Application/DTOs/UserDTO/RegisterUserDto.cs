@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Gratia.Domain.Enum;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -18,7 +19,7 @@ namespace Gratia.Application.DTOs.UserDTO
         [Required]
         public string JobTitle { get; set; }
         [Required, AllowedValues("Employee", "Admin")]
-        public string Role { get; set; }
+        public UserRole Role { get; set; }
         [Required]
         public int NumberOfPointsAcquired { get; set; }
         [Required]
