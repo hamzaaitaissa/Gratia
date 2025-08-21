@@ -4,14 +4,14 @@ namespace Gratia.Worker
 {
     public class PointResetWorker : BackgroundService
     {
-        private readonly IPointResetService _pointResetService;
+        private readonly IServiceProvider _serviceProvider;
         private readonly ILogger<PointResetWorker> _logger;
         private DateTime _lastUpdate;
 
-        public PointResetWorker(IPointResetService pointResetService, ILogger<PointResetWorker> logger)
+        public PointResetWorker( ILogger<PointResetWorker> logger, IServiceProvider serviceProvider)
         {
-            _pointResetService = pointResetService;
             _logger = logger;
+            _serviceProvider = serviceProvider;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -20,9 +20,13 @@ namespace Gratia.Worker
             {
                 try
                 {
-                    if (DateTime.UtcNow.Date.Day == 1 && DateTime.UtcNow.Hour == 0 && _lastUpdate!=DateTime.UtcNow.Date)
+                    if (DateTime.UtcNow.Date.Day == 21 && _lastUpdate!=DateTime.UtcNow.Date)
                     {
-                        await _pointResetService.ResetPointMonthly();
+                        using (var scope = _serviceProvider.CreateScope())
+                        {
+                            var pointResetService = scope.ServiceProvider.GetRequiredService<IPointResetService>();
+                            await pointResetService.ResetPointMonthly();
+                        }
                         _lastUpdate = DateTime.UtcNow.Date;
                     }
                 }catch (Exception ex)
