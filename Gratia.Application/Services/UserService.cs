@@ -47,17 +47,7 @@ namespace Gratia.Application.Services
             var savedUser = await _userRepository.AddAsync(user);
 
             // Step 3: Convert saved User to ReadUserDto
-            var readUserDto = new ReadUserDto
-            {
-                Id = savedUser.Id,
-                FullName = savedUser.FullName,
-                Email = savedUser.Email,
-                JobTitle = savedUser.JobTitle,
-                Role = savedUser.Role.ToString(),
-                NumberOfPointsAcquired = savedUser.NumberOfPointsAcquired,
-                NumberOfPointsAvailable = savedUser.NumberOfPointsAvailable,
-                CompanyId = savedUser.CompanyId
-            };
+            var readUserDto = MapToReadDto(savedUser);
 
             return readUserDto;
         }
@@ -66,17 +56,7 @@ namespace Gratia.Application.Services
         {
             var users = await _userRepository.GetAllAsync();
 
-            return users.Select(user => new ReadUserDto
-            {
-                Id = user.Id,
-                FullName = user.FullName,
-                Email = user.Email,
-                JobTitle = user.JobTitle,
-                Role = user.Role.ToString(),
-                NumberOfPointsAcquired = user.NumberOfPointsAcquired,
-                NumberOfPointsAvailable = user.NumberOfPointsAvailable,
-                CompanyId = user.CompanyId
-            });
+            return users.Select(user => MapToReadDto(user));
         }
 
         async Task<ReadUserDto> IUserService.UpdateUserAsync(UpdateUserDto updateUserDto)
@@ -97,17 +77,7 @@ namespace Gratia.Application.Services
                     updateUserDto.Role
                 );
             var userUpdated = await _userRepository.UpdateAsync(user);
-            var readUserDto = new ReadUserDto
-            {
-                Id = user.Id,
-                FullName = updateUserDto.FullName,
-                Email = updateUserDto.Email,
-                JobTitle = updateUserDto.JobTitle,
-                Role = updateUserDto.Role.ToString(),
-                NumberOfPointsAcquired = user.NumberOfPointsAcquired,
-                NumberOfPointsAvailable = user.NumberOfPointsAvailable,
-                CompanyId = user.CompanyId
-            };
+            var readUserDto = MapToReadDto(user);
             return readUserDto;
         }
 
@@ -119,17 +89,7 @@ namespace Gratia.Application.Services
         public async Task<ReadUserDto> GetUserById(Guid Id)
         {
             var user = await _userRepository.GetByIdAsync(Id);
-            var userReturned = new ReadUserDto
-            {
-                Id = user.Id,
-                FullName = user.FullName,
-                Email = user.Email,
-                JobTitle = user.JobTitle,
-                Role = user.Role.ToString(),
-                NumberOfPointsAcquired = user.NumberOfPointsAcquired,
-                NumberOfPointsAvailable = user.NumberOfPointsAvailable,
-                CompanyId = user.CompanyId
-            };
+            var userReturned = MapToReadDto(user);
             return userReturned;
         }
 
@@ -155,17 +115,7 @@ namespace Gratia.Application.Services
             {
                 throw new KeyNotFoundException("User with this Email not found");
             }
-            var userReturned = new ReadUserDto
-            {
-                Id = user.Id,
-                FullName = user.FullName,
-                Email = user.Email,
-                JobTitle = user.JobTitle,
-                Role = user.Role.ToString(),
-                NumberOfPointsAcquired = user.NumberOfPointsAcquired,
-                NumberOfPointsAvailable = user.NumberOfPointsAvailable,
-                CompanyId = user.CompanyId
-            };
+            var userReturned = MapToReadDto(user);
             return userReturned;
 
         }
@@ -177,17 +127,7 @@ namespace Gratia.Application.Services
             {
                 return null;
             }
-            var userDto = new ReadUserDto
-            {
-                Id = user.Id,
-                FullName = user.FullName,
-                Email = user.Email,
-                JobTitle = user.JobTitle,
-                Role = user.Role.ToString(),
-                NumberOfPointsAcquired = user.NumberOfPointsAcquired,
-                NumberOfPointsAvailable = user.NumberOfPointsAvailable,
-                CompanyId = user.CompanyId
-            };
+            var userDto = MapToReadDto(user);
             var tokenResponse = _tokenService.GenerateTokens(userDto);
             user.RefreshToken = tokenResponse.RefreshToken;
             user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
@@ -215,6 +155,21 @@ namespace Gratia.Application.Services
             user.RefreshToken = refreshToken;
             user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
             await _userRepository.UpdateAsync(user);
+        }
+
+        private static ReadUserDto MapToReadDto(User user)
+        {
+            return new ReadUserDto
+            {
+                Id = user.Id,
+                FullName = user.FullName,
+                Email = user.Email,
+                JobTitle = user.JobTitle,
+                Role = user.Role.ToString(),
+                NumberOfPointsAcquired = user.NumberOfPointsAcquired,
+                NumberOfPointsAvailable = user.NumberOfPointsAvailable,
+                CompanyId = user.CompanyId
+            };
         }
     }
 }

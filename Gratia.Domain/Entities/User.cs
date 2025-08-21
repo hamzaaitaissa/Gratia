@@ -16,9 +16,8 @@ namespace Gratia.Domain.Entities
         public string HashedPassword { get; set; }
         public string JobTitle { get; set; }
         public UserRole Role { get; set; }
-        public int NumberOfPointsAcquired { get; set; }
-        public int NumberOfPointsAvailable { get; set; }
-
+        public int NumberOfPointsAcquired { get; set; } = 25;
+        public int NumberOfPointsAvailable { get; set; } = 0;
         public string? RefreshToken { get; set; }
         public DateTime? RefreshTokenExpiryTime { get; set; }
         public Guid CompanyId { get; set; }

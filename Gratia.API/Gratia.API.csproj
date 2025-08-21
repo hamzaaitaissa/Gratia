@@ -22,6 +22,7 @@
     <ProjectReference Include="..\Gratia.Application\Gratia.Application.csproj" />
     <ProjectReference Include="..\Gratia.Domain\Gratia.Domain.csproj" />
     <ProjectReference Include="..\Gratia.Infrastructure\Gratia.Infrastructure.csproj" />
+    <ProjectReference Include="..\Gratia.Worker\Gratia.Worker.csproj" />
   </ItemGroup>
 
   <ItemGroup>
