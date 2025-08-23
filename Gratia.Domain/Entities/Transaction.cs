@@ -13,6 +13,8 @@ namespace Gratia.Domain.Entities
         public User Sender { get; set; }
         public Guid ReceiverId { get; set; }
         public User Receiver { get; set; }
+        public Guid CompanyId { get; set; }
+        public Company Company { get; set; }
         public int Amount { get; set; }
         public string Message { get; set; }
         public string TypeOfDonation { get; set; }

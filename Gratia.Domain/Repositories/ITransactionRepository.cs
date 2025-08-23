@@ -9,8 +9,10 @@ namespace Gratia.Domain.Repositories
 {
     public interface ITransactionRepository
     {
-        Task<User> AddAsync(Transaction transaction);
-        Task<IEnumerable<Transaction>> GetAllAsync();
-        Task<Transaction> GetByIdAsync(int id);
+        Task<Transaction> AddAsync(Transaction transaction);
+        Task<Transaction?> GetByIdAsync(Guid id, Guid CompanyId);
+        Task<IEnumerable<Transaction>> GetByUserIdAsync(Guid userId, Guid CompanyId);
+        Task<IEnumerable<Transaction>> GetByCompanyIdAsync(Guid companyId);
+        Task<IEnumerable<Transaction>> GetRecentAsync(Guid companyId, int count);
     }
 }
