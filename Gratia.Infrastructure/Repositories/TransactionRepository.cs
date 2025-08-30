@@ -39,9 +39,9 @@ namespace Gratia.Infrastructure.Repositories
             return await _grainContext.Transactions.AsNoTracking().FirstOrDefaultAsync(t => t.Id == id && t.CompanyId == companyId);
         }
 
-        public Task<IEnumerable<Transaction>> GetByUserIdAsync(Guid userId,Guid CompanyId)
+        public async Task<IEnumerable<Transaction>> GetByUserIdAsync(Guid userId,Guid CompanyId)
         {
-            throw new NotImplementedException();
+            return await _grainContext.Transactions.Where(t => t.SenderId == userId && t.CompanyId == CompanyId).ToListAsync();
         }
 
         public Task<IEnumerable<Transaction>> GetRecentAsync(Guid companyId, int count)
