@@ -1,4 +1,5 @@
-﻿using Gratia.Application.Interfaces;
+﻿using Gratia.Application.DTOs.Transaction;
+using Gratia.Application.Interfaces;
 using Gratia.Domain.Entities;
 using Gratia.Domain.Repositories;
 using System;
@@ -18,22 +19,32 @@ namespace Gratia.Application.Services
             _transactionRepository = transactionRepository;
         }
 
-        public Task<IEnumerable<Transaction>> GetRecentTransactionsAsync(Guid companyId, int count)
+        public Task<ReadTransactionDto> CreateTransactionAsync(Guid senderId, CreateReadTransactionDto createReadTransactionDto)
         {
             throw new NotImplementedException();
         }
 
-        public Task<Transaction?> GetTransactionAsync(Guid transactionId, Guid companyId)
+        public Task<ReadTransactionHistoryDto> GetCompanyTransactionHistoryAsync(Guid companyId, int page = 1, int pageSize = 10)
         {
             throw new NotImplementedException();
         }
 
-        public Task<IEnumerable<Transaction>> GetUserTransactionsAsync(Guid userId, Guid companyId)
+        public Task<IEnumerable<ReadTransactionDto>> GetReceivedTransactionsAsync(Guid userId)
         {
             throw new NotImplementedException();
         }
 
-        public Task<Transaction> TradeAsync(Guid senderId, Guid receiverId, int points, Guid companyId)
+        public Task<IEnumerable<ReadTransactionDto>> GetSentTransactionsAsync(Guid userId)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<ReadTransactionDto> GetTransactionByIdAsync(Guid id)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<IEnumerable<ReadTransactionDto>> GetUserTransactionHistoryAsync(Guid userId)
         {
             throw new NotImplementedException();
         }

@@ -1,4 +1,5 @@
-﻿using Gratia.Domain.Entities;
+﻿using Gratia.Application.DTOs.Transaction;
+using Gratia.Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,9 +10,11 @@ namespace Gratia.Application.Interfaces
 {
     public interface ITransactionService
     {
-        Task<Transaction> TradeAsync(Guid senderId, Guid receiverId, int points, Guid companyId);
-        Task<Transaction?> GetTransactionAsync(Guid transactionId, Guid companyId);
-        Task<IEnumerable<Transaction>> GetUserTransactionsAsync(Guid userId, Guid companyId);
-        Task<IEnumerable<Transaction>> GetRecentTransactionsAsync(Guid companyId, int count);
+        Task<ReadTransactionDto> CreateTransactionAsync(Guid senderId, CreateReadTransactionDto createReadTransactionDto);
+        Task<ReadTransactionDto> GetTransactionByIdAsync(Guid id);
+        Task<IEnumerable<ReadTransactionDto>> GetUserTransactionHistoryAsync(Guid userId);
+        Task<ReadTransactionHistoryDto> GetCompanyTransactionHistoryAsync(Guid companyId, int page = 1, int pageSize = 10);
+        Task<IEnumerable<ReadTransactionDto>> GetSentTransactionsAsync(Guid userId);
+        Task<IEnumerable<ReadTransactionDto>> GetReceivedTransactionsAsync(Guid userId);
     }
 }

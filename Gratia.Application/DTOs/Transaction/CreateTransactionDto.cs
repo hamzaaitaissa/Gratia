@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Gratia.Application.DTOs.Transaction
 {
-    public class CreateTransactionDto
+    public class CreateReadTransactionDto
     {
         [Required]
         public Guid ReceiverId { get; set; }
