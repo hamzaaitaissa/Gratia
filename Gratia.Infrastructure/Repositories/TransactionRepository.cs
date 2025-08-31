@@ -13,40 +13,80 @@ namespace Gratia.Infrastructure.Repositories
     public class TransactionRepository : ITransactionRepository
     {
 
-        private readonly GratiaDbContext _grainContext;
+        private readonly GratiaDbContext _gratiaContext;
 
         public TransactionRepository(GratiaDbContext gratiaDbContext)
         {
-            _grainContext = gratiaDbContext;
+            _gratiaContext = gratiaDbContext;
         }
 
-        public async Task<Transaction> AddAsync(Transaction transaction)
+        public async Task<Transaction> CreateAsync(Transaction transaction)
         {
-            if(transaction == null) throw new ArgumentNullException(nameof(transaction));
-            await _grainContext.Transactions.AddAsync(transaction);
-            await _grainContext.SaveChangesAsync();
+            await _gratiaContext.Transactions.AddAsync(transaction);
+            await _gratiaContext.SaveChangesAsync();
             return transaction;
+        }
+
+        public async Task<bool> DeleteAsync(Guid id)
+        {
+            var transaction = await _gratiaContext.Transactions.FindAsync(id);
+            if (transaction == null) return false;
+
+            _gratiaContext.Transactions.Remove(transaction);
+            await _gratiaContext.SaveChangesAsync();
+            return true;
         }
 
         public async Task<IEnumerable<Transaction>> GetByCompanyIdAsync(Guid companyId)
         {
-            var transactions = await _grainContext.Transactions.AsNoTracking().Where(t => t.CompanyId == companyId).ToListAsync();
-            return transactions;
+            return await _gratiaContext.Transactions.Where(t => t.CompanyId == companyId).OrderByDescending(t=>t.CreatedDate).ToListAsync();
         }
 
-        public async Task<Transaction?> GetByIdAsync(Guid id, Guid companyId)
+        public async Task<Transaction> GetByIdAsync(Guid id)
         {
-            return await _grainContext.Transactions.AsNoTracking().FirstOrDefaultAsync(t => t.Id == id && t.CompanyId == companyId);
+            var transaction = await _gratiaContext.Transactions
+                .FirstOrDefaultAsync(t => t.Id == id);
+
+            if (transaction is null)
+                throw new KeyNotFoundException($"Transaction {id} not found.");
+
+            return transaction;
         }
 
-        public async Task<IEnumerable<Transaction>> GetByUserIdAsync(Guid userId,Guid CompanyId)
+        public async Task<IEnumerable<Transaction>> GetByReceiverIdAsync(Guid receiverId)
         {
-            return await _grainContext.Transactions.Where(t => t.SenderId == userId && t.CompanyId == CompanyId).ToListAsync();
+            return await _gratiaContext.Transactions.Where(t => t.ReceiverId == receiverId).OrderByDescending(t => t.CreatedDate).ToListAsync();
         }
 
-        public Task<IEnumerable<Transaction>> GetRecentAsync(Guid companyId, int count)
+        public async Task<IEnumerable<Transaction>> GetBySenderIdAsync(Guid senderId)
         {
-            throw new NotImplementedException();
+            return await _gratiaContext.Transactions.Where(t => t.SenderId == senderId).OrderByDescending(t => t.CreatedDate).ToListAsync();
+        }
+
+        public async Task<IEnumerable<Transaction>> GetCompanyTransactionHistoryAsync(Guid companyId, int page = 1, int pageSize = 10)
+        {
+            return await _gratiaContext.Transactions.Where(t=> t.CompanyId == companyId)
+                .Skip(page).Take(pageSize).ToListAsync();
+        }
+
+        public async Task<int> GetTotalTransactionCountAsync(Guid companyId)
+        {
+            return await _gratiaContext.Transactions.Where(t=>t.CompanyId == companyId).CountAsync();
+        }
+
+        public async Task<IEnumerable<Transaction>> GetUserTransactionHistoryAsync(Guid userId)
+        {
+            return await _gratiaContext.Transactions
+                            .Where(t => t.SenderId == userId || t.ReceiverId == userId)
+                            .OrderByDescending(t => t.CreatedDate)
+                            .ToListAsync();
+        }
+
+        public async Task<Transaction> UpdateAsync(Transaction transaction)
+        {
+            _gratiaContext.Transactions.Update(transaction);
+            await _gratiaContext.SaveChangesAsync();
+            return transaction;
         }
     }
 }

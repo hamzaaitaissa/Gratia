@@ -9,10 +9,15 @@ namespace Gratia.Domain.Repositories
 {
     public interface ITransactionRepository
     {
-        Task<Transaction> AddAsync(Transaction transaction);
-        Task<Transaction?> GetByIdAsync(Guid id, Guid CompanyId);
-        Task<IEnumerable<Transaction>> GetByUserIdAsync(Guid userId, Guid CompanyId);
+        Task<Transaction> CreateAsync(Transaction transaction);
+        Task<Transaction> GetByIdAsync(Guid id);
         Task<IEnumerable<Transaction>> GetByCompanyIdAsync(Guid companyId);
-        Task<IEnumerable<Transaction>> GetRecentAsync(Guid companyId, int count);
+        Task<IEnumerable<Transaction>> GetBySenderIdAsync(Guid senderId);
+        Task<IEnumerable<Transaction>> GetByReceiverIdAsync(Guid receiverId);
+        Task<IEnumerable<Transaction>> GetUserTransactionHistoryAsync(Guid userId);
+        Task<Transaction> UpdateAsync(Transaction transaction);
+        Task<bool> DeleteAsync(Guid id);
+        Task<IEnumerable<Transaction>> GetCompanyTransactionHistoryAsync(Guid companyId, int page = 1, int pageSize = 10);
+        Task<int> GetTotalTransactionCountAsync(Guid companyId);
     }
 }
