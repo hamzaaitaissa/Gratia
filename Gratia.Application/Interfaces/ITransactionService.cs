@@ -10,7 +10,7 @@ namespace Gratia.Application.Interfaces
 {
     public interface ITransactionService
     {
-        Task<ReadTransactionDto> CreateTransactionAsync(Guid senderId, CreateReadTransactionDto createReadTransactionDto);
+        Task<ReadTransactionDto> CreateTransactionAsync(Guid senderId, CreateTransactionDto createReadTransactionDto);
         Task<ReadTransactionDto> GetTransactionByIdAsync(Guid id);
         Task<IEnumerable<ReadTransactionDto>> GetUserTransactionHistoryAsync(Guid userId);
         Task<ReadTransactionHistoryDto> GetCompanyTransactionHistoryAsync(Guid companyId, int page = 1, int pageSize = 10);

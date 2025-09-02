@@ -23,7 +23,7 @@ namespace Gratia.Application.Services
             _userRepository = userRepository;
         }
 
-        public async Task<ReadTransactionDto> CreateTransactionAsync(Guid senderId, CreateReadTransactionDto createReadTransactionDto)
+        public async Task<ReadTransactionDto> CreateTransactionAsync(Guid senderId, CreateTransactionDto createReadTransactionDto)
         {
             var sender = await _userRepository.GetByIdAsync(senderId);
             if(sender == null) throw new KeyNotFoundException("Sender not found");
