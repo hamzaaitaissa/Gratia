@@ -12,7 +12,7 @@ namespace Gratia.Application.DTOs.CompanyDTO
         [Required(ErrorMessage = "Company name is required.")]
         [StringLength(100, ErrorMessage = "Company name cannot exceed 100 characters.")]
         public string Name { get; set; }
-        [Url(ErrorMessage = "LogoUrl must be a valid URL.")]
+        //[Url(ErrorMessage = "LogoUrl must be a valid URL.")]
         [StringLength(200, ErrorMessage = "Logo URL cannot exceed 200 characters.")]
         public string LogoUrl { get; set; }
         [Required(ErrorMessage = "Primary color is required.")]

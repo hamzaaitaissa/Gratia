@@ -45,10 +45,10 @@ namespace Gratia.API.Controllers
                 return BadRequest(ModelState);
             var company = await _companyService.AddCompanyAsync(registerCompanyDto);
             return CreatedAtAction(
-                actionName : nameof(Get),
-                routeValues: new {CompanyId=company.Id},
+                actionName: nameof(Get),
+                routeValues: new { id = company.Id },
                 value: company
-                );
+             );
         }
 
         [HttpPut("{id:guid}")]
