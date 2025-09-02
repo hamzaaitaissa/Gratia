@@ -31,14 +31,6 @@ namespace Gratia.Application.Services
             };
             //adding
             var companyAdd = await _companyRepository.AddAsync(company);
-            //from model to dto
-            //var companyRead = new ReadCompanyDto
-            //{
-            //    Name = companyAdd.Name,
-            //    PrimaryColor = companyAdd.PrimaryColor,
-            //    SecondaryColor = companyAdd.SecondaryColor,
-            //    LogoUrl = companyAdd.LogoUrl,
-            //};
             return MapToReadDto(companyAdd);
         }
 
