@@ -39,19 +39,74 @@ namespace Gratia.API.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                return StatusCode(500, "An error occurred while creating the transaction");
             }
         }
 
-        [HttpGet("{id}")]
-        public Task<ActionResult<ReadTransactionDto>> GetTransaction(int id)
+        [HttpGet("{id:guid}")]
+        public async Task<ActionResult<ReadTransactionDto>> GetTransaction(Guid id)
         {
             try
             {
-
-            }catch (ArgumentException ex)
+                var transaction = await _transactionService.GetTransactionByIdAsync(id);
+                var userId = _currentUserService.UserId;
+                if(userId != transaction.SenderId && userId != transaction.ReceiverId)
+                {
+                    return Forbid("You are not allowed to retrieve this transaction");
+                }
+                return Ok(transaction);
+            }catch (KeyNotFoundException ex)
             {
+                return BadRequest(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "An error occurred while retrieving the transaction");
+            }
+        }
 
+        [HttpGet("my-history")]
+        public async Task<ActionResult<IEnumerable<ReadTransactionDto>>> GetMyTransactionHistory()
+        {
+            try
+            {
+               var userId = _currentUserService.UserId;
+               var History = await _transactionService.GetUserTransactionHistoryAsync(userId);
+               return Ok(History);
+            }
+            catch(Exception ex)
+            {
+                return StatusCode(500, "An error occurred while retrieving your history");
+            }
+        }
+
+        [HttpGet("sent")]
+        public async Task<ActionResult<IEnumerable<ReadTransactionDto>>> GetSentTransaction()
+        {
+            try
+            {
+                var UserId = _currentUserService.UserId;
+                var transactions = await _transactionService.GetSentTransactionsAsync(UserId);
+                return Ok(transactions);
+            }
+            catch(Exception ex)
+            {
+                return StatusCode(500, "An error occurred while creating the transaction");
+            }
+        }
+
+        [HttpGet("received")]
+        public async Task<ActionResult<IEnumerable<ReadTransactionDto>>> GetReceivedTransaction()
+        {
+            try
+            {
+                var UserId = _currentUserService.UserId;
+                var transactions = await _transactionService.GetReceivedTransactionsAsync(UserId);
+                return Ok(transactions);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "An error occurred while creating the transaction");
             }
         }
     }
