@@ -8,6 +8,7 @@ using System.ComponentModel.Design;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Transactions;
 
 namespace Gratia.Application.Services
 {
@@ -32,7 +33,7 @@ namespace Gratia.Application.Services
             //check company
             if(sender.CompanyId !=  receiver.CompanyId) throw new InvalidOperationException("you are only allowed to exchange points with people within your company");
             if (sender.Id == createReadTransactionDto.ReceiverId) throw new InvalidOperationException("You cant send points to yourself?!");
-            var transaction = new Transaction(
+            var transaction = new Domain.Entities.Transaction(
                 senderId,
                 createReadTransactionDto.ReceiverId,
                 createReadTransactionDto.Amount,
@@ -65,29 +66,113 @@ namespace Gratia.Application.Services
 
         }
 
-        public Task<ReadTransactionHistoryDto> GetCompanyTransactionHistoryAsync(Guid companyId, int page = 1, int pageSize = 10)
+        public async Task<ReadTransactionHistoryDto> GetCompanyTransactionHistoryAsync(Guid companyId, int page = 1, int pageSize = 10)
         {
-            throw new NotImplementedException();
+            var transactions = await _transactionRepository.GetCompanyTransactionHistoryAsync(companyId,page,pageSize);
+            var transactionCount = transactions.Count();
+            var history = transactions.Select((t) =>new ReadTransactionDto
+            {
+                Id = t.Id,
+                SenderId = t.SenderId,
+                SenderName = t.Sender?.FullName ?? "",
+                ReceiverId = t.ReceiverId,
+                ReceiverName = t.Receiver?.FullName ?? "",
+                CompanyId = t.CompanyId,
+                CompanyName = t.Company?.Name ?? "",
+                Amount = t.Amount,
+                Message = t.Message,
+                TypeOfDonation = t.TypeOfDonation,
+                CreatedAt = t.CreatedDate
+            });
+            return new ReadTransactionHistoryDto
+            {
+                Transactions = transactions,
+                Page = page,
+                PageSize = pageSize,
+                TotalCount = transactionCount,
+                TotalPages = (int)Math.Ceiling((double)transactionCount / pageSize)
+            };
+
         }
 
-        public Task<IEnumerable<ReadTransactionDto>> GetReceivedTransactionsAsync(Guid userId)
+        public async Task<IEnumerable<ReadTransactionDto>> GetReceivedTransactionsAsync(Guid userId)
         {
-            throw new NotImplementedException();
+            var recievedTransactions = await _transactionRepository.GetByReceiverIdAsync(userId);
+            return recievedTransactions.Select(t => new ReadTransactionDto
+            {
+                Id = t.Id,
+                SenderId = t.SenderId,
+                SenderName = t.Sender?.FullName ?? "",
+                ReceiverId = t.ReceiverId,
+                ReceiverName = t.Receiver?.FullName ?? "",
+                CompanyId = t.CompanyId,
+                CompanyName = t.Company?.Name ?? "",
+                Amount = t.Amount,
+                Message = t.Message,
+                TypeOfDonation = t.TypeOfDonation,
+                CreatedAt = t.CreatedDate
+            });
         }
 
-        public Task<IEnumerable<ReadTransactionDto>> GetSentTransactionsAsync(Guid userId)
+        public async Task<IEnumerable<ReadTransactionDto>> GetSentTransactionsAsync(Guid userId)
         {
-            throw new NotImplementedException();
+            var senderTransactions = await _transactionRepository.GetBySenderIdAsync(userId);
+            return senderTransactions.Select(t => new ReadTransactionDto
+            {
+                Id = t.Id,
+                SenderId = t.SenderId,
+                SenderName = t.Sender?.FullName ?? "",
+                ReceiverId = t.ReceiverId,
+                ReceiverName = t.Receiver?.FullName ?? "",
+                CompanyId = t.CompanyId,
+                CompanyName = t.Company?.Name ?? "",
+                Amount = t.Amount,
+                Message = t.Message,
+                TypeOfDonation = t.TypeOfDonation,
+                CreatedAt = t.CreatedDate
+            });
         }
 
-        public Task<ReadTransactionDto> GetTransactionByIdAsync(Guid id)
+        public async Task<ReadTransactionDto> GetTransactionByIdAsync(Guid id)
         {
-            throw new NotImplementedException();
+            var transaction = await _transactionRepository.GetByIdAsync(id);
+            if(transaction == null)
+            {
+                throw new KeyNotFoundException("Transaction not found");
+            }
+            return new ReadTransactionDto
+            {
+                Id = transaction.Id,
+                SenderId = transaction.SenderId,
+                SenderName = transaction.Sender?.FullName ?? "",
+                ReceiverId = transaction.ReceiverId,
+                ReceiverName = transaction.Receiver?.FullName ?? "",
+                CompanyId = transaction.CompanyId,
+                CompanyName = transaction.Company?.Name ?? "",
+                Amount = transaction.Amount,
+                Message = transaction.Message,
+                TypeOfDonation = transaction.TypeOfDonation,
+                CreatedAt = transaction.CreatedDate
+            };
         }
 
-        public Task<IEnumerable<ReadTransactionDto>> GetUserTransactionHistoryAsync(Guid userId)
+        public async Task<IEnumerable<ReadTransactionDto>> GetUserTransactionHistoryAsync(Guid userId)
         {
-            throw new NotImplementedException();
+            var userTransactions = await _transactionRepository.GetUserTransactionHistoryAsync(userId);
+            return userTransactions.Select(t => new ReadTransactionDto
+            {
+                Id = t.Id,
+                SenderId = t.SenderId,
+                SenderName = t.Sender?.FullName ?? "",
+                ReceiverId = t.ReceiverId,
+                ReceiverName = t.Receiver?.FullName ?? "",
+                CompanyId = t.CompanyId,
+                CompanyName = t.Company?.Name ?? "",
+                Amount = t.Amount,
+                Message = t.Message,
+                TypeOfDonation = t.TypeOfDonation,
+                CreatedAt = t.CreatedDate
+            });
         }
     }
 }
