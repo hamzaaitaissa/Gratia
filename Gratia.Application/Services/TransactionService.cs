@@ -70,7 +70,7 @@ namespace Gratia.Application.Services
         {
             var transactions = await _transactionRepository.GetCompanyTransactionHistoryAsync(companyId,page,pageSize);
             var transactionCount = transactions.Count();
-            var history = transactions.Select((t) =>new ReadTransactionDto
+            var transactionDtos = transactions.Select((t) =>new ReadTransactionDto
             {
                 Id = t.Id,
                 SenderId = t.SenderId,
@@ -86,7 +86,7 @@ namespace Gratia.Application.Services
             });
             return new ReadTransactionHistoryDto
             {
-                Transactions = transactions,
+                Transactions = transactionDtos,
                 Page = page,
                 PageSize = pageSize,
                 TotalCount = transactionCount,

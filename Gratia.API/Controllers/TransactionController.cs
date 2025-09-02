@@ -109,5 +109,20 @@ namespace Gratia.API.Controllers
                 return StatusCode(500, "An error occurred while creating the transaction");
             }
         }
+
+        [HttpGet("company-history")]
+        public async Task<ActionResult<ReadTransactionHistoryDto>> GetCompanyHistory([FromQuery] int page =1, [FromQuery] int pageSize = 10)
+        {
+            try
+            {
+                var ComapnyId = _currentUserService.CompanyId;
+                var transactions = await _transactionService.GetCompanyTransactionHistoryAsync(ComapnyId, page, pageSize);
+                return Ok(transactions);
+            }
+            catch(Exception ex)
+            {
+                return StatusCode(500, "An error occurred while creating the transaction");
+            }
+        }
     }
 }

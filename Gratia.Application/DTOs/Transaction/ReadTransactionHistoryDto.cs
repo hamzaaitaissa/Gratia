@@ -8,7 +8,7 @@ namespace Gratia.Application.DTOs.Transaction
 {
     public class ReadTransactionHistoryDto
     {
-        public IEnumerable<ReadReadTransactionDto> Transactions { get; set; }
+        public IEnumerable<ReadTransactionDto> Transactions { get; set; }
         public int TotalCount { get; set; }
         public int Page { get; set; }
         public int PageSize { get; set; }
