@@ -9,7 +9,7 @@ namespace Gratia.Domain.Entities
 {
     public class Company : BaseEntity
     {
-        public string Name { get; set; }
+        public string Name { get; set; } 
         public string LogoUrl { get; set; }
         public string PrimaryColor { get; set; }
         public string SecondaryColor { get; set; }

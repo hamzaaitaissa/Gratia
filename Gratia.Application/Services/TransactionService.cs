@@ -40,6 +40,7 @@ namespace Gratia.Application.Services
                 createReadTransactionDto.Message,
                 createReadTransactionDto.TypeOfDonation,
                 sender.CompanyId);
+            Console.WriteLine(transaction);
            
             sender.NumberOfPointsAvailable -= createReadTransactionDto.Amount;
             receiver.NumberOfPointsAcquired += createReadTransactionDto.Amount;

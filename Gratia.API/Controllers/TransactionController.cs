@@ -27,6 +27,7 @@ namespace Gratia.API.Controllers
             {
                 var userId = _currentUserService.UserId;
                 var transactionCreated = await _transactionService.CreateTransactionAsync(userId, createTransactionDto);
+                Console.WriteLine(transactionCreated);
                 return Ok(transactionCreated);
             }
             catch (ArgumentException ex)

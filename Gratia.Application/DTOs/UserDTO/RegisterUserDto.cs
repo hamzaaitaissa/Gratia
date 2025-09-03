@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace Gratia.Application.DTOs.UserDTO
@@ -18,7 +19,8 @@ namespace Gratia.Application.DTOs.UserDTO
         public string HashedPassword { get; set; }
         [Required]
         public string JobTitle { get; set; }
-        [Required, AllowedValues("Employee", "Admin")]
+        [Required]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public UserRole Role { get; set; }
         [Required]
         public int NumberOfPointsAcquired { get; set; }
