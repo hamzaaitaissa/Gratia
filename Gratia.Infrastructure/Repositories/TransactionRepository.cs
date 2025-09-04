@@ -2,11 +2,6 @@
 using Gratia.Domain.Repositories;
 using Gratia.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Gratia.Infrastructure.Repositories
 {
@@ -39,13 +34,17 @@ namespace Gratia.Infrastructure.Repositories
 
         public async Task<IEnumerable<Transaction>> GetByCompanyIdAsync(Guid companyId)
         {
-            return await _gratiaContext.Transactions.Where(t => t.CompanyId == companyId).OrderByDescending(t=>t.CreatedDate).ToListAsync();
+            return await _gratiaContext.Transactions.Where(t => t.CompanyId == companyId).OrderByDescending(t => t.CreatedDate).ToListAsync();
         }
 
         public async Task<Transaction> GetByIdAsync(Guid id)
         {
             var transaction = await _gratiaContext.Transactions
-                .FirstOrDefaultAsync(t => t.Id == id);
+                .Include(t => t.Sender)
+                .Include(t => t.Receiver)
+                .Include(t => t.Company)
+                .FirstOrDefaultAsync(t => t.Id == id)
+                ;
 
             if (transaction is null)
                 throw new KeyNotFoundException($"Transaction {id} not found.");
@@ -55,29 +54,43 @@ namespace Gratia.Infrastructure.Repositories
 
         public async Task<IEnumerable<Transaction>> GetByReceiverIdAsync(Guid receiverId)
         {
-            return await _gratiaContext.Transactions.Where(t => t.ReceiverId == receiverId).OrderByDescending(t => t.CreatedDate).ToListAsync();
+            return await _gratiaContext.Transactions
+                .Where(t => t.ReceiverId == receiverId).Include(t => t.Sender)
+                .Include(t => t.Receiver)
+                .Include(t => t.Company)
+                .OrderByDescending(t => t.CreatedDate).
+                ToListAsync();
         }
 
         public async Task<IEnumerable<Transaction>> GetBySenderIdAsync(Guid senderId)
         {
-            return await _gratiaContext.Transactions.Where(t => t.SenderId == senderId).OrderByDescending(t => t.CreatedDate).ToListAsync();
+            return await _gratiaContext.Transactions
+                .Where(t => t.SenderId == senderId)
+                .Include(t => t.Sender)
+                .Include(t => t.Receiver)
+                .Include(t => t.Company)
+                .OrderByDescending(t => t.CreatedDate)
+                .ToListAsync();
         }
 
         public async Task<IEnumerable<Transaction>> GetCompanyTransactionHistoryAsync(Guid companyId, int page = 1, int pageSize = 10)
         {
-            return await _gratiaContext.Transactions.Where(t=> t.CompanyId == companyId)
+            return await _gratiaContext.Transactions.Where(t => t.CompanyId == companyId)
                 .Skip(page).Take(pageSize).ToListAsync();
         }
 
         public async Task<int> GetTotalTransactionCountAsync(Guid companyId)
         {
-            return await _gratiaContext.Transactions.Where(t=>t.CompanyId == companyId).CountAsync();
+            return await _gratiaContext.Transactions.Where(t => t.CompanyId == companyId).CountAsync();
         }
 
         public async Task<IEnumerable<Transaction>> GetUserTransactionHistoryAsync(Guid userId)
         {
             return await _gratiaContext.Transactions
                             .Where(t => t.SenderId == userId || t.ReceiverId == userId)
+                            .Include(t => t.Sender)
+                            .Include(t => t.Receiver)
+                            .Include(t => t.Company)
                             .OrderByDescending(t => t.CreatedDate)
                             .ToListAsync();
         }
