@@ -47,14 +47,18 @@ namespace Gratia.Infrastructure.Repositories
             return await _gratiaDbContext.CompanyInvitations.FirstOrDefaultAsync(i => i.InvitationToken == token);
         }
 
-        public Task<IEnumerable<CompanyInvitation>> GetPendingInvitationsByCompanyIdAsync(Guid companyId)
+        public async Task<IEnumerable<CompanyInvitation>> GetPendingInvitationsByCompanyIdAsync(Guid companyId)
         {
-            throw new NotImplementedException();
+            var invitations = await _gratiaDbContext.CompanyInvitations.Where(i=>i.CompanyId == companyId && !i.IsExpired).Include(i => i.InvitedByUser)
+                .OrderByDescending(i => i.CreatedDate).ToListAsync();
+            return invitations;
         }
 
-        public Task<CompanyInvitation> UpdateAsync(CompanyInvitation invitation)
+        public async Task<CompanyInvitation> UpdateAsync(CompanyInvitation invitation)
         {
-            throw new NotImplementedException();
+            _gratiaDbContext.CompanyInvitations.Update(invitation);
+            await _gratiaDbContext.SaveChangesAsync();
+            return invitation;
         }
     }
 }
