@@ -18,6 +18,7 @@ namespace Gratia.Infrastructure.Data
         public DbSet<User> Users { get; set; }
         public DbSet<Company> Companies { get; set; }
         public DbSet<Transaction> Transactions { get; set; }
+        public DbSet<CompanyInvitation> CompanyInvitations { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -43,6 +44,31 @@ namespace Gratia.Infrastructure.Data
                 .HasOne(u => u.Company)
                 .WithMany(c => c.Users)
                 .HasForeignKey(u => u.CompanyId);
+
+            modelBuilder.Entity<Transaction>()
+                .HasOne(t => t.Company)
+                .WithMany()
+                .HasForeignKey(t => t.CompanyId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<CompanyInvitation>()
+                .HasOne(ci => ci.Company)
+                .WithMany()
+                .HasForeignKey(ci => ci.CompanyId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<CompanyInvitation>()
+                .HasOne(ci => ci.InvitedByUser)
+                .WithMany()
+                .HasForeignKey(ci => ci.InvitedByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<CompanyInvitation>()
+                .HasIndex(ci => ci.InvitationToken)
+                .IsUnique();
+
+            modelBuilder.Entity<CompanyInvitation>()
+                .HasIndex(ci => new { ci.Email, ci.CompanyId });
 
         }
     }

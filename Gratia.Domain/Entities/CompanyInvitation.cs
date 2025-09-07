@@ -1,4 +1,5 @@
-﻿using Gratia.Domain.Enum;
+﻿using Gratia.Domain.Common;
+using Gratia.Domain.Enum;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -8,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Gratia.Domain.Entities
 {
-    public class CompanyInvitation
+    public class CompanyInvitation : BaseEntity
     {
         public string Email { get; set; }
         public string InvitationToken { get; set; }
