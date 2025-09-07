@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Gratia.Application.DTOs.Invitation
 {
-    public class InviteDto
+    public class InvitationDto
     {
         public Guid Id { get; set; }
         public string Email { get; set; }
