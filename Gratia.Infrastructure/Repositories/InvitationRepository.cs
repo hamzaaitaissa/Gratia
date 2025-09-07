@@ -1,6 +1,7 @@
 ﻿using Gratia.Domain.Entities;
 using Gratia.Domain.Repositories;
 using Gratia.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,22 +21,30 @@ namespace Gratia.Infrastructure.Repositories
 
         public async Task<CompanyInvitation> CreateAsync(CompanyInvitation invitation)
         {
-            throw new NotImplementedException();
+            _gratiaDbContext.CompanyInvitations.Add(invitation);
+            await _gratiaDbContext.SaveChangesAsync();
+            return invitation;
         }
 
-        public Task<bool> DeleteAsync(Guid id)
+        public async Task<bool> DeleteAsync(Guid id)
         {
-            throw new NotImplementedException();
+            var invitation = await _gratiaDbContext.CompanyInvitations.FindAsync(id);
+            if (invitation == null) return false;
+
+            _gratiaDbContext.CompanyInvitations.Remove(invitation);
+            await _gratiaDbContext.SaveChangesAsync();
+            return true;
         }
 
-        public Task<CompanyInvitation> GetByEmailAndCompanyIdAsync(string email, Guid companyId)
+        public async Task<CompanyInvitation> GetByEmailAndCompanyIdAsync(string email, Guid companyId)
         {
-            throw new NotImplementedException();
+            return await _gratiaDbContext.CompanyInvitations.FirstOrDefaultAsync(i => i.Email.ToLower() == email.ToLower()
+                    && i.CompanyId == companyId && !i.IsUsed && !i.IsExpired); ;
         }
 
-        public Task<CompanyInvitation> GetByTokenAsync(string token)
+        public async Task<CompanyInvitation> GetByTokenAsync(string token)
         {
-            throw new NotImplementedException();
+            return await _gratiaDbContext.CompanyInvitations.FirstOrDefaultAsync(i => i.InvitationToken == token);
         }
 
         public Task<IEnumerable<CompanyInvitation>> GetPendingInvitationsByCompanyIdAsync(Guid companyId)
