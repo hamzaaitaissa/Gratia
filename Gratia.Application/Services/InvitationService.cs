@@ -13,13 +13,13 @@ namespace Gratia.Application.Services
     {
         private readonly IInvitationRepository _invitationRepository;
         private readonly IUserRepository _userRepository;
-        private readonly IEmailService _emailService;
+        private readonly EmailService _emailService;
         private readonly IPasswordHashingService _passwordHashingService;
 
         public InvitationService(
                    IInvitationRepository invitationRepository,
                    IUserRepository userRepository,
-                   IEmailService emailService,
+                   EmailService emailService,
                    IPasswordHashingService passwordHashingService)
         {
             _invitationRepository = invitationRepository;
