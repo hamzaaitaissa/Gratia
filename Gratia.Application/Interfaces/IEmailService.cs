@@ -8,6 +8,8 @@ namespace Gratia.Application.Interfaces
 {
     public interface IEmailService
     {
-        Task SendEmail(string receptor, string subject, string body);
+        Task SendEmailAsync(string receptor, string subject, string body);
+        Task SendInvitationEmailAsync(string email, string token, Guid companyId);
+        Task SendWelcomeEmailAsync(string email, string fullName, string companyName);
     }
 }
