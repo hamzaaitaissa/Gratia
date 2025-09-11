@@ -5,6 +5,7 @@ using Gratia.Domain.Repositories;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -112,14 +113,52 @@ namespace Gratia.Application.Services
             return invitesList;
         }
 
-        public Task<InvitationDto> InviteUserAsync(Guid companyId, Guid invitedByUserId, InviteUserDto inviteUserDto)
+        public async Task<InvitationDto> InviteUserAsync(Guid companyId, Guid invitedByUserId, InviteUserDto inviteUserDto)
         {
-            
+            var user = await _userRepository.GetByEmailAsync(inviteUserDto.Email);  
+            if (user != null)
+                throw new InvalidOperationException("User with this email already exists");
+            var existingInvitation = await _invitationRepository.GetByEmailAndCompanyIdAsync(inviteUserDto.Email, companyId);
+            if (existingInvitation != null && existingInvitation.IsValid)
+                throw new InvalidOperationException("An active invitation already exists for this email in the company");
+            var token = GenerateInvitationToken();
+            var expiresAt = DateTime.UtcNow.AddDays(7);
+            var invitation = new CompanyInvitation(
+                inviteUserDto.Email,
+                token,
+                expiresAt,
+                inviteUserDto.Role,
+                companyId,
+                invitedByUserId);
+            var createdInvitation  = await _invitationRepository.CreateAsync(invitation);
+            var invitationLink = $"https://yourapp.com/accept-invitation?token={token}";
+            await _emailService.SendInvitationEmailAsync(inviteUserDto.Email, token, companyId);
+            return new InvitationDto
+            {
+                Id = createdInvitation.Id,
+                Email = createdInvitation.Email,
+                InvitationToken = createdInvitation.InvitationToken,
+                ExpiresAt = createdInvitation.ExpiresAt,
+                IsUsed = createdInvitation.IsUsed,
+                InvitedRole = createdInvitation.InvitedRole,
+                CompanyName = createdInvitation.Company?.Name ?? "",
+                InvitedByUserName = createdInvitation.InvitedByUser?.FullName ?? "",
+                CreatedAt = createdInvitation.CreatedDate,
+                IsExpired = createdInvitation.IsExpired,
+                IsValid = createdInvitation.IsValid
+            };
         }
 
         public Task<bool> ResendInvitationAsync(Guid invitationId)
         {
             throw new NotImplementedException();
+        }
+        private string GenerateInvitationToken()
+        {
+            using var rng = RandomNumberGenerator.Create();
+            var bytes = new byte[32];
+            rng.GetBytes(bytes);
+            return Convert.ToBase64String(bytes).Replace("+", "").Replace("/", "").Replace("=", "");
         }
     }
 }
