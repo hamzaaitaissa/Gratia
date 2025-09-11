@@ -8,7 +8,7 @@ namespace Gratia.Application.Interfaces
 {
     public interface IPasswordHashingService
     {
-        string HashPasswor(string password);
+        string HashPassword(string password);
         bool VerifyPassword(string password, string HashedPassword);
     }
 }

@@ -11,7 +11,7 @@ namespace Gratia.Application.Services
 {
     public class PasswordHashingService : IPasswordHashingService
     {
-        public string HashPasswor(string password)
+        public string HashPassword(string password)
         {
             return BCrypt.Net.BCrypt.HashPassword(password);
         }

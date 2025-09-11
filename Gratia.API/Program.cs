@@ -47,6 +47,7 @@ builder.Services.AddScoped<ITransactionRepository,TransactionRepository>();
 builder.Services.AddScoped<ITransactionService, TransactionService>();
 builder.Services.AddScoped<IPasswordHashingService, PasswordHashingService>();
 builder.Services.AddScoped<IInvitationRepository, InvitationRepository>();
+builder.Services.AddTransient<IEmailService, EmailService>();
 builder.Services.AddScoped<IInvitationService,  InvitationService>();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
