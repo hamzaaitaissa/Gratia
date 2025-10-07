@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.14.36301.6
+# Visual Studio Version 18
+VisualStudioVersion = 18.0.11012.119 d18.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gratia.Domain", "Gratia.Domain\Gratia.Domain.csproj", "{C1E00E3E-B953-4610-822D-4584DBAA7044}"
 EndProject
@@ -17,6 +17,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gratia.Worker", "Gratia.Worker\Gratia.Worker.csproj", "{0F18D6B5-4AED-4FE4-82F2-DF356470B667}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GratiaTests", "GratiaTests\GratiaTests.csproj", "{63A863C5-B2D7-4B8D-934D-40D331BF0857}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -44,6 +46,10 @@ Global
 		{0F18D6B5-4AED-4FE4-82F2-DF356470B667}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0F18D6B5-4AED-4FE4-82F2-DF356470B667}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0F18D6B5-4AED-4FE4-82F2-DF356470B667}.Release|Any CPU.Build.0 = Release|Any CPU
+		{63A863C5-B2D7-4B8D-934D-40D331BF0857}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{63A863C5-B2D7-4B8D-934D-40D331BF0857}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{63A863C5-B2D7-4B8D-934D-40D331BF0857}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{63A863C5-B2D7-4B8D-934D-40D331BF0857}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
