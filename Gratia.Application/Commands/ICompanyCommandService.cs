@@ -5,12 +5,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Gratia.Application.Interfaces
+namespace Gratia.Application.Command
 {
-    public interface ICompanyService
+    public interface ICompanyCommandService
     {
-        Task<ReadCompanyDto> GetCompanyAsync(Guid id);
-        Task<IEnumerable<ReadCompanyDto>> GetAllCompaniesAsync();
         Task<ReadCompanyDto> AddCompanyAsync(RegisterCompanyDto registerCompanyDto);
         Task DeleteCompanyAsync(Guid id);
         Task<ReadCompanyDto> UpdateCompanyAsync(UpdateCompanyDto updateCompanyDto);

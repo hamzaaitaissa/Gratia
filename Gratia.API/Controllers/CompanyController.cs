@@ -1,7 +1,9 @@
-﻿using Gratia.Application.DTOs.CompanyDTO;
+﻿using Gratia.Application.Command;
+using Gratia.Application.DTOs.CompanyDTO;
 using Gratia.Application.DTOs.UserDTO;
 using Gratia.Application.Interfaces;
 using Gratia.Domain.Entities;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -14,27 +16,30 @@ namespace Gratia.API.Controllers
     [ApiController]
     public class CompanyController : ControllerBase
     {
-
-        private readonly ICompanyService _companyService;
+        private readonly IMediator _mediator;
+        private readonly ICompanyCommandService _companyCommandService;
         private readonly IUserService _userService;
+        private readonly ICompanyQueryService _companyQueryService;
 
-        public CompanyController(ICompanyService companyService,IUserService userService)
+        public CompanyController(ICompanyCommandService companyCommandService, IUserService userService, ICompanyQueryService companyQueryService, IMediator mediator = null)
         {
-            _companyService = companyService;
+            _companyCommandService = companyCommandService;
             _userService = userService;
+            _companyQueryService = companyQueryService;
+            _mediator = mediator;
         }
 
         [HttpGet]
         public async Task<ActionResult<ReadCompanyDto>> GetAll()
         {
-            var companies = await _companyService.GetAllCompaniesAsync();
+            var companies = await _companyQueryService.GetAllCompaniesAsync();
             return companies is null ? NotFound() : Ok(companies);
         }
 
         [HttpGet("{id:guid}")]
         public async Task<ActionResult> Get(Guid id)
         {
-            var company = await _companyService.GetCompanyAsync(id);
+            var company = await _companyQueryService.GetCompanyAsync(id);
             return company is null ? NotFound() : Ok(company);
         }
 
@@ -43,7 +48,7 @@ namespace Gratia.API.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-            var company = await _companyService.AddCompanyAsync(registerCompanyDto);
+            var company = await _companyCommandService.AddCompanyAsync(registerCompanyDto);
             return CreatedAtAction(
                 actionName: nameof(Get),
                 routeValues: new { id = company.Id },
@@ -73,7 +78,7 @@ namespace Gratia.API.Controllers
             {
                 return Forbid("You are not authorized to edit this Company");
             }
-            var company = await _companyService.UpdateCompanyAsync(updateCompanyDto);
+            var company = await _companyCommandService.UpdateCompanyAsync(updateCompanyDto);
             return company is null ? NotFound("Company not found") : Ok(company);
         }
 

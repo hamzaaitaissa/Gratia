@@ -1,5 +1,4 @@
 ﻿using Gratia.Application.DTOs.CompanyDTO;
-using Gratia.Application.Interfaces;
 using Gratia.Domain.Entities;
 using Gratia.Domain.Repositories;
 using System;
@@ -8,13 +7,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Gratia.Application.Services
+namespace Gratia.Application.Command
 {
-    public class CompanyService : ICompanyService
+    public class CompanyCommandService : ICompanyCommandService
     {
         private readonly ICompanyRepository _companyRepository;
 
-        public CompanyService(ICompanyRepository companyRepository)
+        public CompanyCommandService(ICompanyRepository companyRepository)
         {
             _companyRepository = companyRepository;
         }
@@ -38,25 +37,6 @@ namespace Gratia.Application.Services
         {
             await _companyRepository.DeleteAsync(id);
         }
-
-        public async Task<IEnumerable<ReadCompanyDto>> GetAllCompaniesAsync()
-        {
-            var companies = await _companyRepository.GetAllAsync();
-            var companyRead = new List<ReadCompanyDto>();
-            foreach(var company in companies)
-            {
-                companyRead.Add(MapToReadDto(company));
-            }
-            return companyRead;
-           
-        }
-
-        public async Task<ReadCompanyDto> GetCompanyAsync(Guid id)
-        {
-            var company = await _companyRepository.GetAsync(id);
-            return MapToReadDto(company);
-        }
-
         public async Task<ReadCompanyDto> UpdateCompanyAsync(UpdateCompanyDto updateCompanyDto)
         {
             if (updateCompanyDto == null)

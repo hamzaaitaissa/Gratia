@@ -1,3 +1,5 @@
+using Gratia.Application;
+using Gratia.Application.Command;
 using Gratia.Application.Interfaces;
 using Gratia.Application.Services;
 using Gratia.Domain.Repositories;
@@ -41,7 +43,8 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ICompanyRepository, CompanyRepository>();
-builder.Services.AddScoped<ICompanyService, CompanyService>();
+//builder.Services.AddScoped<ICompanyCommandService, CompanyCommandService>();
+builder.Services.AddApplicationService();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<ITransactionRepository,TransactionRepository>();
 builder.Services.AddScoped<ITransactionService, TransactionService>();
