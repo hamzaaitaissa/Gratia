@@ -1,6 +1,8 @@
 ﻿ using Gratia.Application.DTOs.UserDTO;
 using Gratia.Application.Interfaces;
 using Gratia.Domain.Entities;
+using Gratia.Domain.Enum;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
@@ -9,18 +11,22 @@ namespace Gratia.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class UserController : ControllerBase
     {
         private readonly IUserService _userService;
         private readonly ILogger<UserController> _logger;
+        private readonly ICurrentUserService _currentUserService;
 
-        public UserController(IUserService userService, ILogger<UserController> logger)
+        public UserController(IUserService userService, ILogger<UserController> logger, ICurrentUserService currentUserService)
         {
             _userService = userService;
             _logger = logger;
+            _currentUserService = currentUserService;
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Create([FromBody] RegisterUserDto registerUserDto)
         {
             if (!ModelState.IsValid)
@@ -57,6 +63,7 @@ namespace Gratia.API.Controllers
 
         }
         [HttpDelete("{id:guid}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(Guid id)
         {
             var user = await _userService.GetUserById(id);
@@ -68,6 +75,7 @@ namespace Gratia.API.Controllers
         }
 
         [HttpPut("{id:guid}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Update(Guid id, [FromBody] UpdateUserDto updateUserDto)
         {
             if (id != updateUserDto.Id)

@@ -16,7 +16,6 @@ namespace GratiaTests
         {
             _mockUserService = new Mock<IUserService>();
             _logger = new Mock<ILogger<UserController>>();
-
         }
 
         [Fact]
@@ -41,9 +40,13 @@ namespace GratiaTests
             };
 
             //setuping the mock of userService
-            _mockUserService.Setup(s => s.AddUserAsync(It.IsAny<RegisterUserDto>())).
-                ReturnsAsync(readUserDto);
-            var _userController = new UserController(_mockUserService.Object, _logger.Object);
+            _mockUserService.Setup(s => s.AddUserAsync(It.IsAny<RegisterUserDto>()))
+                .ReturnsAsync(readUserDto);
+
+            var mockCurrentUserService = new Mock<ICurrentUserService>();
+            mockCurrentUserService.Setup(s => s.Role).Returns(UserRole.Admin);
+
+            var _userController = new UserController(_mockUserService.Object, _logger.Object, mockCurrentUserService.Object);
             //act
             var result = await _userController.Create(registerUserDto);
 

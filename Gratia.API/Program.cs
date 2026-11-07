@@ -5,7 +5,6 @@ using Gratia.Application.Services;
 using Gratia.Domain.Repositories;
 using Gratia.Infrastructure.Data;
 using Gratia.Infrastructure.Repositories;
-using Gratia.Worker;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
