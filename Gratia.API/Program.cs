@@ -20,7 +20,14 @@ builder.Services.AddDbContext<GratiaDbContext>(options =>
 });
 
 //addin JWt Config
+// The signing key is a secret: user-secrets in development, the AppSettings__Token environment variable elsewhere
 var jwtKey = builder.Configuration.GetValue<string>("AppSettings:Token");
+if (string.IsNullOrWhiteSpace(jwtKey))
+{
+    throw new InvalidOperationException(
+        "AppSettings:Token is not configured. Run 'dotnet user-secrets set AppSettings:Token <key> --project Gratia.API' " +
+        "or set the AppSettings__Token environment variable (at least 64 characters, HS512).");
+}
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
