@@ -23,9 +23,6 @@ secrets.json
 # Log files
 *.log
 
-# EF Migrations snapshots
-Migrations/
-
 # JetBrains Rider
 .idea/
 
