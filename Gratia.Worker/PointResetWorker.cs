@@ -1,4 +1,5 @@
-using Gratia.Application.Interfaces;
+using Gratia.Application.Features.Points.Commands;
+using Mediator;
 
 namespace Gratia.Worker
 {
@@ -22,10 +23,11 @@ namespace Gratia.Worker
                 {
                     if (DateTime.UtcNow.Date.Day == 21 && _lastUpdate!=DateTime.UtcNow.Date)
                     {
+                        // Handlers are scoped (they use a DbContext), so each run gets its own scope
                         using (var scope = _serviceProvider.CreateScope())
                         {
-                            var pointResetService = scope.ServiceProvider.GetRequiredService<IPointResetService>();
-                            await pointResetService.ResetPointMonthly();
+                            var sender = scope.ServiceProvider.GetRequiredService<ISender>();
+                            await sender.Send(new ResetMonthlyPointsCommand(), stoppingToken);
                         }
                         _lastUpdate = DateTime.UtcNow.Date;
                     }

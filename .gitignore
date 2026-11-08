@@ -35,3 +35,6 @@ TestResults/
 # NuGet
 *.nupkg
 packages/
+
+# Claude Code project instructions (kept local)
+/CLAUDE.md

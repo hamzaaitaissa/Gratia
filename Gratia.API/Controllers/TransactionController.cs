@@ -1,7 +1,9 @@
 ﻿using Gratia.Application.DTOs.Transaction;
+using Gratia.Application.Features.Transactions.Commands;
+using Gratia.Application.Features.Transactions.Queries;
 using Gratia.Application.Interfaces;
+using Mediator;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Gratia.API.Controllers
@@ -11,119 +13,55 @@ namespace Gratia.API.Controllers
     [Authorize]
     public class TransactionController : ControllerBase
     {
-        private readonly ITransactionService _transactionService;
+        private readonly ISender _sender;
         private readonly ICurrentUserService _currentUserService;
 
-        public TransactionController(ITransactionService transactionService, ICurrentUserService currentUserService)
+        public TransactionController(ISender sender, ICurrentUserService currentUserService)
         {
-            _transactionService = transactionService;
+            _sender = sender;
             _currentUserService = currentUserService;
         }
 
         [HttpPost]
-        public async Task<ActionResult<ReadTransactionDto>> CreateTransaction([FromBody] CreateTransactionDto createTransactionDto)
+        public async Task<ActionResult<ReadTransactionDto>> CreateTransaction([FromBody] CreateTransactionDto createTransactionDto, CancellationToken cancellationToken)
         {
-            try
-            {
-                var userId = _currentUserService.UserId;
-                var transactionCreated = await _transactionService.CreateTransactionAsync(userId, createTransactionDto);
-                Console.WriteLine(transactionCreated);
-                return Ok(transactionCreated);
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(ex.Message);
-            }
-            catch (InvalidOperationException ex)
-            { 
-                return BadRequest(ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "An error occurred while creating the transaction");
-            }
+            var transaction = await _sender.Send(new CreateTransactionCommand(_currentUserService.UserId, createTransactionDto), cancellationToken);
+            return Ok(transaction);
         }
 
         [HttpGet("{id:guid}")]
-        public async Task<ActionResult<ReadTransactionDto>> GetTransaction(Guid id)
+        public async Task<ActionResult<ReadTransactionDto>> GetTransaction(Guid id, CancellationToken cancellationToken)
         {
-            try
-            {
-                var transaction = await _transactionService.GetTransactionByIdAsync(id);
-                var userId = _currentUserService.UserId;
-                if(userId != transaction.SenderId && userId != transaction.ReceiverId)
-                {
-                    return Forbid("You are not allowed to retrieve this transaction");
-                }
-                return Ok(transaction);
-            }catch (KeyNotFoundException ex)
-            {
-                return BadRequest(ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "An error occurred while retrieving the transaction");
-            }
+            var transaction = await _sender.Send(new GetTransactionByIdQuery(id, _currentUserService.UserId), cancellationToken);
+            return Ok(transaction);
         }
 
         [HttpGet("my-history")]
-        public async Task<ActionResult<IEnumerable<ReadTransactionDto>>> GetMyTransactionHistory()
+        public async Task<ActionResult<IEnumerable<ReadTransactionDto>>> GetMyTransactionHistory(CancellationToken cancellationToken)
         {
-            try
-            {
-               var userId = _currentUserService.UserId;
-               var History = await _transactionService.GetUserTransactionHistoryAsync(userId);
-               return Ok(History);
-            }
-            catch(Exception ex)
-            {
-                return StatusCode(500, "An error occurred while retrieving your history");
-            }
+            var history = await _sender.Send(new GetUserTransactionHistoryQuery(_currentUserService.UserId), cancellationToken);
+            return Ok(history);
         }
 
         [HttpGet("sent")]
-        public async Task<ActionResult<IEnumerable<ReadTransactionDto>>> GetSentTransaction()
+        public async Task<ActionResult<IEnumerable<ReadTransactionDto>>> GetSentTransaction(CancellationToken cancellationToken)
         {
-            try
-            {
-                var UserId = _currentUserService.UserId;
-                var transactions = await _transactionService.GetSentTransactionsAsync(UserId);
-                return Ok(transactions);
-            }
-            catch(Exception ex)
-            {
-                return StatusCode(500, "An error occurred while creating the transaction");
-            }
+            var transactions = await _sender.Send(new GetSentTransactionsQuery(_currentUserService.UserId), cancellationToken);
+            return Ok(transactions);
         }
 
         [HttpGet("received")]
-        public async Task<ActionResult<IEnumerable<ReadTransactionDto>>> GetReceivedTransaction()
+        public async Task<ActionResult<IEnumerable<ReadTransactionDto>>> GetReceivedTransaction(CancellationToken cancellationToken)
         {
-            try
-            {
-                var UserId = _currentUserService.UserId;
-                var transactions = await _transactionService.GetReceivedTransactionsAsync(UserId);
-                return Ok(transactions);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "An error occurred while creating the transaction");
-            }
+            var transactions = await _sender.Send(new GetReceivedTransactionsQuery(_currentUserService.UserId), cancellationToken);
+            return Ok(transactions);
         }
 
         [HttpGet("company-history")]
-        public async Task<ActionResult<ReadTransactionHistoryDto>> GetCompanyHistory([FromQuery] int page =1, [FromQuery] int pageSize = 10)
+        public async Task<ActionResult<ReadTransactionHistoryDto>> GetCompanyHistory([FromQuery] int page = 1, [FromQuery] int pageSize = 10, CancellationToken cancellationToken = default)
         {
-            try
-            {
-                var ComapnyId = _currentUserService.CompanyId;
-                var transactions = await _transactionService.GetCompanyTransactionHistoryAsync(ComapnyId, page, pageSize);
-                return Ok(transactions);
-            }
-            catch(Exception ex)
-            {
-                return StatusCode(500, "An error occurred while creating the transaction");
-            }
+            var history = await _sender.Send(new GetCompanyTransactionHistoryQuery(_currentUserService.CompanyId, page, pageSize), cancellationToken);
+            return Ok(history);
         }
     }
 }

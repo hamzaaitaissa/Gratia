@@ -1,18 +1,9 @@
 ﻿using Gratia.Application.DTOs.UserDTO;
+using Gratia.Application.Features.Auth.Commands;
 using Gratia.Application.Interfaces;
-using Gratia.Domain.Entities;
+using Mediator;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
-using Microsoft.IdentityModel.Tokens;
-using System.Data.SqlTypes;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Security.Cryptography;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Gratia.API.Controllers
 {
@@ -20,56 +11,44 @@ namespace Gratia.API.Controllers
     [ApiController]
     public class AuthController : ControllerBase
     {
-        private readonly IUserService _userService;
-        private readonly ITokenService _tokenService;
+        private readonly ISender _sender;
+        private readonly ICurrentUserService _currentUserService;
 
-        public AuthController(IUserService userService, ITokenService tokenService)
+        public AuthController(ISender sender, ICurrentUserService currentUserService)
         {
-            _userService = userService;
-            _tokenService = tokenService;
+            _sender = sender;
+            _currentUserService = currentUserService;
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login(LoginDto loginDto)
+        public async Task<IActionResult> Login(LoginDto loginDto, CancellationToken cancellationToken)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            if(!await _userService.LoginUser(loginDto))
-            {
-                return BadRequest("Email or Password are incorrect");
-            }
-            var user = await _userService.GetUserByEmail(loginDto.Email);
-
-            var tokenResponse = _tokenService.GenerateTokens(user);
-            //savin refresh token to user
-            await _userService.SaveRefreshTokenAsync(user.Email, tokenResponse.RefreshToken);
+            var tokenResponse = await _sender.Send(new LoginCommand(loginDto), cancellationToken);
+            if (tokenResponse is null)
+                return Problem(detail: "Email or Password are incorrect", statusCode: StatusCodes.Status400BadRequest);
 
             return Ok(tokenResponse);
         }
+
         [HttpPost("refresh-token")]
-        public async Task<IActionResult> RefreshToken([FromBody] string refreshToken)
+        public async Task<IActionResult> RefreshToken([FromBody] string refreshToken, CancellationToken cancellationToken)
         {
             if (string.IsNullOrEmpty(refreshToken))
-                return BadRequest("Invalid client request");
+                return Problem(detail: "Invalid client request", statusCode: StatusCodes.Status400BadRequest);
 
-            var tokenResponse = await _userService.RefreshTokenAsync(refreshToken);
-
-            if (tokenResponse == null)
-                return Unauthorized("Invalid refresh token");
+            var tokenResponse = await _sender.Send(new RefreshTokenCommand(refreshToken), cancellationToken);
+            if (tokenResponse is null)
+                return Problem(detail: "Invalid refresh token", statusCode: StatusCodes.Status401Unauthorized);
 
             return Ok(tokenResponse);
         }
 
         [HttpPost("revoke-token")]
         [Authorize]
-        public async Task<IActionResult> RevokeToken()
+        public async Task<IActionResult> RevokeToken(CancellationToken cancellationToken)
         {
-            var email = User.FindFirst(ClaimTypes.Email)?.Value;
-            await _userService.RevokeRefreshTokenAsync(email);
+            await _sender.Send(new RevokeRefreshTokenCommand(_currentUserService.UserId), cancellationToken);
             return NoContent();
         }
     }
-
-    
 }
