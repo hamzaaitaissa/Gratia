@@ -1,23 +1,16 @@
 ﻿using Gratia.API.Controllers;
 using Gratia.Application.DTOs.UserDTO;
-using Gratia.Application.Interfaces;
+using Gratia.Application.Features.Users.Commands;
 using Gratia.Domain.Enum;
+using Mediator;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 using Moq;
 
 namespace GratiaTests
 {
     public class UserControllerTests
     {
-        private readonly Mock<IUserService> _mockUserService;
-        private readonly Mock<ILogger<UserController>> _logger;
-        public UserControllerTests()
-        {
-            _mockUserService = new Mock<IUserService>();
-            _logger = new Mock<ILogger<UserController>>();
-
-        }
+        private readonly Mock<ISender> _mockSender = new();
 
         [Fact]
         public async Task Create_ReturnIAction_WithUser()
@@ -40,16 +33,20 @@ namespace GratiaTests
                 Email = registerUserDto.Email,
             };
 
-            //setuping the mock of userService
-            _mockUserService.Setup(s => s.AddUserAsync(It.IsAny<RegisterUserDto>())).
-                ReturnsAsync(readUserDto);
-            var _userController = new UserController(_mockUserService.Object, _logger.Object);
+            // the controller only sends a command; the handler is tested separately
+            _mockSender
+                .Setup(s => s.Send(It.Is<CreateUserCommand>(c => c.User == registerUserDto), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(readUserDto);
+
+            var userController = new UserController(_mockSender.Object);
+
             //act
-            var result = await _userController.Create(registerUserDto);
+            var result = await userController.Create(registerUserDto, CancellationToken.None);
 
             //assert
-            Assert.NotNull(result);
-            Assert.IsType<CreatedAtActionResult>(result);
+            var created = Assert.IsType<CreatedAtActionResult>(result);
+            Assert.Same(readUserDto, created.Value);
+            _mockSender.Verify(s => s.Send(It.IsAny<CreateUserCommand>(), It.IsAny<CancellationToken>()), Times.Once);
         }
     }
 }

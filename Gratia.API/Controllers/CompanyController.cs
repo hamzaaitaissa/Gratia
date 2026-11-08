@@ -1,14 +1,10 @@
-﻿using Gratia.Application.Command;
-using Gratia.Application.DTOs.CompanyDTO;
-using Gratia.Application.DTOs.UserDTO;
+﻿using Gratia.Application.DTOs.CompanyDTO;
+using Gratia.Application.Features.Companies.Commands;
+using Gratia.Application.Features.Companies.Queries;
 using Gratia.Application.Interfaces;
-using Gratia.Domain.Entities;
-using MediatR;
+using Mediator;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
-using System.Threading.Tasks;
 
 namespace Gratia.API.Controllers
 {
@@ -16,39 +12,33 @@ namespace Gratia.API.Controllers
     [ApiController]
     public class CompanyController : ControllerBase
     {
-        private readonly IMediator _mediator;
-        private readonly ICompanyCommandService _companyCommandService;
-        private readonly IUserService _userService;
-        private readonly ICompanyQueryService _companyQueryService;
+        private readonly ISender _sender;
+        private readonly ICurrentUserService _currentUserService;
 
-        public CompanyController(ICompanyCommandService companyCommandService, IUserService userService, ICompanyQueryService companyQueryService, IMediator mediator = null)
+        public CompanyController(ISender sender, ICurrentUserService currentUserService)
         {
-            _companyCommandService = companyCommandService;
-            _userService = userService;
-            _companyQueryService = companyQueryService;
-            _mediator = mediator;
+            _sender = sender;
+            _currentUserService = currentUserService;
         }
 
         [HttpGet]
-        public async Task<ActionResult<ReadCompanyDto>> GetAll()
+        public async Task<ActionResult<IEnumerable<ReadCompanyDto>>> GetAll(CancellationToken cancellationToken)
         {
-            var companies = await _companyQueryService.GetAllCompaniesAsync();
-            return companies is null ? NotFound() : Ok(companies);
+            var companies = await _sender.Send(new GetAllCompaniesQuery(), cancellationToken);
+            return Ok(companies);
         }
 
         [HttpGet("{id:guid}")]
-        public async Task<ActionResult> Get(Guid id)
+        public async Task<ActionResult<ReadCompanyDto>> Get(Guid id, CancellationToken cancellationToken)
         {
-            var company = await _companyQueryService.GetCompanyAsync(id);
-            return company is null ? NotFound() : Ok(company);
+            var company = await _sender.Send(new GetCompanyByIdQuery(id), cancellationToken);
+            return Ok(company);
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody]RegisterCompanyDto registerCompanyDto)
+        public async Task<IActionResult> Create([FromBody] RegisterCompanyDto registerCompanyDto, CancellationToken cancellationToken)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-            var company = await _companyCommandService.AddCompanyAsync(registerCompanyDto);
+            var company = await _sender.Send(new CreateCompanyCommand(registerCompanyDto), cancellationToken);
             return CreatedAtAction(
                 actionName: nameof(Get),
                 routeValues: new { id = company.Id },
@@ -58,29 +48,13 @@ namespace Gratia.API.Controllers
 
         [HttpPut("{id:guid}")]
         [Authorize("Admin")]
-        public async Task<IActionResult> Update(Guid id, [FromBody]UpdateCompanyDto updateCompanyDto)
+        public async Task<IActionResult> Update(Guid id, [FromBody] UpdateCompanyDto updateCompanyDto, CancellationToken cancellationToken)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
             if (id != updateCompanyDto.Id)
-                return BadRequest("Id in route and body do not match.");
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if(string.IsNullOrEmpty(userId) || !Guid.TryParse(userId, out var userIdGuid))
-            {
-                return Unauthorized("Invalid user identifier");
-            }
-            var user = await _userService.GetUserById(userIdGuid);
-            if (user == null)
-            {
-                return NotFound("User not Found");
-            }
-            if(user.CompanyId != id)
-            {
-                return Forbid("You are not authorized to edit this Company");
-            }
-            var company = await _companyCommandService.UpdateCompanyAsync(updateCompanyDto);
-            return company is null ? NotFound("Company not found") : Ok(company);
-        }
+                return Problem(detail: "Id in route and body do not match.", statusCode: StatusCodes.Status400BadRequest);
 
+            var company = await _sender.Send(new UpdateCompanyCommand(_currentUserService.CompanyId, updateCompanyDto), cancellationToken);
+            return Ok(company);
+        }
     }
 }

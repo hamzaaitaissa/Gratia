@@ -1,88 +1,69 @@
-﻿ using Gratia.Application.DTOs.UserDTO;
-using Gratia.Application.Interfaces;
-using Gratia.Domain.Entities;
-using Microsoft.AspNetCore.Http;
+﻿using Gratia.Application.DTOs.UserDTO;
+using Gratia.Application.Features.Users.Commands;
+using Gratia.Application.Features.Users.Queries;
+using Mediator;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Threading.Tasks;
 
 namespace Gratia.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class UserController : ControllerBase
     {
-        private readonly IUserService _userService;
-        private readonly ILogger<UserController> _logger;
+        private readonly ISender _sender;
 
-        public UserController(IUserService userService, ILogger<UserController> logger)
+        public UserController(ISender sender)
         {
-            _userService = userService;
-            _logger = logger;
+            _sender = sender;
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] RegisterUserDto registerUserDto)
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Create([FromBody] RegisterUserDto registerUserDto, CancellationToken cancellationToken)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-            //create the user
-            var user = await _userService.AddUserAsync(registerUserDto);
-            //return 201 created response
+            var user = await _sender.Send(new CreateUserCommand(registerUserDto), cancellationToken);
             return CreatedAtAction(
-                //method
                 actionName: nameof(Get),
-                //parameters needed for this method
-                routeValues: new { UserId = user.Id },
-                //resource
+                routeValues: new { userId = user.Id },
                 value: user
                 );
         }
 
         [HttpGet("{userId:guid}")]
-        public async Task<IActionResult> Get(Guid userId)
+        public async Task<ActionResult<ReadUserDto>> Get(Guid userId, CancellationToken cancellationToken)
         {
-            //get the user
-            var user = await _userService.GetUserById(userId);
-            //return 200 ok reponse
-            return user is null ? NotFound() : Ok(user);
+            var user = await _sender.Send(new GetUserByIdQuery(userId), cancellationToken);
+            return Ok(user);
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<ReadUserDto>>> GetAll()
+        public async Task<ActionResult<IEnumerable<ReadUserDto>>> GetAll(CancellationToken cancellationToken)
         {
-            //get all the users
-            var users = await _userService.GetAllUsersAsync();
-            //return 200 response
-            return users is null ? NotFound() : Ok(users);
-
+            var users = await _sender.Send(new GetAllUsersQuery(), cancellationToken);
+            return Ok(users);
         }
-        [HttpDelete("{id:guid}")]
-        public async Task<IActionResult> Delete(Guid id)
-        {
-            var user = await _userService.GetUserById(id);
-            if (user == null)
-                return NotFound();
 
-            await _userService.DeleteUserAsync(id);
+        [HttpDelete("{id:guid}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
+        {
+            await _sender.Send(new DeleteUserCommand(id), cancellationToken);
             return NoContent();
         }
 
         [HttpPut("{id:guid}")]
-        public async Task<IActionResult> Update(Guid id, [FromBody] UpdateUserDto updateUserDto)
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Update(Guid id, [FromBody] UpdateUserDto updateUserDto, CancellationToken cancellationToken)
         {
             if (id != updateUserDto.Id)
-                return BadRequest("Id in route and body do not match.");
+                return Problem(detail: "Id in route and body do not match.", statusCode: StatusCodes.Status400BadRequest);
 
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            var user = await _userService.UpdateUserAsync(updateUserDto);
-            if (user == null)
-                return NotFound();
-
+            var user = await _sender.Send(new UpdateUserCommand(updateUserDto), cancellationToken);
             return Ok(user);
         }
     }
 }
 
-//TODO: add authorization for super admin 
+//TODO: add authorization for super admin

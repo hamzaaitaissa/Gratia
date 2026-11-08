@@ -23,9 +23,6 @@ secrets.json
 # Log files
 *.log
 
-# EF Migrations snapshots
-Migrations/
-
 # JetBrains Rider
 .idea/
 
@@ -38,3 +35,6 @@ TestResults/
 # NuGet
 *.nupkg
 packages/
+
+# Claude Code project instructions (kept local)
+/CLAUDE.md

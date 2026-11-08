@@ -13,54 +13,42 @@ namespace Gratia.Infrastructure.Repositories
         {
             _gratiaDbContext = gratiaDbContext;
         }
-        public async Task<User> AddAsync(User user)
+
+        public void Add(User user)
         {
-            if(user == null) throw new ArgumentNullException(nameof(user));
-            await _gratiaDbContext.Users.AddAsync(user);
-            await _gratiaDbContext.SaveChangesAsync();
-            return user;
+            _gratiaDbContext.Users.Add(user);
         }
 
-        public async Task DeleteAsync(Guid id)
+        public void Remove(User user)
         {
-            var user = await _gratiaDbContext.Users.FirstOrDefaultAsync(u => u.Id == id);
-            if (user != null)
-            {
-                _gratiaDbContext.Users.Remove(user);
-                await _gratiaDbContext.SaveChangesAsync();
-            }
+            _gratiaDbContext.Users.Remove(user);
         }
 
         public async Task<IEnumerable<User>> GetAllAsync()
         {
-           var users = await _gratiaDbContext.Users.AsNoTracking().ToListAsync();
-            return users;
+            return await _gratiaDbContext.Users.AsNoTracking().ToListAsync();
         }
 
-        public async Task<User> GetByEmailAsync(string email)
+        // Single-entity reads are tracked so services can change them and save through the unit of work
+        public async Task<User?> GetByEmailAsync(string email)
         {
-            if (string.IsNullOrWhiteSpace(email)) throw new ArgumentException("Email cannot be empty.", nameof(email));
-            return await _gratiaDbContext.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Email == email);
+            return await _gratiaDbContext.Users.FirstOrDefaultAsync(u => u.Email == email);
         }
 
-        public async Task<User> GetByIdAsync(Guid id)
+        public async Task<User?> GetByIdAsync(Guid id)
         {
-            if (id == Guid.Empty) throw new ArgumentNullException("User id cannot be empty", nameof(id));
-            var user = await _gratiaDbContext.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == id);
-            return user;
+            return await _gratiaDbContext.Users.FirstOrDefaultAsync(u => u.Id == id);
         }
 
-        public async Task<User> GetUserByRefreshTokenAsync(string refreshToken)
+        public async Task<User?> GetUserByRefreshTokenAsync(string refreshToken)
         {
-            var user = await _gratiaDbContext.Users.FirstOrDefaultAsync(u => u.RefreshToken == refreshToken);
-            return user;
+            return await _gratiaDbContext.Users.FirstOrDefaultAsync(u => u.RefreshToken == refreshToken);
         }
 
-        public async Task<User> UpdateAsync(User user)
+        public async Task<int> ResetAvailablePointsAsync(int points)
         {
-            _gratiaDbContext.Users.Update(user);
-            await _gratiaDbContext.SaveChangesAsync();
-            return user;
+            return await _gratiaDbContext.Users
+                .ExecuteUpdateAsync(setters => setters.SetProperty(u => u.NumberOfPointsAvailable, points));
         }
     }
 }

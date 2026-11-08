@@ -4,12 +4,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Gratia.Domain.Entities; 
+using Gratia.Domain.Entities;
+using Gratia.Domain.Repositories;
 
 
 namespace Gratia.Infrastructure.Data
 {
-    public class GratiaDbContext : DbContext
+    // DbContext already provides SaveChangesAsync, so it is the unit of work itself
+    public class GratiaDbContext : DbContext, IUnitOfWork
     {
         public GratiaDbContext(DbContextOptions<GratiaDbContext> options) : base(options)
         {
