@@ -16,8 +16,10 @@ namespace Gratia.Domain.Entities
         public string HashedPassword { get; set; }
         public string JobTitle { get; set; }
         public UserRole Role { get; set; }
-        public int NumberOfPointsAcquired { get; set; } = 25;
-        public int NumberOfPointsAvailable { get; set; } = 0;
+        // Lifetime points received (only grows) and points left to give this month (refilled to the allowance).
+        // A new account starts with nothing received; whoever creates it sets the allowance to give.
+        public int NumberOfPointsAcquired { get; set; }
+        public int NumberOfPointsAvailable { get; set; }
         public string? RefreshToken { get; set; }
         public DateTime? RefreshTokenExpiryTime { get; set; }
         public Guid CompanyId { get; set; }

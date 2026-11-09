@@ -17,18 +17,19 @@ namespace Gratia.Domain.Entities
         public bool IsUsed { get; set; } = false;
         public UserRole InvitedRole { get; set; } = UserRole.Employee;
         public Guid CompanyId { get; set; }
-        public Guid InvitedByUserId { get; set; }
+        // Null for a founding invitation: the one that creates a new company's first admin at signup
+        public Guid? InvitedByUserId { get; set; }
 
         [ForeignKey(nameof(CompanyId))]
         public Company Company { get; set; }
 
         [ForeignKey(nameof(InvitedByUserId))]
-        public User InvitedByUser { get; set; }
+        public User? InvitedByUser { get; set; }
 
         public CompanyInvitation() { }
 
         public CompanyInvitation(string email, string invitationToken, DateTime expiresAt,
-            UserRole invitedRole, Guid companyId, Guid invitedByUserId)
+            UserRole invitedRole, Guid companyId, Guid? invitedByUserId)
         {
             Email = email;
             InvitationToken = invitationToken;

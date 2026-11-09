@@ -9,7 +9,6 @@ public static class InvitationMappings
     {
         Id = invitation.Id,
         Email = invitation.Email,
-        InvitationToken = invitation.InvitationToken,
         ExpiresAt = invitation.ExpiresAt,
         IsUsed = invitation.IsUsed,
         InvitedRole = invitation.InvitedRole,

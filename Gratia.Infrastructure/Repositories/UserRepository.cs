@@ -45,6 +45,11 @@ namespace Gratia.Infrastructure.Repositories
             return await _gratiaDbContext.Users.FirstOrDefaultAsync(u => u.RefreshToken == refreshToken);
         }
 
+        public async Task<bool> AnyInCompanyAsync(Guid companyId)
+        {
+            return await _gratiaDbContext.Users.AnyAsync(u => u.CompanyId == companyId);
+        }
+
         public async Task<int> ResetAvailablePointsAsync(int points)
         {
             return await _gratiaDbContext.Users

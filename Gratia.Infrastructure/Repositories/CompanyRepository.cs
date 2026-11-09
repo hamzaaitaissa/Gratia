@@ -33,5 +33,10 @@ namespace Gratia.Infrastructure.Repositories
         {
             return await _gratiaDbContext.Companies.FindAsync(id);
         }
+
+        public async Task<Company?> GetByDomainAsync(string domain)
+        {
+            return await _gratiaDbContext.Companies.FirstOrDefaultAsync(c => c.Domain == domain);
+        }
     }
 }

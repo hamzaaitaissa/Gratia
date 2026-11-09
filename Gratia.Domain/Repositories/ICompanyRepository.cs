@@ -6,6 +6,7 @@ namespace Gratia.Domain.Repositories
     {
         Task<IEnumerable<Company>> GetAllAsync();
         Task<Company?> GetByIdAsync(Guid id);
+        Task<Company?> GetByDomainAsync(string domain);
 
         // Saved by IUnitOfWork.SaveChangesAsync
         void Add(Company company);

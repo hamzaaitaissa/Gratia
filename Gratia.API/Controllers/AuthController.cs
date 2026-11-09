@@ -1,9 +1,12 @@
-﻿using Gratia.Application.DTOs.UserDTO;
+﻿using Gratia.Application.DTOs.CompanyDTO;
+using Gratia.Application.DTOs.UserDTO;
 using Gratia.Application.Features.Auth.Commands;
+using Gratia.Application.Features.Companies.Commands;
 using Gratia.Application.Interfaces;
 using Mediator;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Gratia.API.Controllers
 {
@@ -18,6 +21,15 @@ namespace Gratia.API.Controllers
         {
             _sender = sender;
             _currentUserService = currentUserService;
+        }
+
+        // Always 202 once the input is valid: what happened is told only to the mailbox owner, by email
+        [HttpPost("register-company")]
+        [EnableRateLimiting(RateLimitPolicies.Signup)]
+        public async Task<IActionResult> RegisterCompany([FromBody] CompanySignupDto companySignupDto, CancellationToken cancellationToken)
+        {
+            await _sender.Send(new RegisterCompanyCommand(companySignupDto), cancellationToken);
+            return Accepted();
         }
 
         [HttpPost("login")]

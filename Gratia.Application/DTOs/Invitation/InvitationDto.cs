@@ -11,7 +11,7 @@ namespace Gratia.Application.DTOs.Invitation
     {
         public Guid Id { get; set; }
         public string Email { get; set; }
-        public string InvitationToken { get; set; }
+        // No InvitationToken: it only goes out in the email, so nobody else (an admin included) can accept on the invitee's behalf
         public DateTime ExpiresAt { get; set; }
         public bool IsUsed { get; set; }
         public UserRole InvitedRole { get; set; }

@@ -1,63 +1,44 @@
 using Gratia.Application.Interfaces;
-using Microsoft.Extensions.Configuration;
-using System.Net;
-using System.Net.Mail;
+using Gratia.Application.Settings;
+using Microsoft.Extensions.Options;
 
 namespace Gratia.Infrastructure.Email
 {
+    // Builds each email from EmailTemplates and the frontend's links; IEmailSender delivers it
     public class EmailService : IEmailService
     {
-        private readonly IConfiguration _configuration;
+        private readonly IEmailSender _sender;
+        private readonly FrontendOptions _frontend;
 
-        public EmailService(IConfiguration configuration)
+        public EmailService(IEmailSender sender, IOptions<FrontendOptions> frontendOptions)
         {
-            _configuration = configuration;
+            _sender = sender;
+            _frontend = frontendOptions.Value;
         }
-        public async Task SendInvitationEmailAsync(string email, string token, Guid companyId)
-        {
-            var frontendUrl = _configuration["FrontendUrl"];
-            var inviteUrl = $"{frontendUrl}/accept-invitation/{token}";
 
-            var subject = "You're invited to join Gratia!";
-            var body = $@"
-                <h2>You've been invited to join Gratia!</h2>
-                <p>Click the link below to accept your invitation and create your account:</p>
-                <a href='{inviteUrl}' style='background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;'>
-                    Accept Invitation
-                </a>
-                <p>This invitation will expire in 7 days.</p>
-                <p>If the button doesn't work, copy and paste this URL into your browser:</p>
-                <p>{inviteUrl}</p>
-            ";
+        public Task SendInvitationEmailAsync(string toEmail, string token, string companyName, string inviterName, string inviterEmail,
+            CancellationToken cancellationToken = default) =>
+            SendAsync(toEmail, EmailTemplates.Invitation(companyName, inviterName, inviterEmail, AcceptUrl(token)), cancellationToken);
 
-            await SendEmailAsync(email, subject, body);
-        }
-        public async Task SendWelcomeEmailAsync(string email, string fullName, string companyName)
-        {
-            var subject = $"Welcome to {companyName} on Gratia!";
-            var body = $@"
-                <h2>Welcome to Gratia, {fullName}!</h2>
-                <p>Your account has been created successfully for {companyName}.</p>
-                <p>You can now start sharing and receiving gratitude points with your colleagues!</p>
-                <p>You've been given 25 points to start with.</p>
-            ";
+        public Task SendCompanySetupEmailAsync(string toEmail, string founderName, string companyName, string token,
+            CancellationToken cancellationToken = default) =>
+            SendAsync(toEmail, EmailTemplates.CompanySetup(founderName, companyName, AcceptUrl(token)), cancellationToken);
 
-            await SendEmailAsync(email, subject, body);
-        }
-        public async Task SendEmailAsync(string receptor, string subject, string body)
-        {
-            var email = _configuration.GetValue<string>("EMAIL_CONFIGURATION:EMAIL");
-            var password = _configuration.GetValue<string>("EMAIL_CONFIGURATION:PASSWORD");
-            var host = _configuration.GetValue<string>("EMAIL_CONFIGURATION:HOST");
-            var port = _configuration.GetValue<int>("EMAIL_CONFIGURATION:PORT");
+        public Task SendAccountExistsEmailAsync(string toEmail, CancellationToken cancellationToken = default) =>
+            SendAsync(toEmail, EmailTemplates.AccountExists(FrontendUrl("/login")), cancellationToken);
 
-            var smtpClient = new SmtpClient(host, port);
-            smtpClient.EnableSsl = true;
-            smtpClient.UseDefaultCredentials = false;
+        public Task SendWorkspaceExistsEmailAsync(string toEmail, string companyName, CancellationToken cancellationToken = default) =>
+            SendAsync(toEmail, EmailTemplates.WorkspaceExists(companyName), cancellationToken);
 
-            smtpClient.Credentials = new NetworkCredential(email, password);
-            var message = new MailMessage(email,receptor,subject,body);
-            await smtpClient.SendMailAsync(message);
-        }
+        public Task SendWelcomeEmailAsync(string toEmail, string fullName, string companyName, int monthlyAllowance,
+            CancellationToken cancellationToken = default) =>
+            SendAsync(toEmail, EmailTemplates.Welcome(fullName, companyName, monthlyAllowance, FrontendUrl("/login")), cancellationToken);
+
+        private string AcceptUrl(string token) => FrontendUrl($"/accept-invitation/{Uri.EscapeDataString(token)}");
+
+        private string FrontendUrl(string path) => _frontend.FrontendUrl.TrimEnd('/') + path;
+
+        private Task SendAsync(string toEmail, EmailContent content, CancellationToken cancellationToken) =>
+            _sender.SendAsync(toEmail, content, cancellationToken);
     }
 }

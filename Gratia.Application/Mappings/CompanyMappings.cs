@@ -11,6 +11,8 @@ public static class CompanyMappings
         Name = company.Name,
         PrimaryColor = company.PrimaryColor,
         SecondaryColor = company.SecondaryColor,
-        LogoUrl = company.LogoUrl
+        LogoUrl = company.LogoUrl,
+        Domain = company.Domain,
+        IsDomainVerified = company.IsDomainVerified
     };
 }
