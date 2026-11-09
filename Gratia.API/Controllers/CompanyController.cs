@@ -35,16 +35,7 @@ namespace Gratia.API.Controllers
             return Ok(company);
         }
 
-        [HttpPost]
-        public async Task<IActionResult> Create([FromBody] RegisterCompanyDto registerCompanyDto, CancellationToken cancellationToken)
-        {
-            var company = await _sender.Send(new CreateCompanyCommand(registerCompanyDto), cancellationToken);
-            return CreatedAtAction(
-                actionName: nameof(Get),
-                routeValues: new { id = company.Id },
-                value: company
-             );
-        }
+        // Companies are created by signing up (POST /api/auth/register-company)
 
         [HttpPut("{id:guid}")]
         [Authorize("Admin")]

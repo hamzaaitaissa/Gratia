@@ -1,4 +1,4 @@
-using System.Security.Cryptography;
+using Gratia.Application.Common;
 using Gratia.Application.DTOs.Invitation;
 using Gratia.Application.Exceptions;
 using Gratia.Application.Interfaces;
@@ -14,43 +14,52 @@ public sealed record InviteUserCommand(Guid CompanyId, Guid InvitedByUserId, Inv
 public sealed class InviteUserCommandHandler(
     IInvitationRepository invitationRepository,
     IUserRepository userRepository,
+    ICompanyRepository companyRepository,
     IUnitOfWork unitOfWork,
     IEmailService emailService)
     : ICommandHandler<InviteUserCommand, InvitationDto>
 {
     public async ValueTask<InvitationDto> Handle(InviteUserCommand command, CancellationToken cancellationToken)
     {
-        var dto = command.Invitation;
+        var email = EmailAddresses.Normalize(command.Invitation.Email);
 
-        if (await userRepository.GetByEmailAsync(dto.Email) is not null)
+        var company = await companyRepository.GetByIdAsync(command.CompanyId)
+            ?? throw new NotFoundException("Company not found");
+        var inviter = await userRepository.GetByIdAsync(command.InvitedByUserId)
+            ?? throw new NotFoundException("User not found");
+
+        // Until a company proves it controls its domain (TASKS.md #61), its admins can only invite people on that
+        // domain, so a provisional workspace can't be used to send invitations to strangers
+        if (company.Domain is not null && !company.IsDomainVerified && !EmailAddresses.IsOnDomain(email, company.Domain))
+            throw new BusinessRuleException($"Until your company's domain is verified, you can only invite @{company.Domain} addresses");
+
+        if (await userRepository.GetByEmailAsync(email) is not null)
             throw new ConflictException("User with this email already exists");
 
-        var existingInvitation = await invitationRepository.GetByEmailAndCompanyIdAsync(dto.Email, command.CompanyId);
+        var existingInvitation = await invitationRepository.GetByEmailAndCompanyIdAsync(email, command.CompanyId);
         if (existingInvitation is not null && existingInvitation.IsValid)
             throw new ConflictException("An active invitation already exists for this email in the company");
 
-        var token = GenerateInvitationToken();
+        var token = InvitationTokens.Generate();
         var invitation = new CompanyInvitation(
-            dto.Email,
+            email,
             token,
-            DateTime.UtcNow.AddDays(7),
-            dto.Role,
-            command.CompanyId,
-            command.InvitedByUserId);
+            DateTime.UtcNow.Add(InvitationTokens.Lifetime),
+            command.Invitation.Role,
+            company.Id,
+            inviter.Id)
+        {
+            // So the response carries the company and inviter names
+            Company = company,
+            InvitedByUser = inviter
+        };
 
         invitationRepository.Add(invitation);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         // Known issue (TASKS.md #20 / #55): if sending fails, the invitation is already saved
-        await emailService.SendInvitationEmailAsync(dto.Email, token, command.CompanyId);
+        await emailService.SendInvitationEmailAsync(email, token, company.Name, inviter.FullName, inviter.Email, cancellationToken);
 
         return invitation.ToDto();
-    }
-
-    // URL-safe, so it can go straight into the /accept-invitation/{token} link
-    private static string GenerateInvitationToken()
-    {
-        var bytes = RandomNumberGenerator.GetBytes(32);
-        return Convert.ToBase64String(bytes).Replace("+", "").Replace("/", "").Replace("=", "");
     }
 }

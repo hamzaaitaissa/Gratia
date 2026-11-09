@@ -19,17 +19,7 @@ namespace Gratia.API.Controllers
             _sender = sender;
         }
 
-        [HttpPost]
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Create([FromBody] RegisterUserDto registerUserDto, CancellationToken cancellationToken)
-        {
-            var user = await _sender.Send(new CreateUserCommand(registerUserDto), cancellationToken);
-            return CreatedAtAction(
-                actionName: nameof(Get),
-                routeValues: new { userId = user.Id },
-                value: user
-                );
-        }
+        // Accounts are created by accepting an invitation (POST /api/invitation/accept)
 
         [HttpGet("{userId:guid}")]
         public async Task<ActionResult<ReadUserDto>> Get(Guid userId, CancellationToken cancellationToken)
@@ -66,4 +56,3 @@ namespace Gratia.API.Controllers
     }
 }
 
-//TODO: add authorization for super admin

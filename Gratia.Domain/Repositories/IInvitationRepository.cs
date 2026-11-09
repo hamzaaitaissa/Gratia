@@ -8,6 +8,7 @@ namespace Gratia.Domain.Repositories
         Task<CompanyInvitation?> GetByTokenAsync(string token);
         Task<CompanyInvitation?> GetByEmailAndCompanyIdAsync(string email, Guid companyId);
         Task<IEnumerable<CompanyInvitation>> GetPendingInvitationsByCompanyIdAsync(Guid companyId);
+        Task<bool> HasActiveInvitationsAsync(Guid companyId);
 
         // Saved by IUnitOfWork.SaveChangesAsync
         void Add(CompanyInvitation invitation);

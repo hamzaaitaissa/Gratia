@@ -15,8 +15,9 @@ namespace Gratia.Application.DTOs.Invitation
         [Required]
         public string FullName { get; set; }
 
+        // Same minimum as LoginDto, or the new account could never log in
         [Required]
-        [MinLength(6)]
+        [MinLength(8)]
         public string Password { get; set; }
 
         public string JobTitle { get; set; } = "";

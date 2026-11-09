@@ -72,6 +72,14 @@ namespace Gratia.Infrastructure.Data
             modelBuilder.Entity<CompanyInvitation>()
                 .HasIndex(ci => new { ci.Email, ci.CompanyId });
 
+            // One workspace per email domain. Companies without a domain (NULL) don't count.
+            modelBuilder.Entity<Company>()
+                .Property(c => c.Domain)
+                .HasMaxLength(253);
+            modelBuilder.Entity<Company>()
+                .HasIndex(c => c.Domain)
+                .IsUnique();
+
         }
     }
 }

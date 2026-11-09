@@ -8,6 +8,7 @@ namespace Gratia.Domain.Repositories
         Task<User?> GetByIdAsync(Guid id);
         Task<User?> GetByEmailAsync(string email);
         Task<User?> GetUserByRefreshTokenAsync(string refreshToken);
+        Task<bool> AnyInCompanyAsync(Guid companyId);
 
         // Saved by IUnitOfWork.SaveChangesAsync
         void Add(User user);

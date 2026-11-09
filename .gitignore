@@ -36,5 +36,6 @@ TestResults/
 *.nupkg
 packages/
 
-# Claude Code project instructions (kept local)
+# Claude Code project instructions and task backlog (kept local)
 /CLAUDE.md
+/TASKS.md

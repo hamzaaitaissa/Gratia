@@ -18,5 +18,8 @@ namespace Gratia.Application.DTOs.CompanyDTO
         [Required]
         public string PrimaryColor { get; set; }
         public string SecondaryColor { get; set; }
+        public string? Domain { get; set; }
+        // False while the workspace is provisional: invitations are limited to Domain
+        public bool IsDomainVerified { get; set; }
     }
 }

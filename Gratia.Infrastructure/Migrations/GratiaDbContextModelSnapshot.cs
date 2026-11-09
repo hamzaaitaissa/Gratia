@@ -17,7 +17,7 @@ namespace Gratia.Infrastructure.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.8")
+                .HasAnnotation("ProductVersion", "10.0.14")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -29,6 +29,13 @@ namespace Gratia.Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Domain")
+                        .HasMaxLength(253)
+                        .HasColumnType("nvarchar(253)");
+
+                    b.Property<DateTime?>("DomainVerifiedAt")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("LogoUrl")
@@ -48,6 +55,10 @@ namespace Gratia.Infrastructure.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Domain")
+                        .IsUnique()
+                        .HasFilter("[Domain] IS NOT NULL");
 
                     b.ToTable("Companies");
                 });
@@ -75,7 +86,7 @@ namespace Gratia.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<Guid>("InvitedByUserId")
+                    b.Property<Guid?>("InvitedByUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("InvitedRole")
@@ -202,8 +213,7 @@ namespace Gratia.Infrastructure.Migrations
                     b.HasOne("Gratia.Domain.Entities.User", "InvitedByUser")
                         .WithMany()
                         .HasForeignKey("InvitedByUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Company");
 

@@ -14,6 +14,8 @@ namespace Gratia.Application
             services.AddOptions<PointsOptions>()
                 .Bind(configuration.GetSection(PointsOptions.SectionName))
                 .Validate(o => o.MonthlyAllowance > 0, "AppSettings:MonthlyAllowance must be greater than 0.");
+            services.AddOptions<OnboardingOptions>()
+                .Bind(configuration.GetSection(OnboardingOptions.SectionName));
 
             // The Mediator source generator finds every command, query and handler at compile time and
             // generates this registration. Scoped, because handlers use the request's DbContext
