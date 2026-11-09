@@ -1,0 +1,285 @@
+.root {
+  position: relative;
+  height: 100%;
+  display: flex;
+  container-type: inline-size;
+  overflow: hidden;
+  background: var(--g-bg);
+  color: var(--g-ink);
+}
+
+/* ---------- Desktop sidebar ---------- */
+.sidebar {
+  flex: 0 0 256px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 18px 14px;
+  background: var(--g-surface);
+  border-right: 1px solid var(--g-line);
+  min-height: 0;
+  overflow: auto;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 6px;
+  min-width: 0;
+}
+.companyName {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+  font-size: 15.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.logo {
+  flex: none;
+  object-fit: contain;
+  background: var(--g-surface2);
+}
+.monogram {
+  flex: none;
+  display: grid;
+  place-items: center;
+  background: var(--g-brand);
+  color: var(--g-on-brand);
+  font-weight: 700;
+}
+
+.giveButton {
+  box-shadow: var(--g-sh1);
+}
+
+.navList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: 10px;
+  color: var(--g-ink2);
+  font-size: 15px;
+  font-weight: 500;
+  text-decoration: none;
+}
+.navItem:hover {
+  background: var(--g-surface2);
+  color: var(--g-ink);
+}
+.navItem[aria-current='page'] {
+  background: var(--g-primary-soft);
+  color: var(--g-primary-ink);
+  font-weight: 600;
+}
+
+.adminGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.adminHeading {
+  padding: 0 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--g-ink3);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* Account menu */
+.account {
+  margin-top: auto;
+  position: relative;
+}
+.menu {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(100% + 6px);
+  background: var(--g-surface);
+  border: 1px solid var(--g-line);
+  border-radius: 14px;
+  box-shadow: var(--g-sh2);
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  z-index: 10;
+}
+.menuItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--g-ink);
+  font-size: 14.5px;
+  cursor: pointer;
+  text-align: left;
+}
+.menuItem:hover,
+.menuItem:focus-visible {
+  background: var(--g-surface2);
+}
+.menuItem :global(.ms) {
+  color: var(--g-ink2);
+}
+.accountButton {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 56px;
+  padding: 8px 10px;
+  border: 1px solid var(--g-line);
+  border-radius: 14px;
+  background: var(--g-surface);
+  color: var(--g-ink);
+  cursor: pointer;
+  text-align: left;
+}
+.accountButton:hover {
+  background: var(--g-surface2);
+}
+.accountText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.accountName {
+  font-weight: 600;
+  font-size: 14.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.accountRole {
+  font-size: 12.5px;
+  color: var(--g-ink3);
+}
+.accountChevron {
+  color: var(--g-ink3);
+}
+.avatarSkeleton {
+  width: 36px;
+  height: 36px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--g-skel);
+}
+
+/* ---------- Content column ---------- */
+.column {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.main {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+.content {
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: clamp(18px, 3.4cqw, 40px) clamp(16px, 3.4cqw, 44px) 56px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* ---------- Mobile ---------- */
+.mobileHeader {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  min-height: 60px;
+  background: var(--g-surface);
+  border-bottom: 1px solid var(--g-line);
+}
+.headerAvatar {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  text-decoration: none;
+}
+
+.tabBar {
+  flex: none;
+  display: flex;
+  align-items: stretch;
+  justify-content: space-around;
+  padding: 6px 8px calc(10px + env(safe-area-inset-bottom, 0px));
+  background: var(--g-surface);
+  border-top: 1px solid var(--g-line);
+}
+.tab {
+  flex: 1;
+  min-width: 0;
+  min-height: 52px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  border-radius: 10px;
+  color: var(--g-ink3);
+  font-size: 12px;
+  font-weight: 500;
+  text-decoration: none;
+}
+.tab:hover {
+  color: var(--g-ink);
+}
+.tab[aria-current='page'] {
+  color: var(--g-primary-ink);
+  font-weight: 600;
+}
+.fabSlot {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+.fab {
+  margin-top: -22px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: 4px solid var(--g-bg);
+  box-sizing: content-box;
+  background: var(--g-primary);
+  color: var(--g-on-primary);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  box-shadow: var(--g-sh2);
+  padding: 0;
+}
+.fab:hover {
+  background: var(--g-primary-hover);
+}

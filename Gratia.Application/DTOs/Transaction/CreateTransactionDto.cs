@@ -18,10 +18,10 @@ namespace Gratia.Application.DTOs.Transaction
 
         [Required]
         [StringLength(500, ErrorMessage = "Message cannot exceed 500 characters")]
-        public string Message { get; set; }
+        public string? Message { get; set; }
 
         [Required]
         [StringLength(100, ErrorMessage = "Type of donation cannot exceed 100 characters")]
-        public string TypeOfDonation { get; set; }
+        public string? TypeOfDonation { get; set; }
     }
 }

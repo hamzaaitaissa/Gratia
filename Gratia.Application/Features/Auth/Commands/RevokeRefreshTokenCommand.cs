@@ -1,23 +1,27 @@
+using Gratia.Application.Interfaces;
 using Gratia.Domain.Repositories;
 using Mediator;
 
 namespace Gratia.Application.Features.Auth.Commands;
 
-public sealed record RevokeRefreshTokenCommand(Guid UserId) : ICommand;
+/// <summary>
+/// Signing out. With a refresh token, only that device is signed out; holding the token is proof enough, so it needs
+/// no access token. Without one, every device of the signed-in caller is signed out. The controller makes sure there
+/// is one or the other.
+/// </summary>
+public sealed record RevokeRefreshTokenCommand(string? RefreshToken, Guid CallerUserId) : ICommand;
 
-public sealed class RevokeRefreshTokenCommandHandler(IUserRepository userRepository, IUnitOfWork unitOfWork)
+public sealed class RevokeRefreshTokenCommandHandler(IRefreshTokenRepository refreshTokenRepository, ITokenService tokenService)
     : ICommandHandler<RevokeRefreshTokenCommand>
 {
     public async ValueTask<Unit> Handle(RevokeRefreshTokenCommand command, CancellationToken cancellationToken)
     {
-        var user = await userRepository.GetByIdAsync(command.UserId);
-        if (user is null)
-            return Unit.Value;
+        // Single DELETEs that run immediately, so there's nothing for the unit of work to save
+        if (!string.IsNullOrEmpty(command.RefreshToken))
+            await refreshTokenRepository.DeleteByHashAsync(tokenService.HashRefreshToken(command.RefreshToken), cancellationToken);
+        else
+            await refreshTokenRepository.DeleteForUserAsync(command.CallerUserId, cancellationToken);
 
-        user.RefreshToken = null;
-        user.RefreshTokenExpiryTime = null;
-
-        await unitOfWork.SaveChangesAsync(cancellationToken);
         return Unit.Value;
     }
 }

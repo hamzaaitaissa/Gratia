@@ -49,10 +49,12 @@ namespace Gratia.Infrastructure.Repositories
 
         public async Task<IEnumerable<CompanyInvitation>> GetPendingInvitationsByCompanyIdAsync(Guid companyId)
         {
-            var now = DateTime.UtcNow;
             return await _gratiaDbContext.CompanyInvitations
                 .AsNoTracking()
-                .Where(i => i.CompanyId == companyId && !i.IsUsed && i.ExpiresAt > now)
+                .Where(i => i.CompanyId == companyId && !i.IsUsed && i.InvitedByUserId != null)
+                // Only the latest invitation to each address: an expired one that was followed by a new one is history
+                .Where(i => !_gratiaDbContext.CompanyInvitations.Any(newer =>
+                    newer.CompanyId == i.CompanyId && newer.Email == i.Email && newer.CreatedDate > i.CreatedDate))
                 .Include(i => i.Company)
                 .Include(i => i.InvitedByUser)
                 .OrderByDescending(i => i.CreatedDate)

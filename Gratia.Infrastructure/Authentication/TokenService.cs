@@ -6,6 +6,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
+using System.Text;
 
 namespace Gratia.Infrastructure.Authentication
 {
@@ -18,25 +19,20 @@ namespace Gratia.Infrastructure.Authentication
             _jwtOptions = jwtOptions.Value;
         }
 
-        public string GenerateRefreshToken()
-        {
-            var randomNumber = new Byte[32];
-            using var rng = RandomNumberGenerator.Create();
-            rng.GetBytes(randomNumber);
-            return Convert.ToBase64String(randomNumber);
-        }
-
         public TokenResponseDto GenerateTokens(ReadUserDto readUserDto)
         {
-            var accessToken = CreateToken(readUserDto);
-            var refreshToken = GenerateRefreshToken();
             return new TokenResponseDto
             {
-                AccessToken = accessToken,
-                RefreshToken = refreshToken,
-                RefreshTokenExpiryTime = DateTime.UtcNow.AddHours(1)
+                AccessToken = CreateToken(readUserDto),
+                RefreshToken = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32)),
+                // The same moment the server stores, so the client can rely on it (it said 1 hour while 7 days were stored)
+                RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(_jwtOptions.RefreshTokenDays)
             };
         }
+
+        // The token is 256 random bits, so a plain SHA-256 is enough: there's nothing to guess, unlike a password
+        public string HashRefreshToken(string refreshToken) =>
+            Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(refreshToken)));
 
         public ClaimsPrincipal GetPrincipalFromExpiredToken(string token)
         {
@@ -70,7 +66,8 @@ namespace Gratia.Infrastructure.Authentication
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.Email, user.Email),
-                new Claim(ClaimTypes.Role, user.Role),
+                new Claim(ClaimTypes.Role, user.Role.ToString()), // the name ("Admin"), which [Authorize(Roles = ...)] compares
+
                 new Claim("CompanyId", user.CompanyId.ToString())
             };
 
@@ -80,7 +77,7 @@ namespace Gratia.Infrastructure.Authentication
                 issuer: _jwtOptions.Issuer,
                 audience: _jwtOptions.Audience,
                 claims: claims,
-                expires: DateTime.UtcNow.AddHours(1),
+                expires: DateTime.UtcNow.AddMinutes(_jwtOptions.AccessTokenMinutes),
                 signingCredentials: creds
                 );
 

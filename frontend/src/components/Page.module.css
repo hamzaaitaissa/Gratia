@@ -1,0 +1,120 @@
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.title {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: clamp(32px, 4.4cqw, 44px);
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+.sub {
+  margin: 0;
+  color: var(--g-ink2);
+  font-size: 15.5px;
+}
+
+.error {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+  padding: clamp(24px, 4cqw, 40px);
+  border-radius: 20px;
+  background: var(--g-surface);
+  border: 1px solid var(--g-line);
+}
+.errorIcon {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--g-danger-soft);
+  color: var(--g-danger);
+}
+.errorTitle {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: 32px;
+  line-height: 1.1;
+}
+.errorText {
+  margin: 0;
+  color: var(--g-ink2);
+  max-width: 52ch;
+}
+.reference {
+  margin: 0;
+  font-size: 13px;
+  color: var(--g-ink3);
+}
+.reference code {
+  font: 12.5px ui-monospace, Menlo, monospace;
+  color: var(--g-ink2);
+  overflow-wrap: anywhere;
+}
+
+.system {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+  padding-top: clamp(12px, 6cqw, 64px);
+  max-width: 560px;
+}
+.systemIcon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--g-surface2);
+  color: var(--g-ink2);
+}
+.systemTitle {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: clamp(34px, 5cqw, 46px);
+  line-height: 1.05;
+}
+.systemText {
+  margin: 0;
+  color: var(--g-ink2);
+  font-size: 16px;
+  text-wrap: pretty;
+}
+.systemCode {
+  margin: 0;
+  font-size: 13px;
+  color: var(--g-ink3);
+}
+.systemDanger {
+  background: var(--g-danger-soft);
+  color: var(--g-danger);
+}
+.traceBox {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--g-surface2);
+  max-width: 100%;
+}
+.traceLabel {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--g-ink3);
+}
+.traceBox code {
+  font: 13px ui-monospace, Menlo, monospace;
+  overflow-wrap: anywhere;
+  user-select: all;
+}

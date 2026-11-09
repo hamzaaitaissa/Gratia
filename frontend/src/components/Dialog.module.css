@@ -1,0 +1,123 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  font-family: var(--font-sans);
+  color: var(--g-ink);
+}
+.scrim {
+  position: absolute;
+  inset: 0;
+  background: var(--g-scrim);
+  animation: fadeIn 160ms ease-out both;
+}
+.dialog {
+  position: relative;
+  width: 100%;
+  max-width: 460px;
+  max-height: 100%;
+  overflow: auto;
+  background: var(--g-surface);
+  border-radius: 20px;
+  box-shadow: var(--g-sh3);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  outline: none;
+  animation: popIn 180ms cubic-bezier(0.2, 0.7, 0.3, 1) both;
+}
+.title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  text-wrap: balance;
+}
+.body {
+  margin: -4px 0 0;
+  color: var(--g-ink2);
+  text-wrap: pretty;
+}
+.warning {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--g-danger-soft);
+  color: var(--g-danger);
+}
+.actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  padding-top: 4px;
+}
+.danger {
+  border: 0;
+  background: var(--g-danger);
+  color: var(--g-surface);
+  padding: 0 20px;
+}
+.danger:hover:not(:disabled) {
+  filter: brightness(0.92);
+}
+
+/* Form fields inside a dialog */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.hint {
+  margin: 0;
+  font-size: 13px;
+  color: var(--g-ink3);
+}
+.optional {
+  font-weight: 400;
+  color: var(--g-ink3);
+}
+.select {
+  width: 100%;
+  height: 48px;
+  padding: 0 12px;
+  border-radius: 12px;
+  border: 1px solid var(--g-line2);
+  background: var(--g-surface);
+  color: var(--g-ink);
+  font: inherit;
+  font-size: 16px;
+}
+.formError {
+  display: flex;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--g-danger-soft);
+  color: var(--g-danger);
+  font-size: 14px;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes popIn {
+  from {
+    transform: translateY(8px) scale(0.98);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}

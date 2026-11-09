@@ -42,9 +42,18 @@ namespace Gratia.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("MonthlyPointsAllowance")
+                        .HasColumnType("int");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("PointsPeriodStartedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("PointsResetDay")
+                        .HasColumnType("int");
 
                     b.Property<string>("PrimaryColor")
                         .IsRequired()
@@ -60,7 +69,12 @@ namespace Gratia.Infrastructure.Migrations
                         .IsUnique()
                         .HasFilter("[Domain] IS NOT NULL");
 
-                    b.ToTable("Companies");
+                    b.ToTable("Companies", t =>
+                        {
+                            t.HasCheckConstraint("CK_Companies_MonthlyPointsAllowance", "[MonthlyPointsAllowance] BETWEEN 1 AND 1000");
+
+                            t.HasCheckConstraint("CK_Companies_PointsResetDay", "[PointsResetDay] BETWEEN 1 AND 28");
+                        });
                 });
 
             modelBuilder.Entity("Gratia.Domain.Entities.CompanyInvitation", b =>
@@ -107,6 +121,36 @@ namespace Gratia.Infrastructure.Migrations
                     b.HasIndex("Email", "CompanyId");
 
                     b.ToTable("CompanyInvitations");
+                });
+
+            modelBuilder.Entity("Gratia.Domain.Entities.RefreshToken", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique();
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("RefreshTokens");
                 });
 
             modelBuilder.Entity("Gratia.Domain.Entities.Transaction", b =>
@@ -161,6 +205,9 @@ namespace Gratia.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<DateTime?>("DeactivatedAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
@@ -182,12 +229,6 @@ namespace Gratia.Infrastructure.Migrations
 
                     b.Property<int>("NumberOfPointsAvailable")
                         .HasColumnType("int");
-
-                    b.Property<string>("RefreshToken")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("RefreshTokenExpiryTime")
-                        .HasColumnType("datetime2");
 
                     b.Property<int>("Role")
                         .HasColumnType("int");
@@ -218,6 +259,17 @@ namespace Gratia.Infrastructure.Migrations
                     b.Navigation("Company");
 
                     b.Navigation("InvitedByUser");
+                });
+
+            modelBuilder.Entity("Gratia.Domain.Entities.RefreshToken", b =>
+                {
+                    b.HasOne("Gratia.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Gratia.Domain.Entities.Transaction", b =>

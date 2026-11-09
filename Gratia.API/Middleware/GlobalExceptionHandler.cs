@@ -29,6 +29,7 @@ namespace Gratia.API.Middleware
                 ConflictException => (StatusCodes.Status409Conflict, "Conflict"),
                 ForbiddenException => (StatusCodes.Status403Forbidden, "Forbidden"),
                 BusinessRuleException => (StatusCodes.Status400BadRequest, "Bad request"),
+                EmailDeliveryException => (StatusCodes.Status503ServiceUnavailable, "Email unavailable"),
                 _ => (StatusCodes.Status500InternalServerError, "An unexpected error occurred")
             };
 
@@ -38,6 +39,12 @@ namespace Gratia.API.Middleware
             if (isUnexpected)
             {
                 _logger.LogError(exception, "Unhandled exception while processing {Method} {Path}",
+                    httpContext.Request.Method, httpContext.Request.Path);
+            }
+            else if (exception is EmailDeliveryException)
+            {
+                // The client gets a plain message; the SMTP error is in the inner exception, for whoever runs the API
+                _logger.LogError(exception, "Couldn't send an email while processing {Method} {Path}",
                     httpContext.Request.Method, httpContext.Request.Path);
             }
 

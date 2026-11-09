@@ -9,6 +9,7 @@ namespace Gratia.Domain.Common
     public class BaseEntity
     {
         public Guid Id { get; set; }
-        public DateTime CreatedDate { get; set; } = DateTime.Now;
+        // UTC, like every DateTime in the app (#40)
+        public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
     }
 }

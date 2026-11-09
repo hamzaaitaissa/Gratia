@@ -20,9 +20,11 @@ namespace Gratia.Domain.Entities
         // A new account starts with nothing received; whoever creates it sets the allowance to give.
         public int NumberOfPointsAcquired { get; set; }
         public int NumberOfPointsAvailable { get; set; }
-        public string? RefreshToken { get; set; }
-        public DateTime? RefreshTokenExpiryTime { get; set; }
+        // Signed-in devices are RefreshToken rows (#15), so a user can be signed in on several at once
         public Guid CompanyId { get; set; }
+        // Set when an admin deactivates the account (#16). Users are never deleted, because their transactions keep
+        // pointing at them. A deactivated user can't sign in and is left out of the directory.
+        public DateTime? DeactivatedAt { get; set; }
 
         //navigation
         [ForeignKey(nameof(CompanyId))]
@@ -47,14 +49,19 @@ namespace Gratia.Domain.Entities
             CompanyId = companyId;
         }
 
-        public void Update(string fullname, string email, string hashedpassword, string jobtitle, UserRole role)
+        // An admin's edit. The password isn't part of it (#17): it gets its own change-password flow (#50).
+        public void Update(string fullname, string email, string jobtitle, UserRole role)
         {
             FullName = fullname;
             Email = email;
-            HashedPassword = hashedpassword;
             JobTitle = jobtitle;
             Role = role;
         }
+
+        // Keeps the first date if it's already deactivated
+        public void Deactivate(DateTime now) => DeactivatedAt ??= now;
+
+        public void Reactivate() => DeactivatedAt = null;
 
 
 

@@ -1,0 +1,142 @@
+.preview {
+  font-family: var(--font-sans);
+  background: var(--g-bg);
+  color: var(--g-ink);
+  border: 1px solid var(--g-line);
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  min-height: 320px;
+}
+.side {
+  flex: 0 0 168px;
+  background: var(--g-surface);
+  border-right: 1px solid var(--g-line);
+  padding: 14px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 4px;
+  min-width: 0;
+}
+.logo {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  object-fit: contain;
+  background: var(--g-surface2);
+  flex: none;
+}
+.mono {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  display: grid;
+  place-items: center;
+  background: var(--g-brand);
+  color: var(--g-on-brand);
+  font-weight: 700;
+  font-size: 11px;
+  flex: none;
+}
+.name {
+  font-weight: 600;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.give {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 34px;
+  border-radius: 9px;
+  background: var(--g-primary);
+  color: var(--g-on-primary);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 12.5px;
+}
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 30px;
+  padding: 0 8px;
+  border-radius: 8px;
+  color: var(--g-ink2);
+}
+.navOn {
+  background: var(--g-primary-soft);
+  color: var(--g-primary-ink);
+  font-weight: 600;
+}
+.main {
+  flex: 1;
+  min-width: 0;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.balance {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--g-surface);
+  border: 1px solid var(--g-line);
+  border-radius: 12px;
+  padding: 12px;
+}
+.balance svg {
+  flex: none;
+}
+.balanceText {
+  flex: 1;
+  min-width: 0;
+}
+.balanceLabel {
+  font-size: 11.5px;
+  color: var(--g-ink3);
+  font-weight: 600;
+}
+.balanceValue {
+  font-size: 15px;
+  font-weight: 600;
+}
+.balanceNumber {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  font-weight: 400;
+}
+.balanceButton {
+  display: flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 9px;
+  background: var(--g-primary);
+  color: var(--g-on-primary);
+  font-size: 12.5px;
+  font-weight: 600;
+  flex: none;
+}
+
+/* On a narrow screen the preview drops its sidebar */
+@container (max-width: 400px) {
+  .side {
+    display: none;
+  }
+}

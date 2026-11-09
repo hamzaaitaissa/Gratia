@@ -7,6 +7,8 @@ namespace Gratia.Infrastructure.Email
 {
     public class SmtpEmailSender : IEmailSender
     {
+        private static readonly TimeSpan SendTimeout = TimeSpan.FromSeconds(30);
+
         private readonly EmailOptions _email;
 
         public SmtpEmailSender(IOptions<EmailOptions> emailOptions)
@@ -35,7 +37,11 @@ namespace Gratia.Infrastructure.Email
                 Credentials = new NetworkCredential(_email.Email, _email.Password)
             };
 
-            await smtpClient.SendMailAsync(message, cancellationToken);
+            // SmtpClient.Timeout only applies to the synchronous Send, so a stuck server would otherwise hold the request
+            // (and the admin waiting on it) for as long as the connection stays open
+            using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            timeout.CancelAfter(SendTimeout);
+            await smtpClient.SendMailAsync(message, timeout.Token);
         }
     }
 }

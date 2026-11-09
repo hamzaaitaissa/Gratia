@@ -6,6 +6,7 @@ using Gratia.Application.Interfaces;
 using Mediator;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.RateLimiting;
 
 namespace Gratia.API.Controllers
@@ -32,7 +33,9 @@ namespace Gratia.API.Controllers
             return Accepted();
         }
 
+        // 403 for a deactivated account, once the password is right (#16)
         [HttpPost("login")]
+        [EnableRateLimiting(RateLimitPolicies.Login)]
         public async Task<IActionResult> Login(LoginDto loginDto, CancellationToken cancellationToken)
         {
             var tokenResponse = await _sender.Send(new LoginCommand(loginDto), cancellationToken);
@@ -43,6 +46,7 @@ namespace Gratia.API.Controllers
         }
 
         [HttpPost("refresh-token")]
+        [EnableRateLimiting(RateLimitPolicies.Refresh)]
         public async Task<IActionResult> RefreshToken([FromBody] string refreshToken, CancellationToken cancellationToken)
         {
             if (string.IsNullOrEmpty(refreshToken))
@@ -55,11 +59,19 @@ namespace Gratia.API.Controllers
             return Ok(tokenResponse);
         }
 
+        // Signing out (#15). With the refresh token as the body (a JSON string, like refresh-token), only that device is
+        // signed out, and no access token is needed. With no body, every device of the signed-in caller is signed out.
+        // Always 204, so it doesn't reveal whether a token existed.
         [HttpPost("revoke-token")]
-        [Authorize]
-        public async Task<IActionResult> RevokeToken(CancellationToken cancellationToken)
+        [AllowAnonymous]
+        public async Task<IActionResult> RevokeToken([FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] string? refreshToken,
+            CancellationToken cancellationToken)
         {
-            await _sender.Send(new RevokeRefreshTokenCommand(_currentUserService.UserId), cancellationToken);
+            if (string.IsNullOrEmpty(refreshToken) && _currentUserService.UserId == Guid.Empty)
+                return Problem(detail: "Send the refresh token to sign out this device, or sign in to sign out everywhere.",
+                    statusCode: StatusCodes.Status401Unauthorized);
+
+            await _sender.Send(new RevokeRefreshTokenCommand(refreshToken, _currentUserService.UserId), cancellationToken);
             return NoContent();
         }
     }

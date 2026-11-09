@@ -10,10 +10,7 @@ namespace Gratia.Application
     {
         public static IServiceCollection AddApplication(this IServiceCollection services, IConfiguration configuration)
         {
-            // Hosts that need these settings at startup add .ValidateOnStart() themselves (see the Worker)
-            services.AddOptions<PointsOptions>()
-                .Bind(configuration.GetSection(PointsOptions.SectionName))
-                .Validate(o => o.MonthlyAllowance > 0, "AppSettings:MonthlyAllowance must be greater than 0.");
+            // The points allowance and reset day are per company now (#19), so they aren't settings
             services.AddOptions<OnboardingOptions>()
                 .Bind(configuration.GetSection(OnboardingOptions.SectionName));
 

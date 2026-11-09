@@ -24,7 +24,7 @@ public sealed class OnboardingTests(GratiaApiFactory factory) : IClassFixture<Gr
         var setup = Assert.Single(factory.Emails.SentTo(email));
         Assert.Equal(EmailKind.CompanySetup, setup.Kind);
 
-        var lookup = await factory.CreateClient().GetFromJsonAsync<InvitationDto>($"/api/invitation/token/{setup.Token}");
+        var lookup = await factory.CreateClient().GetFromJsonAsync<InvitationDto>($"/api/invitation/token/{setup.Token}", GratiaApiFactory.Json);
         Assert.Equal("Initech", lookup!.CompanyName);
         Assert.Equal(UserRole.Admin, lookup.InvitedRole);
 
@@ -98,7 +98,7 @@ public sealed class OnboardingTests(GratiaApiFactory factory) : IClassFixture<Gr
         Assert.NotEqual(firstToken, secondToken);
         var anonymous = factory.CreateClient();
         Assert.Equal(HttpStatusCode.NotFound, (await anonymous.GetAsync($"/api/invitation/token/{firstToken}")).StatusCode);
-        var lookup = await anonymous.GetFromJsonAsync<InvitationDto>($"/api/invitation/token/{secondToken}");
+        var lookup = await anonymous.GetFromJsonAsync<InvitationDto>($"/api/invitation/token/{secondToken}", GratiaApiFactory.Json);
         Assert.Equal("Chotchkies", lookup!.CompanyName);
         Assert.Equal(1, await factory.WithDbAsync(db => db.Companies.CountAsync(c => c.Domain == domain)));
     }
@@ -166,6 +166,20 @@ public sealed class OnboardingTests(GratiaApiFactory factory) : IClassFixture<Gr
     {
         var response = await SignupAsync("", "", "not-an-email");
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task If_the_setup_email_fails_the_founder_is_told_and_can_sign_up_again()
+    {
+        var email = $"founder@{NewDomain()}";
+        factory.Emails.FailFor(email);
+
+        // A 500 before #20
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, (await SignupAsync("Initech", "Peter Gibbons", email)).StatusCode);
+
+        factory.Emails.StopFailingFor(email);
+        Assert.Equal(HttpStatusCode.Accepted, (await SignupAsync("Initech", "Peter Gibbons", email)).StatusCode);
+        await AcceptAsync(factory.Emails.LastTokenFor(email), "Peter Gibbons");
     }
 
     private static string NewDomain() => $"{Guid.NewGuid():N}.test";

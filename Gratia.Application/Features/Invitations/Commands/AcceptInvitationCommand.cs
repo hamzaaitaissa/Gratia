@@ -1,12 +1,10 @@
 using Gratia.Application.DTOs.Invitation;
 using Gratia.Application.Exceptions;
 using Gratia.Application.Interfaces;
-using Gratia.Application.Settings;
 using Gratia.Domain.Entities;
 using Gratia.Domain.Repositories;
 using Mediator;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 namespace Gratia.Application.Features.Invitations.Commands;
 
@@ -18,7 +16,6 @@ public sealed class AcceptInvitationCommandHandler(
     IUnitOfWork unitOfWork,
     IPasswordHashingService passwordHashingService,
     IEmailService emailService,
-    IOptions<PointsOptions> pointsOptions,
     ILogger<AcceptInvitationCommandHandler> logger)
     : ICommandHandler<AcceptInvitationCommand>
 {
@@ -33,13 +30,13 @@ public sealed class AcceptInvitationCommandHandler(
         if (await userRepository.GetByEmailAsync(invitation.Email) is not null)
             throw new ConflictException("User with this email already exists");
 
-        // A new account has this month's allowance to give and nothing received yet
-        var monthlyAllowance = pointsOptions.Value.MonthlyAllowance;
+        // A new account has this month's allowance to give and nothing received yet. GetByTokenAsync loads the company.
+        var monthlyAllowance = invitation.Company.MonthlyPointsAllowance;
         var user = new User(
             dto.FullName,
             invitation.Email,
             passwordHashingService.HashPassword(dto.Password),
-            dto.JobTitle,
+            dto.JobTitle ?? string.Empty,
             invitation.InvitedRole,
             numberofpointsacquired: 0,
             numberofpointsavailable: monthlyAllowance,
@@ -54,7 +51,7 @@ public sealed class AcceptInvitationCommandHandler(
         // The account exists by now, so a failed welcome email shouldn't turn into an error for the new user
         try
         {
-            await emailService.SendWelcomeEmailAsync(user.Email, user.FullName, invitation.Company?.Name ?? "your company", monthlyAllowance,
+            await emailService.SendWelcomeEmailAsync(user.Email, user.FullName, invitation.Company.Name, monthlyAllowance,
                 cancellationToken);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)

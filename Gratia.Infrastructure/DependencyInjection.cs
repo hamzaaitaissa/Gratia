@@ -26,6 +26,7 @@ namespace Gratia.Infrastructure
             services.AddScoped<ICompanyRepository, CompanyRepository>();
             services.AddScoped<ITransactionRepository, TransactionRepository>();
             services.AddScoped<IInvitationRepository, InvitationRepository>();
+            services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 
             // Authentication. Only the API checks these settings at startup (.ValidateOnStart() in its Program.cs);
             // the Worker never issues tokens, so it can run without the signing key.
@@ -36,7 +37,11 @@ namespace Gratia.Infrastructure
                     "'dotnet user-secrets set AppSettings:Token <key> --project Gratia.API' in development, " +
                     "or the AppSettings__Token environment variable elsewhere.")
                 .Validate(o => !string.IsNullOrWhiteSpace(o.Issuer) && !string.IsNullOrWhiteSpace(o.Audience),
-                    "AppSettings:Issuer and AppSettings:Audience must be configured.");
+                    "AppSettings:Issuer and AppSettings:Audience must be configured.")
+                .Validate(o => o.AccessTokenMinutes > 0 && o.RefreshTokenDays > 0
+                        && TimeSpan.FromMinutes(o.AccessTokenMinutes) < TimeSpan.FromDays(o.RefreshTokenDays),
+                    "AppSettings:AccessTokenMinutes and AppSettings:RefreshTokenDays must be positive, and an access token " +
+                    "must expire before the refresh token that renews it.");
 
             services.AddScoped<ITokenService, TokenService>();
             services.AddSingleton<IPasswordHashingService, PasswordHashingService>();

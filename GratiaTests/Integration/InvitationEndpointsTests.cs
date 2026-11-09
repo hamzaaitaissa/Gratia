@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Gratia.Application.DTOs.Invitation;
+using Microsoft.EntityFrameworkCore;
 
 namespace GratiaTests.Integration;
 
@@ -23,7 +24,7 @@ public sealed class InvitationEndpointsTests(GratiaApiFactory factory) : IClassF
         // The invitee opens the link from the email
         var token = factory.Emails.LastTokenFor(email);
         var anonymous = factory.CreateClient();
-        var lookup = await anonymous.GetFromJsonAsync<InvitationDto>($"/api/invitation/token/{token}");
+        var lookup = await anonymous.GetFromJsonAsync<InvitationDto>($"/api/invitation/token/{token}", GratiaApiFactory.Json);
         Assert.Equal("Acme", lookup!.CompanyName);
         Assert.Equal("Acme Admin", lookup.InvitedByUserName);
         Assert.True(lookup.IsValid);
@@ -62,7 +63,7 @@ public sealed class InvitationEndpointsTests(GratiaApiFactory factory) : IClassF
         // Case doesn't matter, and the address is stored lowercase
         var colleague = await admin.PostAsJsonAsync("/api/invitation", new { email = $"{Guid.NewGuid():N}@ACME.test" });
         Assert.Equal(HttpStatusCode.Created, colleague.StatusCode);
-        var invitation = await colleague.Content.ReadFromJsonAsync<InvitationDto>();
+        var invitation = await colleague.Content.ReadFromJsonAsync<InvitationDto>(GratiaApiFactory.Json);
         Assert.EndsWith("@acme.test", invitation!.Email);
         Assert.Equal("Acme", invitation.CompanyName);
         Assert.Equal("Acme Admin", invitation.InvitedByUserName);
@@ -93,6 +94,36 @@ public sealed class InvitationEndpointsTests(GratiaApiFactory factory) : IClassF
         var anonymous = factory.CreateClient();
         Assert.Equal(HttpStatusCode.NotFound, (await anonymous.GetAsync($"/api/invitation/token/{oldToken}")).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await anonymous.GetAsync($"/api/invitation/token/{newToken}")).StatusCode);
+    }
+
+    [Fact]
+    public async Task An_expired_invitation_stays_in_the_list_and_can_be_resent()
+    {
+        var admin = await factory.CreateClientForAsync(factory.AcmeAdminEmail);
+        var (id, email) = await InviteAsync(admin);
+        await ExpireAsync(id);
+
+        // #75: it used to drop out of the list, though it could still be resent
+        var listed = Assert.Single(await PendingAsync(admin), i => i.Email == email);
+        Assert.True(listed.IsExpired);
+
+        var resent = await admin.PostAsync($"/api/invitation/{id}/resend", null);
+        Assert.Equal(HttpStatusCode.OK, resent.StatusCode);
+        Assert.False(Assert.Single(await PendingAsync(admin), i => i.Email == email).IsExpired);
+    }
+
+    [Fact]
+    public async Task An_expired_invitation_followed_by_a_new_one_is_not_listed()
+    {
+        var admin = await factory.CreateClientForAsync(factory.AcmeAdminEmail);
+        var (oldId, email) = await InviteAsync(admin);
+        await ExpireAsync(oldId);
+
+        var again = await admin.PostAsJsonAsync("/api/invitation", new { email });
+        Assert.Equal(HttpStatusCode.Created, again.StatusCode);
+
+        var listed = Assert.Single(await PendingAsync(admin), i => i.Email == email);
+        Assert.NotEqual(oldId, listed.Id);
     }
 
     [Fact]
@@ -162,6 +193,51 @@ public sealed class InvitationEndpointsTests(GratiaApiFactory factory) : IClassF
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
+    [Fact]
+    public async Task The_role_is_sent_and_returned_by_name()
+    {
+        var admin = await factory.CreateClientForAsync(factory.AcmeAdminEmail);
+
+        var invite = await admin.PostAsJsonAsync("/api/invitation", new { email = NewEmail(), role = "Admin" });
+        Assert.Equal(HttpStatusCode.Created, invite.StatusCode);
+        Assert.Contains("\"invitedRole\":\"Admin\"", await invite.Content.ReadAsStringAsync());
+
+        var number = await admin.PostAsJsonAsync("/api/invitation", new { email = NewEmail(), role = 1 });
+        Assert.Equal(HttpStatusCode.BadRequest, number.StatusCode);
+    }
+
+    [Fact]
+    public async Task When_the_invitation_email_fails_nothing_is_saved_and_the_admin_can_try_again()
+    {
+        var admin = await factory.CreateClientForAsync(factory.AcmeAdminEmail);
+        var email = NewEmail();
+        factory.Emails.FailFor(email);
+
+        var failed = await admin.PostAsJsonAsync("/api/invitation", new { email });
+
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, failed.StatusCode);
+        Assert.DoesNotContain(email, await PendingEmailsAsync(admin));
+
+        // #20: the unsent invitation used to stay, so this was a 409 for the next 7 days
+        factory.Emails.StopFailingFor(email);
+        Assert.Equal(HttpStatusCode.Created, (await admin.PostAsJsonAsync("/api/invitation", new { email })).StatusCode);
+    }
+
+    [Fact]
+    public async Task When_a_resent_email_fails_the_link_already_sent_keeps_working()
+    {
+        var admin = await factory.CreateClientForAsync(factory.AcmeAdminEmail);
+        var (id, email) = await InviteAsync(admin);
+        var token = factory.Emails.LastTokenFor(email);
+        factory.Emails.FailFor(email);
+
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, (await admin.PostAsync($"/api/invitation/{id}/resend", null)).StatusCode);
+
+        // #20: the token used to be replaced anyway, so the invitee's only link stopped working
+        var lookup = await factory.CreateClient().GetFromJsonAsync<InvitationDto>($"/api/invitation/token/{token}", GratiaApiFactory.Json);
+        Assert.True(lookup!.IsValid);
+    }
+
     // The seeded companies are unverified, so their admins can only invite addresses on their own domain
     private static string NewEmail(string domain = "acme.test") => $"{Guid.NewGuid():N}@{domain}";
 
@@ -170,13 +246,17 @@ public sealed class InvitationEndpointsTests(GratiaApiFactory factory) : IClassF
         var email = NewEmail(domain);
         var response = await admin.PostAsJsonAsync("/api/invitation", new { email });
         response.EnsureSuccessStatusCode();
-        var invitation = await response.Content.ReadFromJsonAsync<InvitationDto>();
+        var invitation = await response.Content.ReadFromJsonAsync<InvitationDto>(GratiaApiFactory.Json);
         return (invitation!.Id, email);
     }
 
-    private static async Task<List<string>> PendingEmailsAsync(HttpClient admin)
-    {
-        var pending = await admin.GetFromJsonAsync<List<InvitationDto>>("/api/invitation/pending");
-        return pending!.Select(i => i.Email).ToList();
-    }
+    private static async Task<List<string>> PendingEmailsAsync(HttpClient admin) =>
+        (await PendingAsync(admin)).Select(i => i.Email).ToList();
+
+    private static async Task<List<InvitationDto>> PendingAsync(HttpClient admin) =>
+        (await admin.GetFromJsonAsync<List<InvitationDto>>("/api/invitation/pending", GratiaApiFactory.Json))!;
+
+    private Task<int> ExpireAsync(Guid invitationId) =>
+        factory.WithDbAsync(db => db.CompanyInvitations.Where(i => i.Id == invitationId)
+            .ExecuteUpdateAsync(setters => setters.SetProperty(i => i.ExpiresAt, DateTime.UtcNow.AddMinutes(-1))));
 }

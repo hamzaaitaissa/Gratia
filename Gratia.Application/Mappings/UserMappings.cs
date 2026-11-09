@@ -11,9 +11,10 @@ public static class UserMappings
         FullName = user.FullName,
         Email = user.Email,
         JobTitle = user.JobTitle,
-        Role = user.Role.ToString(),
+        Role = user.Role,
         NumberOfPointsAcquired = user.NumberOfPointsAcquired,
         NumberOfPointsAvailable = user.NumberOfPointsAvailable,
-        CompanyId = user.CompanyId
+        CompanyId = user.CompanyId,
+        DeactivatedAt = user.DeactivatedAt
     };
 }

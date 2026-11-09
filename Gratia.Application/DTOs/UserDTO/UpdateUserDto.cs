@@ -12,14 +12,14 @@ namespace Gratia.Application.DTOs.UserDTO
     {
         public Guid Id { get; set; }
         [Required]
-        public string FullName { get; set; }
+        public string? FullName { get; set; }
         [Required, EmailAddress]
-        public string Email { get; set; }
-        [Required, MinLength(8)]
-        public string HashedPassword { get; set; }
-        [Required]
-        public string JobTitle { get; set; }
-        [Required, AllowedValues("Employee", "Admin")]
+        public string? Email { get; set; }
+        // No password (#17): an admin's edit used to force a new one. Changing it is the user's own job (#50).
+        // Optional, as when accepting an invitation (#74): null or empty means none.
+        public string? JobTitle { get; set; }
+        // Sent by name ("Employee", "Admin"). AllowedValues("Employee", "Admin") compared the enum to strings, so it always failed (#5).
+        [Required, EnumDataType(typeof(UserRole))]
         public UserRole Role { get; set; }
     }
 }

@@ -10,16 +10,17 @@ namespace Gratia.Application.DTOs.Invitation
     public class AcceptInvitationDto
     {
         [Required]
-        public string Token { get; set; }
+        public string? Token { get; set; }
 
         [Required]
-        public string FullName { get; set; }
+        public string? FullName { get; set; }
 
         // Same minimum as LoginDto, or the new account could never log in
         [Required]
         [MinLength(8)]
-        public string Password { get; set; }
+        public string? Password { get; set; }
 
-        public string JobTitle { get; set; } = "";
+        // Optional: null or empty means none
+        public string? JobTitle { get; set; }
     }
 }

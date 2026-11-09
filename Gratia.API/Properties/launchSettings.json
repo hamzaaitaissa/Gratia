@@ -18,6 +18,17 @@
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
+    },
+    "demo": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": false,
+      "applicationUrl": "http://localhost:5290",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ConnectionStrings__DefaultConnection": "Server=(localdb)\\MSSQLLocalDB;Database=GratiaDemo;Trusted_Connection=True;TrustServerCertificate=True",
+        "EMAIL_CONFIGURATION__EMAIL": "log-only"
+      }
     }
   }
 }
