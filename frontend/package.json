@@ -1,0 +1,36 @@
+{
+  "name": "gratia-frontend",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "engines": {
+    "node": "^22.12.0 || >=24.0.0"
+  },
+  "scripts": {
+    "dev": "node scripts/vite.mjs vite",
+    "build": "tsc -b && node scripts/vite.mjs vite build",
+    "typecheck": "tsc -b",
+    "test": "node scripts/vite.mjs vitest run",
+    "test:watch": "node scripts/vite.mjs vitest",
+    "preview": "node scripts/vite.mjs vite preview",
+    "api:types": "node scripts/api-types.mjs"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "5.104.5",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "react-router": "7.18.4"
+  },
+  "devDependencies": {
+    "@testing-library/dom": "10.4.2",
+    "@testing-library/react": "16.3.3",
+    "@testing-library/user-event": "14.6.8",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.1.2",
+    "jsdom": "27.4.0",
+    "typescript": "7.0.2",
+    "vite": "8.3.5",
+    "vitest": "5.1.0"
+  }
+}

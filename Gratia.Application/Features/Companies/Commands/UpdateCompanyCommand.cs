@@ -21,7 +21,10 @@ public sealed class UpdateCompanyCommandHandler(ICompanyRepository companyReposi
         var company = await companyRepository.GetByIdAsync(dto.Id)
             ?? throw new NotFoundException($"Company {dto.Id} was not found.");
 
-        company.Update(dto.Name, dto.LogoUrl, dto.PrimaryColor, dto.SecondaryColor);
+        // An empty LogoUrl means no logo, the same as a company created by signup
+        company.Update(dto.Name, dto.LogoUrl ?? string.Empty, dto.PrimaryColor, dto.SecondaryColor);
+        company.ChangePointsCycle(dto.MonthlyPointsAllowance ?? company.MonthlyPointsAllowance, dto.PointsResetDay ?? company.PointsResetDay,
+            DateTime.UtcNow);
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return company.ToReadDto();

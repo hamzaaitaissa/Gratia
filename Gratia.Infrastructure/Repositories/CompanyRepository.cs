@@ -24,11 +24,6 @@ namespace Gratia.Infrastructure.Repositories
             _gratiaDbContext.Companies.Remove(company);
         }
 
-        public async Task<IEnumerable<Company>> GetAllAsync()
-        {
-            return await _gratiaDbContext.Companies.AsNoTracking().ToListAsync();
-        }
-
         public async Task<Company?> GetByIdAsync(Guid id)
         {
             return await _gratiaDbContext.Companies.FindAsync(id);
@@ -37,6 +32,21 @@ namespace Gratia.Infrastructure.Repositories
         public async Task<Company?> GetByDomainAsync(string domain)
         {
             return await _gratiaDbContext.Companies.FirstOrDefaultAsync(c => c.Domain == domain);
+        }
+
+        public async Task<IReadOnlyList<Company>> GetAllForPointsResetAsync(CancellationToken cancellationToken = default)
+        {
+            return await _gratiaDbContext.Companies.AsNoTracking().ToListAsync(cancellationToken);
+        }
+
+        public async Task<bool> TryStartPointsPeriodAsync(Guid companyId, DateTime periodStart, CancellationToken cancellationToken = default)
+        {
+            // The check is in the WHERE clause, so a second job waits for the first one's row lock and then finds
+            // the period already recorded
+            var updated = await _gratiaDbContext.Companies
+                .Where(c => c.Id == companyId && (c.PointsPeriodStartedAt == null || c.PointsPeriodStartedAt < periodStart))
+                .ExecuteUpdateAsync(setters => setters.SetProperty(c => c.PointsPeriodStartedAt, (DateTime?)periodStart), cancellationToken);
+            return updated == 1;
         }
     }
 }

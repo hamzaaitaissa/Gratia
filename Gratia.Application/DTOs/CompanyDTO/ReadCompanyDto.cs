@@ -12,14 +12,21 @@ namespace Gratia.Application.DTOs.CompanyDTO
         [Required, Key]
         public Guid Id { get; set; }
         [Required, MinLength(2)]
-        public string Name { get; set; }
+        public string? Name { get; set; }
         [Required]
-        public string LogoUrl { get; set; }
+        public string? LogoUrl { get; set; }
         [Required]
-        public string PrimaryColor { get; set; }
-        public string SecondaryColor { get; set; }
+        public string? PrimaryColor { get; set; }
+        public string? SecondaryColor { get; set; }
         public string? Domain { get; set; }
         // False while the workspace is provisional: invitations are limited to Domain
         public bool IsDomainVerified { get; set; }
+
+        // The points cycle (#19, #53): points to give are refilled to the allowance on the reset day at 00:00 UTC.
+        // LastPointsResetAt and NextPointsResetAt are that schedule's dates (UTC) around the time of the request.
+        public int MonthlyPointsAllowance { get; set; }
+        public int PointsResetDay { get; set; }
+        public DateTime LastPointsResetAt { get; set; }
+        public DateTime NextPointsResetAt { get; set; }
     }
 }

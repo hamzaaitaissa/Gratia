@@ -1,0 +1,53 @@
+.root {
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  container-type: inline-size;
+  background: var(--g-bg);
+}
+.header {
+  flex: none;
+  padding: 22px clamp(16px, 4cqw, 44px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.wordmark {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--g-ink);
+}
+.mark {
+  position: relative;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2.5px solid currentColor;
+  flex: none;
+}
+.markDot {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  top: -5px;
+  right: -5px;
+  box-shadow: 0 0 0 2px var(--g-bg);
+}
+.word {
+  font-family: var(--font-serif);
+  font-size: 30px;
+  line-height: 1;
+  letter-spacing: -0.01em;
+}
+.main {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: clamp(8px, 5cqw, 56px) 16px 56px;
+}

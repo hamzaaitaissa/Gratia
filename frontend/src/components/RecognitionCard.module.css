@@ -1,0 +1,236 @@
+.card {
+  position: relative;
+  background: var(--g-surface);
+  border: 1px solid var(--g-line);
+  border-radius: 16px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  color: var(--g-ink);
+  box-shadow: var(--g-sh1);
+  min-width: 0;
+}
+
+.highlight {
+  position: absolute;
+  inset: -1px;
+  border-radius: 16px;
+  border: 2px solid var(--g-primary);
+  pointer-events: none;
+  animation: gFadeIn 300ms ease-out both;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.avatars {
+  display: flex;
+  align-items: center;
+  flex: none;
+}
+.avatar {
+  box-shadow: 0 0 0 2px var(--g-surface);
+}
+.avatar + .avatar {
+  margin-left: -8px;
+}
+
+.who {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  line-height: 1.35;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 6px;
+}
+.who strong {
+  font-weight: 600;
+}
+.arrow {
+  color: var(--g-ink3);
+}
+
+.points {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 28px;
+  padding: 0 10px 0 8px;
+  border-radius: 999px;
+  background: var(--g-recv-soft);
+  color: var(--g-recv);
+  font-weight: 700;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+
+.message {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.55;
+  text-wrap: pretty;
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+}
+
+.more {
+  all: unset;
+  cursor: pointer;
+  color: var(--g-primary-ink);
+  font-weight: 600;
+  font-size: 14px;
+}
+.more:hover {
+  text-decoration: underline;
+}
+
+.foot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.category {
+  display: inline-flex;
+  align-items: center;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: var(--g-primary-soft);
+  color: var(--g-primary-ink);
+  font-size: 12.5px;
+  font-weight: 600;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.time {
+  all: unset;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--g-ink3);
+  border-radius: 4px;
+}
+.time:hover {
+  color: var(--g-ink);
+  text-decoration: underline;
+}
+.timeText {
+  font-size: 13px;
+  color: var(--g-ink3);
+}
+
+/* ---------- Large (recognition detail) ---------- */
+.large {
+  position: relative;
+  background: var(--g-surface);
+  border: 1px solid var(--g-line);
+  border-radius: 24px;
+  padding: clamp(24px, 5cqw, 44px);
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  color: var(--g-ink);
+  box-shadow: var(--g-sh2);
+  min-width: 0;
+  overflow: hidden;
+}
+.brandBar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 6px;
+  background: var(--g-brand);
+}
+.largeHead {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.party {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.partyText {
+  min-width: 0;
+}
+.partyLabel {
+  font-size: 12px;
+  color: var(--g-ink3);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+}
+.partyName {
+  font-weight: 600;
+  font-size: 17px;
+}
+.largePoints {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 44px;
+  padding: 0 16px 0 12px;
+  border-radius: 999px;
+  background: var(--g-recv-soft);
+  color: var(--g-recv);
+  font-weight: 700;
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+}
+.largePointsWord {
+  font-size: 14px;
+  font-weight: 600;
+}
+.quote {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: clamp(24px, 3.4cqw, 34px);
+  line-height: 1.25;
+  letter-spacing: -0.005em;
+  text-wrap: pretty;
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+}
+.largeFoot {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  border-top: 1px solid var(--g-line);
+  padding-top: 18px;
+}
+.largeCategory {
+  height: 30px;
+  padding: 0 12px;
+  font-size: 14px;
+}
+.exact {
+  font-size: 14px;
+  color: var(--g-ink2);
+}
+
+@keyframes gFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

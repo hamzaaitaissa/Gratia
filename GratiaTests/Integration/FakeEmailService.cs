@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using Gratia.Application.Exceptions;
 using Gratia.Application.Interfaces;
 
 namespace GratiaTests.Integration;
@@ -35,8 +36,17 @@ public sealed class FakeEmailService : IEmailService
     public Task SendWelcomeEmailAsync(string toEmail, string fullName, string companyName, int monthlyAllowance,
         CancellationToken cancellationToken = default) => Record(new(EmailKind.Welcome, toEmail, CompanyName: companyName));
 
+    private readonly ConcurrentDictionary<string, bool> _failing = new(StringComparer.OrdinalIgnoreCase);
+
+    // Makes every email to this address fail the way EmailService reports an SMTP failure (#20)
+    public void FailFor(string email) => _failing[email] = true;
+    public void StopFailingFor(string email) => _failing.TryRemove(email, out _);
+
     private Task Record(SentEmail email)
     {
+        if (_failing.ContainsKey(email.To))
+            return Task.FromException(new EmailDeliveryException("The email couldn't be sent. Try again in a moment."));
+
         _sent.Enqueue(email);
         return Task.CompletedTask;
     }

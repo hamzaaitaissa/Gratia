@@ -106,8 +106,9 @@ public sealed class RegisterCompanyCommandHandler(
         // The company and its founding invitation are saved together
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        // Known issue (TASKS.md #55): if sending fails, the company and invitation are already saved.
-        // Signing up again sends a new link.
+        // If sending fails the founder gets a 503 (EmailDeliveryException), and the company and invitation stay: signing
+        // up again sends a new link, and once that one expires unused anyone from the domain can take the workspace over.
+        // Every branch answers 503 when email is down, so this doesn't give anything away either.
         await emailService.SendCompanySetupEmailAsync(email, founderName, company.Name, invitation.InvitationToken, cancellationToken);
         return Unit.Value;
     }

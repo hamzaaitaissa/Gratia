@@ -1,0 +1,296 @@
+.layout {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  align-items: flex-start;
+}
+.mainColumn {
+  flex: 3 1 520px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.balances {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.card {
+  min-width: 0;
+  padding: 22px;
+  border-radius: 20px;
+  background: var(--g-surface);
+  border: 1px solid var(--g-line);
+  box-shadow: var(--g-sh1);
+}
+
+/* Points to give: brand colour and a ring. Points received: teal and a star. They never share a treatment. */
+.balanceCard {
+  flex: 1.4 1 320px;
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+.ring {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  flex: none;
+}
+.ring svg {
+  display: block;
+}
+.ringIcon {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--g-primary-ink);
+}
+.balanceText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.balanceHeading {
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--g-primary-ink);
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+}
+.amountLine {
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.bigNumber {
+  font-family: var(--font-serif);
+  font-size: 46px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.ofLeft {
+  font-size: 17px;
+  font-weight: 600;
+}
+.refill {
+  margin: 0;
+  font-size: 14px;
+  color: var(--g-ink2);
+}
+.balanceGive {
+  margin-top: 10px;
+  align-self: flex-start;
+  min-height: 44px;
+}
+.zeroTitle {
+  margin: 4px 0 0;
+  font-size: 17px;
+  font-weight: 600;
+  text-wrap: pretty;
+}
+.zeroText {
+  margin: 0;
+  font-size: 14.5px;
+  color: var(--g-ink2);
+}
+
+.receivedCard {
+  flex: 1 1 260px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.receivedHeading {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--g-recv);
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+}
+.amountNote {
+  font-size: 15px;
+  color: var(--g-ink2);
+}
+.latest {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  min-height: 52px;
+  border-radius: 12px;
+  border: 0;
+  background: var(--g-recv-soft);
+  color: var(--g-ink);
+  text-align: left;
+  cursor: pointer;
+}
+.latest:hover {
+  filter: brightness(0.97);
+}
+.latestText {
+  flex: 1;
+  min-width: 0;
+  font-size: 13.5px;
+  line-height: 1.35;
+}
+.latestWhen {
+  display: block;
+  color: var(--g-ink2);
+}
+.latestWhat {
+  display: block;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.latestChevron {
+  color: var(--g-ink3);
+}
+.receivedEmpty {
+  margin: auto 0 0;
+  font-size: 14px;
+  color: var(--g-ink2);
+}
+
+/* ---------- Feed ---------- */
+.feed {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.feedHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.feedTitle {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 600;
+}
+.feedCount {
+  font-size: 13px;
+  color: var(--g-ink3);
+}
+.cards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.loadMore {
+  width: 100%;
+}
+.caughtUp {
+  margin: 0;
+  text-align: center;
+  font-size: 14px;
+  color: var(--g-ink3);
+  padding: 8px 0;
+}
+
+/* ---------- Most recognized: its own column, removable without breaking the layout ---------- */
+.most {
+  flex: 1 1 260px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 20px 14px 14px;
+  border-radius: 20px;
+  background: var(--g-surface);
+  border: 1px solid var(--g-line);
+}
+.mostHead {
+  padding: 0 6px 6px;
+}
+.mostTitle {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+.mostSub {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: var(--g-ink3);
+}
+.mostList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.mostItem {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 56px;
+  padding: 8px 6px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--g-ink);
+  text-align: left;
+  cursor: pointer;
+}
+.mostItem:hover {
+  background: var(--g-surface2);
+}
+.rank {
+  width: 18px;
+  flex: none;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--g-ink3);
+  font-variant-numeric: tabular-nums;
+}
+.mostText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.mostName {
+  font-weight: 600;
+  font-size: 14.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mostJob {
+  font-size: 12.5px;
+  color: var(--g-ink3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mostPts {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--g-recv);
+  font-variant-numeric: tabular-nums;
+}

@@ -1,0 +1,260 @@
+/* ---------- Directory ---------- */
+.directory {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.toolbar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.search {
+  position: relative;
+  flex: 1 1 280px;
+  max-width: 480px;
+}
+.searchIcon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--g-ink3);
+  pointer-events: none;
+}
+.search .searchInput {
+  padding-left: 44px;
+}
+.count {
+  font-size: 13.5px;
+  color: var(--g-ink3);
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.letter {
+  margin: 0;
+  padding-left: 4px;
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: 24px;
+  color: var(--g-ink2);
+}
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-radius: 16px;
+  background: var(--g-surface);
+  border: 1px solid var(--g-line);
+  overflow: hidden;
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px 10px 14px;
+  border-bottom: 1px solid var(--g-line);
+}
+.row:last-child {
+  border-bottom: 0;
+}
+.person {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  border-radius: 8px;
+  color: var(--g-ink);
+  text-decoration: none;
+}
+.person:hover {
+  color: var(--g-ink);
+}
+.person:hover .name {
+  text-decoration: underline;
+}
+.personText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.nameLine {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.name {
+  font-weight: 600;
+  font-size: 15px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.you {
+  flex: none;
+  font-size: 12px;
+  color: var(--g-ink3);
+}
+.adminBadge {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: var(--g-surface2);
+  color: var(--g-ink2);
+  font-size: 12px;
+  font-weight: 600;
+}
+.job {
+  font-size: 13.5px;
+  color: var(--g-ink3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.recognize {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  min-width: 44px;
+  justify-content: center;
+  padding: 0 14px;
+  border-radius: 12px;
+  border: 1px solid var(--g-line2);
+  background: var(--g-surface);
+  color: var(--g-primary-ink);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.recognize:hover {
+  background: var(--g-primary-soft);
+  border-color: var(--g-primary-line);
+}
+
+.noMatch {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 40px 20px;
+  text-align: center;
+}
+.noMatchIcon {
+  color: var(--g-ink3);
+}
+.noMatchTitle {
+  margin: 0;
+  font-weight: 600;
+}
+.noMatchText {
+  margin: 0;
+  color: var(--g-ink2);
+  font-size: 14.5px;
+}
+
+/* ---------- Person profile ---------- */
+.profile {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-width: 760px;
+}
+.profileCard {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: clamp(20px, 4cqw, 36px);
+  border-radius: 24px;
+  background: var(--g-surface);
+  border: 1px solid var(--g-line);
+  box-shadow: var(--g-sh1);
+}
+.profileHead {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.profileText {
+  flex: 1 1 220px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.profileName {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: clamp(32px, 4.4cqw, 42px);
+  line-height: 1.05;
+}
+.profileJob {
+  margin: 0;
+  color: var(--g-ink2);
+  font-size: 16px;
+}
+.profileAction {
+  flex: none;
+  min-height: 48px;
+  padding: 0 20px;
+  font-size: 15.5px;
+}
+
+.facts {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  padding-top: 20px;
+  border-top: 1px solid var(--g-line);
+}
+.fact {
+  min-width: 0;
+}
+.fact dt {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--g-ink3);
+}
+.fact dd {
+  margin: 2px 0 0;
+  overflow-wrap: anywhere;
+}
+.role {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.roleIcon {
+  color: var(--g-ink3);
+}
+.fact .recvLabel {
+  color: var(--g-recv);
+}
+.recvValue {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 22px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.recvIcon {
+  color: var(--g-recv);
+}

@@ -25,4 +25,13 @@ namespace Gratia.Application.Exceptions
     {
         public BusinessRuleException(string message) : base(message) { }
     }
+
+    /// <summary>
+    /// An email couldn't be sent, e.g. the SMTP server is down (503, so the caller knows to try again). Thrown by
+    /// IEmailService; a handler that saved something the email was about undoes it first (#20).
+    /// </summary>
+    public sealed class EmailDeliveryException : Exception
+    {
+        public EmailDeliveryException(string message, Exception? innerException = null) : base(message, innerException) { }
+    }
 }

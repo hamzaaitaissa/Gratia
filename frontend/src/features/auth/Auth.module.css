@@ -1,0 +1,186 @@
+.form {
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+.intro {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.title {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: 44px;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+}
+.lead {
+  margin: 0;
+  color: var(--g-ink2);
+  font-size: 15.5px;
+}
+.failure {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--g-danger-soft);
+  color: var(--g-danger);
+  font-size: 14.5px;
+  font-weight: 500;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.submit {
+  min-height: 48px;
+  font-size: 15.5px;
+}
+.note {
+  margin: 8px 0 0;
+  padding-top: 20px;
+  border-top: 1px solid var(--g-line);
+  font-size: 14px;
+  color: var(--g-ink2);
+}
+.note a,
+.linkButton {
+  color: var(--g-primary-ink);
+  font-weight: 600;
+  text-underline-offset: 2px;
+}
+.linkButton {
+  all: unset;
+  cursor: pointer;
+  color: var(--g-primary-ink);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* ---------- Accept invitation ---------- */
+.wide {
+  max-width: 460px;
+}
+.company {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.companyTile {
+  width: 48px;
+  height: 48px;
+  flex: none;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: var(--g-brand);
+  color: var(--g-on-brand);
+  font-weight: 700;
+  font-size: 16px;
+}
+.companyName {
+  font-weight: 600;
+  font-size: 16px;
+}
+.companySub {
+  font-size: 13.5px;
+  color: var(--g-ink3);
+}
+.facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: var(--g-surface2);
+}
+.factLabel {
+  font-size: 12.5px;
+  color: var(--g-ink3);
+  font-weight: 600;
+}
+.factValue {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 15px;
+  overflow-wrap: anywhere;
+}
+.factIcon {
+  color: var(--g-ink3);
+}
+.hint {
+  margin: 0;
+  font-size: 13px;
+  color: var(--g-ink3);
+}
+.optional {
+  font-weight: 400;
+  color: var(--g-ink3);
+}
+
+/* A dead end (expired link, check your email…): one card that says what to do next */
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 28px;
+  border-radius: 20px;
+  background: var(--g-surface);
+  border: 1px solid var(--g-line);
+  box-shadow: var(--g-sh1);
+}
+.cardIcon {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--g-surface2);
+  color: var(--g-ink2);
+}
+.cardTitle {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: 34px;
+  line-height: 1.1;
+}
+.cardText {
+  margin: 0;
+  color: var(--g-ink2);
+  font-size: 15.5px;
+  text-wrap: pretty;
+}
+.cardActions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* ---------- Session expired ---------- */
+.plain {
+  width: 100%;
+  max-width: 440px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+}
+.plainIcon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--g-surface2);
+  color: var(--g-ink2);
+}

@@ -16,6 +16,11 @@ namespace Gratia.Infrastructure.Authentication
         public string Issuer { get; set; } = string.Empty;
         public string Audience { get; set; } = string.Empty;
 
+        // How long an access token works, and how long a device stays signed in without using the app (#15).
+        // Every refresh starts a new RefreshTokenDays period.
+        public int AccessTokenMinutes { get; set; } = 60;
+        public int RefreshTokenDays { get; set; } = 7;
+
         public SymmetricSecurityKey CreateSigningKey() => new(Encoding.UTF8.GetBytes(Token));
     }
 }

@@ -45,14 +45,27 @@ public sealed class ResendInvitationCommandHandler(
         var inviter = await userRepository.GetByIdAsync(inviterId)
             ?? throw new NotFoundException("User not found");
 
-        // A new token, so a link from an earlier email stops working; the 7 days start again
+        // A new token, so a link from an earlier email stops working; the 7 days start again. Saved before sending, so
+        // the new link works the moment it arrives.
+        var (previousToken, previousExpiry) = (invitation.InvitationToken, invitation.ExpiresAt);
         invitation.InvitationToken = InvitationTokens.Generate();
         invitation.ExpiresAt = DateTime.UtcNow.Add(InvitationTokens.Lifetime);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        // Known issue (TASKS.md #20 / #55): if sending fails, the new token is already saved
-        await emailService.SendInvitationEmailAsync(invitation.Email, invitation.InvitationToken, company.Name, inviter.FullName, inviter.Email,
-            cancellationToken);
+        try
+        {
+            await emailService.SendInvitationEmailAsync(invitation.Email, invitation.InvitationToken, company.Name, inviter.FullName,
+                inviter.Email, cancellationToken);
+        }
+        catch
+        {
+            // #20: otherwise the link the invitee already has would stop working with no new one to replace it.
+            // Not cancellable: the request may be what was cancelled.
+            invitation.InvitationToken = previousToken;
+            invitation.ExpiresAt = previousExpiry;
+            await unitOfWork.SaveChangesAsync(CancellationToken.None);
+            throw;
+        }
 
         return invitation.ToDto();
     }

@@ -32,7 +32,7 @@ namespace Gratia.API.Controllers
         [HttpGet("{id:guid}")]
         public async Task<ActionResult<ReadTransactionDto>> GetTransaction(Guid id, CancellationToken cancellationToken)
         {
-            var transaction = await _sender.Send(new GetTransactionByIdQuery(id, _currentUserService.UserId), cancellationToken);
+            var transaction = await _sender.Send(new GetTransactionByIdQuery(id, _currentUserService.UserId, _currentUserService.CompanyId), cancellationToken);
             return Ok(transaction);
         }
 

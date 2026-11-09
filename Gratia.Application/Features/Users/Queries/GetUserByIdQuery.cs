@@ -6,14 +6,16 @@ using Mediator;
 
 namespace Gratia.Application.Features.Users.Queries;
 
-public sealed record GetUserByIdQuery(Guid UserId) : IQuery<ReadUserDto>;
+// CallerCompanyId is the signed-in user's company: a user in another company, or a deactivated one (#16), gets the
+// same 404 as one that doesn't exist
+public sealed record GetUserByIdQuery(Guid UserId, Guid CallerCompanyId) : IQuery<ReadUserDto>;
 
 public sealed class GetUserByIdQueryHandler(IUserRepository userRepository)
     : IQueryHandler<GetUserByIdQuery, ReadUserDto>
 {
     public async ValueTask<ReadUserDto> Handle(GetUserByIdQuery query, CancellationToken cancellationToken)
     {
-        var user = await userRepository.GetByIdAsync(query.UserId)
+        var user = await userRepository.GetByIdInCompanyAsync(query.UserId, query.CallerCompanyId)
             ?? throw new NotFoundException($"User {query.UserId} was not found.");
 
         return user.ToReadDto();

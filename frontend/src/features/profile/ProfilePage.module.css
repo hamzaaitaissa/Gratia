@@ -1,0 +1,161 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 760px;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding: clamp(20px, 4cqw, 32px);
+  border-radius: 24px;
+  background: var(--g-surface);
+  border: 1px solid var(--g-line);
+  box-shadow: var(--g-sh1);
+}
+.head {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+.headText {
+  min-width: 0;
+}
+.name {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 600;
+}
+.job {
+  margin: 2px 0 0;
+  color: var(--g-ink2);
+}
+.facts {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  padding-top: 18px;
+  border-top: 1px solid var(--g-line);
+}
+.fact {
+  min-width: 0;
+}
+.fact dt {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--g-ink3);
+}
+.fact dd {
+  margin: 2px 0 0;
+  overflow-wrap: anywhere;
+}
+
+.balances {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+.balance {
+  flex: 1 1 240px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 20px;
+  border-radius: 20px;
+  background: var(--g-surface);
+  border: 1px solid var(--g-line);
+}
+.balanceLabel {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+}
+.give {
+  color: var(--g-primary-ink);
+}
+.recv {
+  color: var(--g-recv);
+}
+.balanceLine {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.big {
+  font-family: var(--font-serif);
+  font-size: 42px;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+.ofLeft {
+  font-weight: 600;
+}
+.inTotal {
+  color: var(--g-ink2);
+}
+.balanceNote {
+  font-size: 14px;
+  color: var(--g-ink2);
+}
+
+.admin {
+  display: flex;
+  flex-direction: column;
+  border-radius: 20px;
+  background: var(--g-surface);
+  border: 1px solid var(--g-line);
+  overflow: hidden;
+}
+.adminHeading {
+  padding: 14px 16px 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--g-ink3);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.adminLink {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 52px;
+  padding: 0 16px;
+  border-top: 1px solid var(--g-line);
+  color: var(--g-ink);
+  font-size: 15px;
+  text-decoration: none;
+}
+.adminLink:hover {
+  background: var(--g-surface2);
+  color: var(--g-ink);
+}
+.adminIcon {
+  color: var(--g-ink2);
+}
+.adminLabel {
+  flex: 1;
+}
+.adminChevron {
+  color: var(--g-ink3);
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.actions .signOut {
+  color: var(--g-danger);
+}
+.actions .signOut:hover:not(:disabled) {
+  background: var(--g-danger-soft);
+}

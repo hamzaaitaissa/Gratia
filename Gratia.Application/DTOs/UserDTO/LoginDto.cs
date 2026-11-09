@@ -10,8 +10,8 @@ namespace Gratia.Application.DTOs.UserDTO
     public class LoginDto
     {
         [Required, EmailAddress]
-        public string Email { get; set; }
+        public string? Email { get; set; }
         [Required, MinLength(8)]
-        public string HashedPassword { get; set; }
+        public string? HashedPassword { get; set; }
     }
 }

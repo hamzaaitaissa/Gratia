@@ -1,3 +1,4 @@
+using Gratia.Application.Exceptions;
 using Gratia.Application.Interfaces;
 using Gratia.Application.Settings;
 using Microsoft.Extensions.Options;
@@ -38,7 +39,18 @@ namespace Gratia.Infrastructure.Email
 
         private string FrontendUrl(string path) => _frontend.FrontendUrl.TrimEnd('/') + path;
 
-        private Task SendAsync(string toEmail, EmailContent content, CancellationToken cancellationToken) =>
-            _sender.SendAsync(toEmail, content, cancellationToken);
+        // Any failure other than the caller cancelling becomes EmailDeliveryException (503), so handlers can undo what
+        // the email was about without knowing SMTP's exception types (#20)
+        private async Task SendAsync(string toEmail, EmailContent content, CancellationToken cancellationToken)
+        {
+            try
+            {
+                await _sender.SendAsync(toEmail, content, cancellationToken);
+            }
+            catch (Exception ex) when (!cancellationToken.IsCancellationRequested)
+            {
+                throw new EmailDeliveryException("The email couldn't be sent. Try again in a moment.", ex);
+            }
+        }
     }
 }

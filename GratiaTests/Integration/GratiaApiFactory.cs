@@ -1,6 +1,8 @@
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Security.Cryptography;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Gratia.Application.DTOs.Token;
 using Gratia.Application.Interfaces;
 using Gratia.Domain.Entities;
@@ -25,6 +27,9 @@ public sealed class GratiaApiFactory : WebApplicationFactory<Program>, IAsyncLif
 {
     public const string Password = "Password123!";
 
+    // How the API writes JSON: the web defaults, with enums as names (#52). Use it to read DTOs that contain a role.
+    public static JsonSerializerOptions Json { get; } = new(JsonSerializerDefaults.Web) { Converters = { new JsonStringEnumConverter() } };
+
     // An in-memory SQLite database lives as long as its connection stays open
     private readonly SqliteConnection _connection = new("DataSource=:memory:");
 
@@ -45,7 +50,12 @@ public sealed class GratiaApiFactory : WebApplicationFactory<Program>, IAsyncLif
         builder.UseSetting("AppSettings:FrontendUrl", "http://localhost:5173");
         builder.UseSetting("EMAIL_CONFIGURATION:EMAIL", "noreply@gratia.test"); // never used: FakeEmailService replaces SMTP
         builder.UseSetting("EMAIL_CONFIGURATION:PASSWORD", "unused");
-        builder.UseSetting("RateLimiting:SignupPerHour", "1000"); // every test request comes from the same (empty) IP
+        // Every test request comes from the same (empty) IP. RateLimitTests lowers these on a copy of the factory.
+        builder.UseSetting("RateLimiting:SignupPerHour", "1000");
+        builder.UseSetting("RateLimiting:LoginPerMinute", "1000");
+        builder.UseSetting("RateLimiting:RefreshPerMinute", "1000");
+        // The background refill would share the SQLite connection with the tests; PointsCycleTests sends the command itself
+        builder.UseSetting("PointsReset:Enabled", "false");
 
         builder.ConfigureTestServices(services =>
         {
@@ -94,6 +104,26 @@ public sealed class GratiaApiFactory : WebApplicationFactory<Program>, IAsyncLif
         using var scope = Services.CreateScope();
         return await action(scope.ServiceProvider.GetRequiredService<GratiaDbContext>());
     }
+
+    /// <summary>
+    /// Adds a throwaway user who can log in with <see cref="Password"/>, for tests that change balances or delete
+    /// users, so they don't affect the seeded users that other tests in the class rely on.
+    /// </summary>
+    public async Task<(Guid Id, string Email)> AddUserAsync(Company company, int pointsAvailable = 25)
+    {
+        using var scope = Services.CreateScope();
+        var hasher = scope.ServiceProvider.GetRequiredService<IPasswordHashingService>();
+        var db = scope.ServiceProvider.GetRequiredService<GratiaDbContext>();
+
+        var user = new User("Temp User", $"{Guid.NewGuid():N}@{company.Domain}", hasher.HashPassword(Password), "Tester",
+            UserRole.Employee, 0, pointsAvailable, company.Id);
+        db.Users.Add(user);
+        await db.SaveChangesAsync();
+        return (user.Id, user.Email);
+    }
+
+    public Task<Guid> UserIdAsync(string email) =>
+        WithDbAsync(db => db.Users.Where(u => u.Email == email).Select(u => u.Id).SingleAsync());
 
     /// <summary>Logs in through the API and returns a client that sends the access token.</summary>
     public async Task<HttpClient> CreateClientForAsync(string email, string password = Password)

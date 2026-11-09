@@ -8,8 +8,12 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Gratia.API.Controllers
 {
+    // Callers only ever see their own company. There's deliberately no list of companies: no role may see
+    // the others, and the list would reveal which domains have a workspace (TASKS.md #22).
+    // Companies are created by signing up (POST /api/auth/register-company).
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class CompanyController : ControllerBase
     {
         private readonly ISender _sender;
@@ -21,24 +25,24 @@ namespace Gratia.API.Controllers
             _currentUserService = currentUserService;
         }
 
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<ReadCompanyDto>>> GetAll(CancellationToken cancellationToken)
+        // The signed-in user's company, e.g. for the frontend's branding
+        [HttpGet("me")]
+        public async Task<ActionResult<ReadCompanyDto>> GetMine(CancellationToken cancellationToken)
         {
-            var companies = await _sender.Send(new GetAllCompaniesQuery(), cancellationToken);
-            return Ok(companies);
+            var companyId = _currentUserService.CompanyId;
+            var company = await _sender.Send(new GetCompanyByIdQuery(companyId, companyId), cancellationToken);
+            return Ok(company);
         }
 
         [HttpGet("{id:guid}")]
         public async Task<ActionResult<ReadCompanyDto>> Get(Guid id, CancellationToken cancellationToken)
         {
-            var company = await _sender.Send(new GetCompanyByIdQuery(id), cancellationToken);
+            var company = await _sender.Send(new GetCompanyByIdQuery(id, _currentUserService.CompanyId), cancellationToken);
             return Ok(company);
         }
 
-        // Companies are created by signing up (POST /api/auth/register-company)
-
         [HttpPut("{id:guid}")]
-        [Authorize("Admin")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Update(Guid id, [FromBody] UpdateCompanyDto updateCompanyDto, CancellationToken cancellationToken)
         {
             if (id != updateCompanyDto.Id)

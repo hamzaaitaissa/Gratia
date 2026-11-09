@@ -1,5 +1,6 @@
 namespace Gratia.Application.Interfaces
 {
+    // Every method throws EmailDeliveryException when the email can't be sent (#20)
     public interface IEmailService
     {
         // An invitation to join an existing company. It names the inviter, so the recipient can judge it.

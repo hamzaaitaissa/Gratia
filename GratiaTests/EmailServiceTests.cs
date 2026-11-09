@@ -1,3 +1,5 @@
+using System.Net.Mail;
+using Gratia.Application.Exceptions;
 using Gratia.Application.Settings;
 using Gratia.Infrastructure.Email;
 using Microsoft.Extensions.Logging;
@@ -45,6 +47,35 @@ namespace GratiaTests
             Assert.Contains("To: bob@acme.test", message);
             Assert.Contains("Accept invitation (http://localhost:5173/accept-invitation/abc123)", message);
             Assert.DoesNotContain("<a ", message);
+        }
+
+        [Fact]
+        public async Task A_failed_send_becomes_an_EmailDeliveryException()
+        {
+            var service = new EmailService(new FailingSender(new SmtpException(SmtpStatusCode.ServiceNotAvailable, "Service not available")),
+                Options.Create(new FrontendOptions { FrontendUrl = "http://localhost:5173" }));
+
+            // The API answers 503 for it, and the invite and resend handlers undo what the email was about (#20)
+            var error = await Assert.ThrowsAsync<EmailDeliveryException>(() =>
+                service.SendInvitationEmailAsync("bob@acme.test", "abc123", "Acme", "Ada", "ada@acme.test"));
+            Assert.IsType<SmtpException>(error.InnerException);
+        }
+
+        [Fact]
+        public async Task A_send_the_caller_cancelled_stays_a_cancellation()
+        {
+            using var cancelled = new CancellationTokenSource();
+            await cancelled.CancelAsync();
+            var service = new EmailService(new FailingSender(new OperationCanceledException(cancelled.Token)),
+                Options.Create(new FrontendOptions { FrontendUrl = "http://localhost:5173" }));
+
+            await Assert.ThrowsAsync<OperationCanceledException>(() =>
+                service.SendInvitationEmailAsync("bob@acme.test", "abc123", "Acme", "Ada", "ada@acme.test", cancelled.Token));
+        }
+
+        private sealed class FailingSender(Exception failure) : IEmailSender
+        {
+            public Task SendAsync(string toEmail, EmailContent content, CancellationToken cancellationToken) => Task.FromException(failure);
         }
 
         private sealed class CapturingSender : IEmailSender

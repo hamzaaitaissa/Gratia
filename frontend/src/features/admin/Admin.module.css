@@ -1,0 +1,315 @@
+/* Shared by the three admin pages */
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.toolbar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.search {
+  position: relative;
+  flex: 1 1 260px;
+  max-width: 440px;
+}
+.searchIcon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--g-ink3);
+  pointer-events: none;
+}
+.search .searchInput {
+  padding-left: 44px;
+}
+.count {
+  font-size: 13.5px;
+  color: var(--g-ink3);
+  margin-left: auto;
+}
+.sortLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--g-ink2);
+}
+.select {
+  height: 44px;
+  padding: 0 10px;
+  border-radius: 10px;
+  border: 1px solid var(--g-line2);
+  background: var(--g-surface);
+  color: var(--g-ink);
+  font: inherit;
+  font-size: 15px;
+}
+
+/* ---------- Tables (desktop) ---------- */
+.tableWrap {
+  border-radius: 16px;
+  background: var(--g-surface);
+  border: 1px solid var(--g-line);
+  overflow: auto;
+}
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14.5px;
+}
+.table thead tr {
+  text-align: left;
+  background: var(--g-surface2);
+}
+.table th {
+  padding: 0 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--g-ink2);
+  white-space: nowrap;
+}
+.table th:first-child,
+.table td:first-child {
+  padding-left: 16px;
+}
+.table th:last-child,
+.table td:last-child {
+  padding-right: 12px;
+}
+.table td {
+  padding: 10px 8px;
+  border-top: 1px solid var(--g-line);
+}
+.plainTh {
+  padding-top: 12px !important;
+  padding-bottom: 12px !important;
+}
+.num {
+  text-align: right !important;
+  font-variant-numeric: tabular-nums;
+}
+.strong {
+  font-weight: 600;
+}
+.muted {
+  color: var(--g-ink2);
+}
+.wrapAnywhere {
+  overflow-wrap: anywhere;
+}
+.nowrap {
+  white-space: nowrap;
+}
+.actionsCell {
+  text-align: right;
+  white-space: nowrap;
+  padding-top: 6px !important;
+  padding-bottom: 6px !important;
+}
+.sortButton {
+  all: unset;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 44px;
+  border-radius: 4px;
+}
+.sortIcon {
+  color: var(--g-ink3);
+}
+.sortIconOn {
+  color: var(--g-ink);
+}
+.giveHead {
+  color: var(--g-primary-ink);
+}
+.recvHead {
+  color: var(--g-recv);
+}
+.person {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.you {
+  font-size: 12px;
+  color: var(--g-ink3);
+}
+.rolePill {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  height: 24px;
+  padding: 0 9px;
+  border-radius: 999px;
+  background: var(--g-surface2);
+  color: var(--g-ink2);
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.iconButton {
+  width: 44px;
+  height: 44px;
+  display: inline-grid;
+  place-items: center;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--g-ink2);
+  cursor: pointer;
+}
+.iconButton:hover:not(:disabled) {
+  background: var(--g-surface2);
+  color: var(--g-ink);
+}
+.dangerIcon {
+  color: var(--g-danger);
+}
+.dangerIcon:hover:not(:disabled) {
+  background: var(--g-danger-soft);
+  color: var(--g-danger);
+}
+.textButton {
+  min-height: 40px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--g-primary-ink);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.textButton:hover:not(:disabled) {
+  background: var(--g-primary-soft);
+}
+.textDanger {
+  color: var(--g-danger);
+}
+.textDanger:hover:not(:disabled) {
+  background: var(--g-danger-soft);
+}
+
+/* ---------- Cards (mobile) ---------- */
+.cards {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: var(--g-surface);
+  border: 1px solid var(--g-line);
+}
+.cardHead {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 0;
+}
+.cardText {
+  flex: 1;
+  min-width: 0;
+}
+.cardName {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  font-weight: 600;
+}
+.cardSub {
+  font-size: 13.5px;
+  color: var(--g-ink3);
+  overflow-wrap: anywhere;
+}
+.cardNumbers {
+  display: flex;
+  gap: 16px;
+  font-size: 13.5px;
+  flex-wrap: wrap;
+}
+.cardGive {
+  color: var(--g-primary-ink);
+  font-weight: 600;
+}
+.cardRecv {
+  color: var(--g-recv);
+  font-weight: 600;
+}
+.cardNumbers .unit {
+  font-weight: 400;
+  color: var(--g-ink2);
+}
+.cardActions {
+  display: flex;
+  gap: 8px;
+}
+.cardAction {
+  flex: 1;
+  min-height: 44px;
+  border-radius: 12px;
+  border: 1px solid var(--g-line2);
+  background: var(--g-surface);
+  color: var(--g-ink);
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.cardAction.primaryText {
+  color: var(--g-primary-ink);
+}
+.cardAction.dangerText {
+  color: var(--g-danger);
+}
+
+.noMatch {
+  margin: 0;
+  padding: 32px;
+  text-align: center;
+  color: var(--g-ink2);
+}
+
+/* ---------- Sections ---------- */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.sectionHead {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.sectionTitle {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 600;
+}
+.sectionNote {
+  font-size: 13.5px;
+  color: var(--g-ink3);
+}
+.warnInline {
+  margin: 0;
+  display: flex;
+  gap: 6px;
+  font-size: 13.5px;
+  color: var(--g-warn, #8a5a00);
+}

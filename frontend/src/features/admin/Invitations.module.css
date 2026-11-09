@@ -1,0 +1,143 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.formCard {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 22px;
+  border-radius: 20px;
+  background: var(--g-surface);
+  border: 1px solid var(--g-line);
+  box-shadow: var(--g-sh1);
+  max-width: 760px;
+}
+.cardTitle {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  font-weight: 600;
+}
+.cardIcon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  background: var(--g-primary-soft);
+  color: var(--g-primary-ink);
+}
+.formRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: flex-start;
+}
+.emailField {
+  flex: 2 1 280px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.roleField {
+  flex: 1 1 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.segmented {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 12px;
+  background: var(--g-surface2);
+}
+.segment {
+  flex: 1;
+  min-height: 40px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--g-ink);
+  font-size: 14.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.segment[aria-checked='true'] {
+  background: var(--g-surface);
+  box-shadow: var(--g-sh1);
+}
+.hint {
+  margin: 0;
+  font-size: 13px;
+  color: var(--g-ink3);
+}
+.send {
+  align-self: flex-start;
+}
+
+.status {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  align-items: flex-start;
+}
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 24px;
+  padding: 0 9px 0 7px;
+  border-radius: 999px;
+  background: var(--g-info-soft, #e5edf7);
+  color: var(--g-info, #2f5785);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.expires {
+  font-size: 12.5px;
+  color: var(--g-ink3);
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 10px;
+  padding: 36px 24px;
+  border-radius: 20px;
+  border: 1.5px dashed var(--g-line2);
+}
+.emptyIcon {
+  color: var(--g-ink3);
+}
+.emptyTitle {
+  margin: 0;
+  font-weight: 600;
+}
+.emptyText {
+  margin: 0;
+  color: var(--g-ink2);
+  font-size: 14.5px;
+  max-width: 42ch;
+}
+.expired {
+  background: var(--g-warn-soft, #fbf0d8);
+  color: var(--g-warn, #8a5a00);
+}
+.failure {
+  display: flex;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--g-danger-soft);
+  color: var(--g-danger);
+  font-size: 14px;
+}

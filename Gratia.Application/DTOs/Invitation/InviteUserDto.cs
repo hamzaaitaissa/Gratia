@@ -12,7 +12,8 @@ namespace Gratia.Application.DTOs.Invitation
     {
         [Required]
         [EmailAddress]
-        public string Email { get; set; }
+        public string? Email { get; set; }
+        [EnumDataType(typeof(UserRole))]
         public UserRole Role { get; set; } = UserRole.Employee;
     }
 }

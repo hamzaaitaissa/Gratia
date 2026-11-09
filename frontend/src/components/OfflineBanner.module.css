@@ -1,0 +1,13 @@
+.banner {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: var(--g-ink);
+  color: var(--g-bg);
+  font-size: 14px;
+  text-align: center;
+  z-index: 5;
+}

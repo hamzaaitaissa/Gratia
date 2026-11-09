@@ -37,28 +37,43 @@ namespace Gratia.Infrastructure.Repositories
         public async Task<IEnumerable<Transaction>> GetByReceiverIdAsync(Guid receiverId)
         {
             return await _gratiaContext.Transactions
-                .Where(t => t.ReceiverId == receiverId).Include(t => t.Sender)
+                .AsNoTracking()
+                .Where(t => t.ReceiverId == receiverId)
+                .Include(t => t.Sender)
                 .Include(t => t.Receiver)
                 .Include(t => t.Company)
-                .OrderByDescending(t => t.CreatedDate).
-                ToListAsync();
+                .OrderByDescending(t => t.CreatedDate)
+                .ThenByDescending(t => t.Id)
+                .ToListAsync();
         }
 
         public async Task<IEnumerable<Transaction>> GetBySenderIdAsync(Guid senderId)
         {
             return await _gratiaContext.Transactions
+                .AsNoTracking()
                 .Where(t => t.SenderId == senderId)
                 .Include(t => t.Sender)
                 .Include(t => t.Receiver)
                 .Include(t => t.Company)
                 .OrderByDescending(t => t.CreatedDate)
+                .ThenByDescending(t => t.Id)
                 .ToListAsync();
         }
 
         public async Task<IEnumerable<Transaction>> GetCompanyTransactionHistoryAsync(Guid companyId, int page = 1, int pageSize = 10)
         {
-            return await _gratiaContext.Transactions.Where(t => t.CompanyId == companyId)
-                .Skip(page).Take(pageSize).ToListAsync();
+            // Newest first. The Id breaks ties, so the pages never overlap or skip a row.
+            return await _gratiaContext.Transactions
+                .AsNoTracking()
+                .Where(t => t.CompanyId == companyId)
+                .Include(t => t.Sender)
+                .Include(t => t.Receiver)
+                .Include(t => t.Company)
+                .OrderByDescending(t => t.CreatedDate)
+                .ThenByDescending(t => t.Id)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
         }
 
         public async Task<int> GetTotalTransactionCountAsync(Guid companyId)
@@ -69,12 +84,14 @@ namespace Gratia.Infrastructure.Repositories
         public async Task<IEnumerable<Transaction>> GetUserTransactionHistoryAsync(Guid userId)
         {
             return await _gratiaContext.Transactions
-                            .Where(t => t.SenderId == userId || t.ReceiverId == userId)
-                            .Include(t => t.Sender)
-                            .Include(t => t.Receiver)
-                            .Include(t => t.Company)
-                            .OrderByDescending(t => t.CreatedDate)
-                            .ToListAsync();
+                .AsNoTracking()
+                .Where(t => t.SenderId == userId || t.ReceiverId == userId)
+                .Include(t => t.Sender)
+                .Include(t => t.Receiver)
+                .Include(t => t.Company)
+                .OrderByDescending(t => t.CreatedDate)
+                .ThenByDescending(t => t.Id)
+                .ToListAsync();
         }
     }
 }
