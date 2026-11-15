@@ -1,4 +1,5 @@
 ﻿using Gratia.Domain.Entities;
+using Gratia.Domain.Enum;
 
 namespace Gratia.Domain.Repositories
 {
@@ -20,6 +21,13 @@ namespace Gratia.Domain.Repositories
         // Expects a normalized email (EmailAddresses.Normalize)
         Task<User?> GetByEmailAsync(string email);
         Task<bool> AnyInCompanyAsync(Guid companyId);
+
+        // Whether the user is active, in that company and has that role: what an access token claims (#73). One
+        // primary-key lookup with nothing loaded, because it runs on every authenticated request.
+        Task<bool> IsActiveWithRoleAsync(Guid id, Guid companyId, UserRole role, CancellationToken cancellationToken = default);
+
+        // Whether the company has an active admin other than exceptUserId (#63)
+        Task<bool> HasOtherActiveAdminAsync(Guid companyId, Guid exceptUserId, CancellationToken cancellationToken = default);
 
         // Saved by IUnitOfWork.SaveChangesAsync
         void Add(User user);

@@ -63,6 +63,35 @@ public sealed class PointsCycleTests(GratiaApiFactory factory) : IClassFixture<G
     }
 
     [Fact]
+    public async Task A_company_whose_refill_fails_holds_up_no_one_and_is_refilled_on_the_next_run()
+    {
+        var (failing, failingAdmin) = await AddCompanyAsync(allowance: 40, resetDay: 21, periodStartedAt: Utc(2026, 10, 21), members: 2, pointsLeft: 3);
+        var (other, _) = await AddCompanyAsync(allowance: 30, resetDay: 21, periodStartedAt: Utc(2026, 10, 21), members: 1, pointsLeft: 3);
+
+        // The refill of one company's members fails after its period was claimed, as a lock timeout or a deadlock would
+        var failRefill = "CREATE TRIGGER FailRefill BEFORE UPDATE OF NumberOfPointsAvailable ON Users " +
+            $"WHEN OLD.CompanyId = (SELECT Id FROM Companies WHERE Domain = '{failingAdmin.Split('@')[1]}') " +
+            "BEGIN SELECT RAISE(ABORT, 'refill failed'); END";
+        await factory.WithDbAsync(db => db.Database.ExecuteSqlRawAsync(failRefill));
+        try
+        {
+            await ResetAsync(Utc(2026, 11, 21, 0, 5)); // used to throw, whether the failing company came first or last
+        }
+        finally
+        {
+            await factory.WithDbAsync(db => db.Database.ExecuteSqlRawAsync("DROP TRIGGER FailRefill"));
+        }
+
+        Assert.All(await PointsLeftAsync(other), points => Assert.Equal(30, points));
+        Assert.All(await PointsLeftAsync(failing), points => Assert.Equal(3, points));
+        Assert.Equal(Utc(2026, 10, 21), await PeriodStartedAtAsync(failing)); // the claim rolled back with the refill
+
+        await ResetAsync(Utc(2026, 11, 21, 0, 15));
+        Assert.All(await PointsLeftAsync(failing), points => Assert.Equal(40, points));
+        Assert.Equal(Utc(2026, 11, 21), await PeriodStartedAtAsync(failing));
+    }
+
+    [Fact]
     public async Task The_company_shows_its_cycle()
     {
         var (_, adminEmail) = await AddCompanyAsync(allowance: 25, resetDay: 21, periodStartedAt: null);

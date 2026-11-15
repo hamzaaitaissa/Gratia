@@ -9,8 +9,8 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace GratiaTests.Integration;
 
-// The API only accepts access tokens it issued itself, for itself (#25). Each token here is signed with the real key,
-// so the one thing wrong with it is what gets it refused.
+// The API only accepts access tokens it issued itself, for itself (#25), that still describe their user (#73). Each
+// token here is signed with the real key, so the one thing wrong with it is what gets it refused.
 public sealed class JwtValidationTests(GratiaApiFactory factory) : IClassFixture<GratiaApiFactory>
 {
     [Fact]
@@ -44,11 +44,20 @@ public sealed class JwtValidationTests(GratiaApiFactory factory) : IClassFixture
         Assert.Equal(HttpStatusCode.Unauthorized, await CallWithAsync(await TokenAsync(expires: DateTime.UtcNow.AddMinutes(-2))));
     }
 
+    [Fact]
+    public async Task A_token_that_no_longer_describes_its_user_is_refused()
+    {
+        // Correctly signed, but the employee isn't an admin, isn't in Globex, or the user doesn't exist (#73)
+        Assert.Equal(HttpStatusCode.Unauthorized, await CallWithAsync(await TokenAsync(role: "Admin")));
+        Assert.Equal(HttpStatusCode.Unauthorized, await CallWithAsync(await TokenAsync(companyId: factory.Globex.Id)));
+        Assert.Equal(HttpStatusCode.Unauthorized, await CallWithAsync(await TokenAsync(userId: Guid.NewGuid())));
+    }
+
     private async Task<string> TokenAsync(string? issuer = null, string? audience = null, string algorithm = SecurityAlgorithms.HmacSha512,
-        DateTime? expires = null)
+        DateTime? expires = null, Guid? userId = null, string role = "Employee", Guid? companyId = null)
     {
         var options = factory.Services.GetRequiredService<IOptions<JwtOptions>>().Value;
-        var userId = await factory.UserIdAsync(factory.AcmeEmployeeEmail);
+        var subject = userId ?? await factory.UserIdAsync(factory.AcmeEmployeeEmail);
         var expiry = expires ?? DateTime.UtcNow.AddMinutes(10);
 
         var token = new JwtSecurityToken(
@@ -56,10 +65,10 @@ public sealed class JwtValidationTests(GratiaApiFactory factory) : IClassFixture
             audience: audience ?? options.Audience,
             claims:
             [
-                new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
+                new Claim(ClaimTypes.NameIdentifier, subject.ToString()),
                 new Claim(ClaimTypes.Email, factory.AcmeEmployeeEmail),
-                new Claim(ClaimTypes.Role, "Employee"),
-                new Claim("CompanyId", factory.Acme.Id.ToString())
+                new Claim(ClaimTypes.Role, role),
+                new Claim("CompanyId", (companyId ?? factory.Acme.Id).ToString())
             ],
             notBefore: expiry.AddHours(-1),
             expires: expiry,

@@ -30,7 +30,7 @@ public sealed class RefreshTokenCommandHandler(
         if (!await refreshTokenRepository.TryConsumeAsync(stored.Id, now, cancellationToken))
             return null; // another refresh with the same token got there first
 
-        // From the user as they are now, so a changed role or a move takes effect at the next refresh
+        // From the user as they are now: after a role change the old access token is refused (#73), and this one has the new role
         var tokens = tokenService.GenerateTokens(stored.User.ToReadDto());
         refreshTokenRepository.Add(new RefreshToken(stored.UserId, tokenService.HashRefreshToken(tokens.RefreshToken), tokens.RefreshTokenExpiryTime));
 

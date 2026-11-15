@@ -135,25 +135,63 @@ public sealed class AuthEndpointsTests(GratiaApiFactory factory) : IClassFixture
     }
 
     [Fact]
-    public async Task A_refresh_picks_up_a_changed_role()
+    public async Task A_deactivated_users_access_token_is_refused_at_once()
+    {
+        var (id, email) = await factory.AddUserAsync(factory.Acme);
+        var user = ClientWith((await LoginAsync(email)).AccessToken);
+        Assert.Equal(HttpStatusCode.OK, (await user.GetAsync("/api/user")).StatusCode);
+
+        var admin = await factory.CreateClientForAsync(factory.AcmeAdminEmail);
+        Assert.Equal(HttpStatusCode.NoContent, (await admin.PostAsync($"/api/user/{id}/deactivate", null)).StatusCode);
+
+        // Before #73 it worked until it expired, up to an hour. Refused like an expired token, with no reason given.
+        var refused = await user.GetAsync("/api/user");
+        Assert.Equal(HttpStatusCode.Unauthorized, refused.StatusCode);
+        Assert.Equal("Bearer error=\"invalid_token\"", refused.Headers.WwwAuthenticate.ToString());
+    }
+
+    [Fact]
+    public async Task A_promotion_refuses_the_old_access_token_and_a_refresh_brings_the_new_role()
     {
         var (id, email) = await factory.AddUserAsync(factory.Acme);
         var before = await LoginAsync(email);
         Assert.Equal(HttpStatusCode.Forbidden, (await ClientWith(before.AccessToken).GetAsync("/api/invitation/pending")).StatusCode);
 
         var admin = await factory.CreateClientForAsync(factory.AcmeAdminEmail);
-        var promote = await admin.PutAsJsonAsync($"/api/user/{id}", new
-        {
-            id,
-            fullName = "Temp User",
-            email,
-            jobTitle = "Lead",
-            role = "Admin"
-        });
-        promote.EnsureSuccessStatusCode();
+        (await ChangeRoleAsync(admin, id, email, "Admin")).EnsureSuccessStatusCode();
 
-        var after = (await (await RefreshAsync(before.RefreshToken)).Content.ReadFromJsonAsync<TokenResponseDto>())!;
+        // The old token still says Employee, so it's refused (#73), and the frontend refreshes
+        Assert.Equal(HttpStatusCode.Unauthorized, (await ClientWith(before.AccessToken).GetAsync("/api/user")).StatusCode);
+        var after = await RefreshedAsync(before.RefreshToken);
         Assert.Equal(HttpStatusCode.OK, (await ClientWith(after.AccessToken).GetAsync("/api/invitation/pending")).StatusCode);
+    }
+
+    [Fact]
+    public async Task A_demoted_admin_loses_admin_rights_at_once()
+    {
+        var (id, email) = await factory.AddUserAsync(factory.Acme);
+        var admin = await factory.CreateClientForAsync(factory.AcmeAdminEmail);
+        (await ChangeRoleAsync(admin, id, email, "Admin")).EnsureSuccessStatusCode();
+        var asAdmin = await LoginAsync(email);
+        Assert.Equal(HttpStatusCode.OK, (await ClientWith(asAdmin.AccessToken).GetAsync("/api/invitation/pending")).StatusCode);
+
+        (await ChangeRoleAsync(admin, id, email, "Employee")).EnsureSuccessStatusCode();
+
+        // Before #73 this token kept its admin rights until it expired
+        Assert.Equal(HttpStatusCode.Unauthorized, (await ClientWith(asAdmin.AccessToken).GetAsync("/api/invitation/pending")).StatusCode);
+        var asEmployee = await RefreshedAsync(asAdmin.RefreshToken);
+        Assert.Equal(HttpStatusCode.Forbidden, (await ClientWith(asEmployee.AccessToken).GetAsync("/api/invitation/pending")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await ClientWith(asEmployee.AccessToken).GetAsync("/api/user")).StatusCode);
+    }
+
+    private static Task<HttpResponseMessage> ChangeRoleAsync(HttpClient admin, Guid id, string email, string role) =>
+        admin.PutAsJsonAsync($"/api/user/{id}", new { id, fullName = "Temp User", email, jobTitle = "Lead", role });
+
+    private async Task<TokenResponseDto> RefreshedAsync(string? refreshToken)
+    {
+        var response = await RefreshAsync(refreshToken);
+        response.EnsureSuccessStatusCode();
+        return (await response.Content.ReadFromJsonAsync<TokenResponseDto>())!;
     }
 
     private async Task<TokenResponseDto> LoginAsync(string email)
@@ -163,11 +201,12 @@ public sealed class AuthEndpointsTests(GratiaApiFactory factory) : IClassFixture
         return (await response.Content.ReadFromJsonAsync<TokenResponseDto>())!;
     }
 
-    // The API takes the refresh token as a bare JSON string, as the frontend sends it
-    private Task<HttpResponseMessage> RefreshAsync(string refreshToken) =>
+    // The API takes the refresh token as a bare JSON string, as the frontend sends it. Nullable because
+    // TokenResponseDto's tokens are.
+    private Task<HttpResponseMessage> RefreshAsync(string? refreshToken) =>
         factory.CreateClient().PostAsJsonAsync("/api/auth/refresh-token", refreshToken);
 
-    private HttpClient ClientWith(string accessToken)
+    private HttpClient ClientWith(string? accessToken)
     {
         var client = factory.CreateClient();
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);

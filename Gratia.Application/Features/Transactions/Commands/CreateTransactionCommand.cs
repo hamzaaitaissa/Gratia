@@ -22,7 +22,7 @@ public sealed class CreateTransactionCommandHandler(
 
         var sender = await userRepository.GetByIdAsync(command.SenderId)
             ?? throw new NotFoundException("Sender not found");
-        // A deactivated user's access token works until it expires, but not for giving points (#16)
+        // A deactivated user's access token is already refused (#73); this also covers one deactivated mid-request (#16)
         if (sender.DeactivatedAt is not null)
             throw new ForbiddenException("Your account has been deactivated.");
         // Points stay within a company. A receiver in another company, or a deactivated one, gets the same 404 as one

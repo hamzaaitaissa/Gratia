@@ -2,13 +2,15 @@ using Gratia.Application.Common;
 using Gratia.Application.DTOs.UserDTO;
 using Gratia.Application.Exceptions;
 using Gratia.Application.Mappings;
+using Gratia.Domain.Enum;
 using Gratia.Domain.Repositories;
 using Mediator;
 
 namespace Gratia.Application.Features.Users.Commands;
 
 // CallerCompanyId is the signed-in admin's company: admins can only edit users in their own company.
-// The password isn't part of the edit (#17). A role change applies at the user's next token refresh (#15).
+// The password isn't part of the edit (#17). A role change applies at once: the user's access token stops working and
+// a refresh brings the new role (#73).
 public sealed record UpdateUserCommand(Guid CallerCompanyId, UpdateUserDto User) : ICommand<ReadUserDto>;
 
 public sealed class UpdateUserCommandHandler(
@@ -38,9 +40,15 @@ public sealed class UpdateUserCommandHandler(
                 throw new ConflictException("Another account already uses this email");
         }
 
+        // Demoting an admin, themselves included, must leave the company another one (#63)
+        await using var dbTransaction = await unitOfWork.BeginTransactionAsync(cancellationToken);
+        if (user.Role == UserRole.Admin && dto.Role != UserRole.Admin)
+            await LastAdmin.EnsureAnotherRemainsAsync(companyRepository, userRepository, user.CompanyId, user.Id, cancellationToken);
+
         user.Update(dto.FullName, email, dto.JobTitle ?? string.Empty, dto.Role);
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
+        await dbTransaction.CommitAsync(cancellationToken);
         return user.ToReadDto();
     }
 }

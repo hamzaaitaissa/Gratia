@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using Gratia.Application.DTOs.Transaction;
 using Gratia.Application.DTOs.UserDTO;
+using Gratia.Domain.Enum;
 using Microsoft.EntityFrameworkCore;
 
 namespace GratiaTests.Integration;
@@ -157,6 +158,34 @@ public sealed class UserEndpointsTests(GratiaApiFactory factory) : IClassFixture
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
+    // The last admin (#63)
+
+    [Fact]
+    public async Task The_last_admin_cannot_step_down()
+    {
+        var company = await factory.AddCompanyAsync();
+        var (adminId, adminEmail) = await factory.AddUserAsync(company, role: UserRole.Admin);
+        var (colleagueId, colleagueEmail) = await factory.AddUserAsync(company);
+        var admin = await factory.CreateClientForAsync(adminEmail);
+
+        var refused = await admin.PutAsJsonAsync($"/api/user/{adminId}", UpdateFor(adminId, adminEmail, "Founder", role: "Employee"));
+        Assert.Equal(HttpStatusCode.BadRequest, refused.StatusCode);
+        Assert.Contains("at least one admin", await refused.Content.ReadAsStringAsync());
+        Assert.Equal(UserRole.Admin, await factory.WithDbAsync(db => db.Users.Where(u => u.Id == adminId).Select(u => u.Role).SingleAsync()));
+
+        // Other changes to the last admin are fine
+        Assert.Equal(HttpStatusCode.OK, (await admin.PutAsJsonAsync($"/api/user/{adminId}", UpdateFor(adminId, adminEmail, "CEO", role: "Admin"))).StatusCode);
+
+        // With a second admin, either may step down, but not both
+        Assert.Equal(HttpStatusCode.OK, (await admin.PutAsJsonAsync($"/api/user/{colleagueId}", UpdateFor(colleagueId, colleagueEmail, "Lead", role: "Admin"))).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await admin.PutAsJsonAsync($"/api/user/{adminId}", UpdateFor(adminId, adminEmail, "CEO", role: "Employee"))).StatusCode);
+
+        var colleague = await factory.CreateClientForAsync(colleagueEmail); // signed in after the promotion, so as an admin
+        var last = await colleague.PutAsJsonAsync($"/api/user/{colleagueId}", UpdateFor(colleagueId, colleagueEmail, "Lead", role: "Employee"));
+        Assert.Equal(HttpStatusCode.BadRequest, last.StatusCode);
+        Assert.Contains("at least one admin", await last.Content.ReadAsStringAsync());
+    }
+
     // Deactivation (#16)
 
     [Fact]
@@ -192,8 +221,8 @@ public sealed class UserEndpointsTests(GratiaApiFactory factory) : IClassFixture
         await admin.PostAsync($"/api/user/{giverId}/deactivate", null);
         await admin.PostAsync($"/api/user/{receiverId}/deactivate", null);
 
-        // The giver's access token is still valid, but not for this
-        Assert.Equal(HttpStatusCode.Forbidden, (await giver.PostAsJsonAsync("/api/transaction", Gift(await factory.UserIdAsync(factory.AcmeAdminEmail), 1))).StatusCode);
+        // The giver's access token stops working at once (#73)
+        Assert.Equal(HttpStatusCode.Unauthorized, (await giver.PostAsJsonAsync("/api/transaction", Gift(await factory.UserIdAsync(factory.AcmeAdminEmail), 1))).StatusCode);
         // The frontend says "they may have left the company" for this 404
         Assert.Equal(HttpStatusCode.NotFound, (await admin.PostAsJsonAsync("/api/transaction", Gift(receiverId, 1))).StatusCode);
 

@@ -109,17 +109,29 @@ public sealed class GratiaApiFactory : WebApplicationFactory<Program>, IAsyncLif
     /// Adds a throwaway user who can log in with <see cref="Password"/>, for tests that change balances or delete
     /// users, so they don't affect the seeded users that other tests in the class rely on.
     /// </summary>
-    public async Task<(Guid Id, string Email)> AddUserAsync(Company company, int pointsAvailable = 25)
+    public async Task<(Guid Id, string Email)> AddUserAsync(Company company, int pointsAvailable = 25, UserRole role = UserRole.Employee)
     {
         using var scope = Services.CreateScope();
         var hasher = scope.ServiceProvider.GetRequiredService<IPasswordHashingService>();
         var db = scope.ServiceProvider.GetRequiredService<GratiaDbContext>();
 
         var user = new User("Temp User", $"{Guid.NewGuid():N}@{company.Domain}", hasher.HashPassword(Password), "Tester",
-            UserRole.Employee, 0, pointsAvailable, company.Id);
+            role, 0, pointsAvailable, company.Id);
         db.Users.Add(user);
         await db.SaveChangesAsync();
         return (user.Id, user.Email);
+    }
+
+    /// <summary>An empty company of its own, for tests that need to know exactly who its members are.</summary>
+    public async Task<Company> AddCompanyAsync()
+    {
+        var company = new Company("Temp Co", "", "#123456", "#654321") { Domain = $"{Guid.NewGuid():N}.test" };
+        await WithDbAsync(db =>
+        {
+            db.Companies.Add(company);
+            return db.SaveChangesAsync();
+        });
+        return company;
     }
 
     public Task<Guid> UserIdAsync(string email) =>

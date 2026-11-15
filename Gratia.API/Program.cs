@@ -44,6 +44,8 @@ builder.Services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationSc
             // The default is 5 minutes. This API issues and checks its own tokens, so clocks can't drift far apart.
             ClockSkew = TimeSpan.FromSeconds(30)
         };
+        // ...and only while their user is still active with the same company and role (#73)
+        bearerOptions.Events = new JwtBearerEvents { OnTokenValidated = AccessTokenCheck.OnTokenValidated };
     });
 
 // Invitations and signup depend on email, so the API refuses to start without valid email settings and FrontendUrl.

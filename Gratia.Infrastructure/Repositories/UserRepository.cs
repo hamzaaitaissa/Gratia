@@ -1,4 +1,5 @@
 ﻿using Gratia.Domain.Entities;
+using Gratia.Domain.Enum;
 using Gratia.Domain.Repositories;
 using Gratia.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -56,6 +57,18 @@ namespace Gratia.Infrastructure.Repositories
         public async Task<User?> GetByIdInCompanyIncludingDeactivatedAsync(Guid id, Guid companyId)
         {
             return await _gratiaDbContext.Users.FirstOrDefaultAsync(u => u.Id == id && u.CompanyId == companyId);
+        }
+
+        public async Task<bool> IsActiveWithRoleAsync(Guid id, Guid companyId, UserRole role, CancellationToken cancellationToken = default)
+        {
+            return await _gratiaDbContext.Users.AnyAsync(
+                u => u.Id == id && u.CompanyId == companyId && u.Role == role && u.DeactivatedAt == null, cancellationToken);
+        }
+
+        public async Task<bool> HasOtherActiveAdminAsync(Guid companyId, Guid exceptUserId, CancellationToken cancellationToken = default)
+        {
+            return await _gratiaDbContext.Users.AnyAsync(
+                u => u.CompanyId == companyId && u.Role == UserRole.Admin && u.DeactivatedAt == null && u.Id != exceptUserId, cancellationToken);
         }
 
         public async Task<bool> AnyInCompanyAsync(Guid companyId)
