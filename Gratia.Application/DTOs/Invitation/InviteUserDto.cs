@@ -15,5 +15,11 @@ namespace Gratia.Application.DTOs.Invitation
         public string? Email { get; set; }
         [EnumDataType(typeof(UserRole))]
         public UserRole Role { get; set; } = UserRole.Employee;
+
+        // Optional: the accept form starts with them (#54)
+        [StringLength(200)]
+        public string? FullName { get; set; }
+        [StringLength(200)]
+        public string? JobTitle { get; set; }
     }
 }

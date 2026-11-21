@@ -39,6 +39,25 @@
   flex-direction: column;
   gap: 6px;
 }
+.failure a {
+  color: inherit;
+  font-weight: 600;
+  text-underline-offset: 2px;
+}
+/* A label with a link at the other end, e.g. Password … Forgot your password? */
+.labelRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.labelLink {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--g-primary-ink);
+  text-underline-offset: 2px;
+}
 .submit {
   min-height: 48px;
   font-size: 15.5px;

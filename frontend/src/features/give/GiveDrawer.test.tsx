@@ -29,7 +29,7 @@ function setup(available: number, onGive?: (body: CreateTransaction, state: { av
       const custom = onGive?.(body, state);
       if (custom) return custom;
       state.available -= body.amount;
-      return { body: { ...tx('t9', me(), priya, body.amount, body.message), typeOfDonation: body.typeOfDonation } };
+      return { body: { ...tx('t9', me(), priya, body.amount, body.message ?? ''), typeOfDonation: body.typeOfDonation } };
     },
   });
   renderWithProviders(

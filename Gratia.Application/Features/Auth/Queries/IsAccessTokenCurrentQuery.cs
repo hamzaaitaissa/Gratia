@@ -9,10 +9,10 @@ namespace Gratia.Application.Features.Auth.Queries;
 // expired (AccessTokenMinutes, 60).
 // A refused token gets a 401 and the frontend refreshes: a deactivated user's refresh fails, so they're signed out, and
 // anyone else gets a token built from who they are now (RefreshTokenCommand).
-public sealed record IsAccessTokenCurrentQuery(Guid UserId, Guid CompanyId, UserRole Role) : IQuery<bool>;
+public sealed record IsAccessTokenCurrentQuery(Guid UserId, Guid CompanyId, UserRole Role, Guid SessionStamp) : IQuery<bool>;
 
 public sealed class IsAccessTokenCurrentQueryHandler(IUserRepository userRepository) : IQueryHandler<IsAccessTokenCurrentQuery, bool>
 {
     public async ValueTask<bool> Handle(IsAccessTokenCurrentQuery query, CancellationToken cancellationToken) =>
-        await userRepository.IsActiveWithRoleAsync(query.UserId, query.CompanyId, query.Role, cancellationToken);
+        await userRepository.IsAccessTokenCurrentAsync(query.UserId, query.CompanyId, query.Role, query.SessionStamp, cancellationToken);
 }

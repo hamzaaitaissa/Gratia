@@ -1,6 +1,8 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Net.Http.Headers;
 using Gratia.Application.DTOs.Invitation;
+using Gratia.Application.DTOs.Token;
 using Gratia.Domain.Enum;
 using Microsoft.EntityFrameworkCore;
 
@@ -28,11 +30,13 @@ public sealed class OnboardingTests(GratiaApiFactory factory) : IClassFixture<Gr
         Assert.Equal("Initech", lookup!.CompanyName);
         Assert.Equal(UserRole.Admin, lookup.InvitedRole);
 
-        await AcceptAsync(setup.Token!, "Peter Gibbons");
+        var tokens = await AcceptAsync(setup.Token!, "Peter Gibbons");
 
-        // The founder can log in and use the admin endpoints
-        var founder = await factory.CreateClientForAsync(email);
+        // The founder lands in the app signed in (#66), and can use the admin endpoints
+        var founder = factory.CreateClient();
+        founder.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", tokens.AccessToken);
         Assert.Equal(HttpStatusCode.OK, (await founder.GetAsync("/api/invitation/pending")).StatusCode);
+        await factory.CreateClientForAsync(email); // and can sign in again later with the password
 
         var (company, user) = await factory.WithDbAsync(async db => (
             await db.Companies.SingleAsync(c => c.Domain == domain),
@@ -74,14 +78,20 @@ public sealed class OnboardingTests(GratiaApiFactory factory) : IClassFixture<Gr
     [Fact]
     public async Task A_second_signup_for_a_domain_with_a_workspace_only_emails_a_notice()
     {
-        // acme.test already has a workspace with users
-        var response = await SignupAsync("Acme Rival", "Rival", "rival@acme.test");
+        // A workspace with a member and no pending invitations, so only having members can stop a takeover. (Acme won't
+        // do: another test leaves it an invitation, and a colleague's pending setup link stops one too.)
+        var company = await factory.AddCompanyAsync();
+        await factory.AddUserAsync(company, role: UserRole.Admin);
+        var rival = $"rival@{company.Domain}";
+
+        var response = await SignupAsync("Rival Co", "Rival", rival);
 
         Assert.Equal(HttpStatusCode.Accepted, response.StatusCode);
-        var notice = Assert.Single(factory.Emails.SentTo("rival@acme.test"));
+        var notice = Assert.Single(factory.Emails.SentTo(rival));
         Assert.Equal(EmailKind.WorkspaceExists, notice.Kind);
-        Assert.Equal("Acme", notice.CompanyName);
-        Assert.Equal(1, await factory.WithDbAsync(db => db.Companies.CountAsync(c => c.Domain == "acme.test")));
+        Assert.Equal(company.Name, notice.CompanyName);
+        Assert.Equal(1, await factory.WithDbAsync(db => db.Companies.CountAsync(c => c.Domain == company.Domain)));
+        Assert.False(await factory.WithDbAsync(db => db.CompanyInvitations.AnyAsync(i => i.Email == rival)));
     }
 
     [Fact]
@@ -187,10 +197,12 @@ public sealed class OnboardingTests(GratiaApiFactory factory) : IClassFixture<Gr
     private Task<HttpResponseMessage> SignupAsync(string companyName, string fullName, string email) =>
         factory.CreateClient().PostAsJsonAsync(SignupUrl, new { companyName, fullName, email });
 
-    private async Task AcceptAsync(string token, string fullName)
+    // Accepting signs the new user in (#66)
+    private async Task<TokenResponseDto> AcceptAsync(string token, string fullName)
     {
         var accept = await factory.CreateClient().PostAsJsonAsync("/api/invitation/accept",
             new { token, fullName, password = GratiaApiFactory.Password });
-        Assert.Equal(HttpStatusCode.NoContent, accept.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, accept.StatusCode);
+        return (await accept.Content.ReadFromJsonAsync<TokenResponseDto>())!;
     }
 }

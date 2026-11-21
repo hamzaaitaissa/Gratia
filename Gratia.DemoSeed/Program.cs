@@ -31,6 +31,7 @@ if (!database.Contains("demo", StringComparison.OrdinalIgnoreCase))
 }
 
 var options = new DbContextOptionsBuilder<GratiaDbContext>().UseSqlServer(connection).Options;
+// No caller, so its queries ignore the tenant filter (#78) to see every company
 await using var db = new GratiaDbContext(options);
 
 if (reset)
@@ -40,10 +41,10 @@ if (reset)
 }
 await db.Database.EnsureCreatedAsync();
 
-if (await db.Companies.AnyAsync())
+if (await db.Companies.IgnoreQueryFilters().AnyAsync())
 {
     Console.WriteLine($"{database} already has data. Use --reset to start over (also after a model change).");
-    DemoData.PrintLogins(await db.Users.AsNoTracking().Include(u => u.Company).ToListAsync());
+    DemoData.PrintLogins(await db.Users.IgnoreQueryFilters().AsNoTracking().Include(u => u.Company).ToListAsync());
     return 0;
 }
 

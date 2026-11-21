@@ -8,11 +8,13 @@ import { NotFound } from './components/Page';
 import { ToastProvider } from './components/Toast';
 import { ActivityPage } from './features/activity/ActivityPage';
 import { CompanySettingsPage } from './features/admin/CompanySettingsPage';
+import { ImportPage } from './features/admin/ImportPage';
 import { InvitationsPage } from './features/admin/InvitationsPage';
 import { MembersPage } from './features/admin/MembersPage';
 import { RequireAdmin } from './features/admin/RequireAdmin';
 import { AcceptInvitationPage } from './features/auth/AcceptInvitationPage';
 import { CreateWorkspacePage } from './features/auth/CreateWorkspacePage';
+import { ForgotPasswordPage, ResetPasswordPage } from './features/auth/PasswordPages';
 import { SessionExpiredPage } from './features/auth/SessionExpiredPage';
 import { SignInPage } from './features/auth/SignInPage';
 import { GiveProvider } from './features/give/GiveContext';
@@ -55,6 +57,8 @@ export function App() {
             <Route path="/create-workspace" element={<CreateWorkspacePage />} />
             <Route path="/session-expired" element={<SessionExpiredPage />} />
             <Route path="/accept-invitation/:token" element={<AcceptInvitationPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
             <Route
               element={
                 <RequireAuth>
@@ -72,6 +76,7 @@ export function App() {
               <Route path="recognition/:id" element={<RecognitionPage />} />
               <Route path="admin/members" element={<RequireAdmin><MembersPage /></RequireAdmin>} />
               <Route path="admin/invitations" element={<RequireAdmin><InvitationsPage /></RequireAdmin>} />
+              <Route path="admin/invitations/import" element={<RequireAdmin><ImportPage /></RequireAdmin>} />
               <Route path="admin/settings" element={<RequireAdmin><CompanySettingsPage /></RequireAdmin>} />
               <Route path="*" element={<NotFound />} />
             </Route>

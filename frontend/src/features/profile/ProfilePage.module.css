@@ -148,6 +148,49 @@
   color: var(--g-ink3);
 }
 
+/* Password and devices: the same list treatment as the mobile admin links */
+.security {
+  display: flex;
+  flex-direction: column;
+  border-radius: 20px;
+  background: var(--g-surface);
+  border: 1px solid var(--g-line);
+  overflow: hidden;
+}
+.securityHeading {
+  margin: 0;
+  padding: 14px 16px 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--g-ink3);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.securityRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 14px 16px;
+  border-top: 1px solid var(--g-line);
+}
+.securityIcon {
+  color: var(--g-ink2);
+  flex: none;
+}
+.securityText {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+.securityTitle {
+  font-weight: 600;
+}
+.securityNote {
+  font-size: 14px;
+  color: var(--g-ink2);
+  text-wrap: pretty;
+}
+
 .actions {
   display: flex;
   gap: 10px;

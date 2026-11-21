@@ -1,7 +1,7 @@
-import { screen, waitFor, within } from '@testing-library/react';
+import { cleanup, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { Invitation, ReadCompany, ReadUser } from '../../api/types';
-import { COMPANY, mockApi, renderWithProviders, signIn, user } from '../../test/utils';
+import { COMPANY, invitation, mockApi, renderWithProviders, signIn, user } from '../../test/utils';
 import { CompanySettingsPage } from './CompanySettingsPage';
 import { InvitationsPage } from './InvitationsPage';
 import { MembersPage } from './MembersPage';
@@ -63,6 +63,38 @@ describe('Members', () => {
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 
+  it('keeps the only admin an admin, and puts the last-admin error under Role (#80)', async () => {
+    const u = userEvent.setup();
+    const other = user('u9', 'Ada Mwangi', 25, 0, { role: 'Admin' });
+    const detail = 'A company needs at least one admin. Make someone else an admin first.';
+    renderMembers({
+      'GET /api/user': () => ({ body: [me, other, priya] }),
+      'PUT /api/user/u9': () => ({ status: 400, body: { status: 400, detail } }),
+    });
+
+    // Two admins: either can be made an Employee, and the API has the last word (the other one may just have left)
+    await u.click(await screen.findByRole('button', { name: 'Edit Ada Mwangi' }));
+    let dialog = screen.getByRole('dialog', { name: 'Edit member' });
+    await u.selectOptions(within(dialog).getByLabelText('Role'), 'Employee');
+    await u.click(within(dialog).getByRole('button', { name: 'Save changes' }));
+    const error = await within(dialog).findByText(detail);
+    expect(error.closest('div')?.querySelector('select')?.id).toBe('member-role');
+    expect(within(dialog).getByLabelText('Email').getAttribute('aria-invalid')).toBeNull();
+    await u.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+
+    // The only admin isn't offered Employee
+    cleanupAndRender();
+    await u.click(await screen.findByRole('button', { name: 'Edit Maya Okonkwo' }));
+    dialog = screen.getByRole('dialog', { name: 'Edit member' });
+    expect((within(dialog).getByRole('option', { name: 'Employee' }) as HTMLOptionElement).disabled).toBe(true);
+    expect(within(dialog).getByText('You’re the only admin, so the role stays Admin. Make someone else an admin first.')).toBeTruthy();
+
+    function cleanupAndRender() {
+      cleanup();
+      renderMembers();
+    }
+  });
+
   it('shows a duplicate email next to the field', async () => {
     const u = userEvent.setup();
     renderMembers({ 'PUT /api/user/u3': () => ({ status: 409, body: { status: 409, detail: 'Another account already uses this email' } }) });
@@ -95,18 +127,7 @@ describe('Members', () => {
 });
 
 describe('Invitations', () => {
-  const pending: Invitation = {
-    id: 'i1',
-    email: 'clara.jensen@fernhilllabs.com',
-    expiresAt: new Date(Date.now() + 5 * 864e5 + 3600e3).toISOString(),
-    isUsed: false,
-    invitedRole: 'Employee',
-    companyName: 'Fernhill Labs',
-    invitedByUserName: 'Maya Okonkwo',
-    createdAt: new Date(Date.now() - 2 * 864e5).toISOString(),
-    isExpired: false,
-    isValid: true,
-  };
+  const pending: Invitation = invitation();
 
   function renderInvitations(routes: Parameters<typeof mockApi>[0] = {}, company: ReadCompany = COMPANY) {
     signIn(me);
@@ -126,17 +147,21 @@ describe('Invitations', () => {
     expect(await screen.findByText(/Until fernhilllabs.com is verified, you can only invite @fernhilllabs.com addresses/)).toBeTruthy();
     await u.type(screen.getByLabelText('Email'), 'elena.petrova@fernhilllabs.com');
     await u.click(screen.getByRole('radio', { name: 'Admin' }));
+    await u.type(screen.getByLabelText('Full name (optional)'), ' Elena Petrova ');
     await u.click(screen.getByRole('button', { name: 'Send invitation' }));
 
-    expect(await screen.findByText('Invitation sent to elena.petrova@fernhilllabs.com.')).toBeTruthy();
-    expect(calls.find((c) => c.method === 'POST')?.body).toEqual({ email: 'elena.petrova@fernhilllabs.com', role: 'Admin' });
+    // The email goes out in the background (#55)
+    expect(await screen.findByText('Sending an invitation to elena.petrova@fernhilllabs.com.')).toBeTruthy();
+    expect(calls.find((c) => c.method === 'POST')?.body).toEqual({ email: 'elena.petrova@fernhilllabs.com', role: 'Admin', fullName: 'Elena Petrova', jobTitle: null });
     expect((screen.getByLabelText('Email') as HTMLInputElement).value).toBe('');
+    expect((screen.getByLabelText('Full name (optional)') as HTMLInputElement).value).toBe('');
   });
 
   it.each([
     [400, 'Until your company\'s domain is verified, you can only invite @fernhilllabs.com addresses', 'Until your company\'s domain is verified, you can only invite @fernhilllabs.com addresses'],
     [409, 'This person\'s account was deactivated. Reactivate it instead of inviting them again.', 'This person’s account was deactivated. Reactivate them in Members instead of inviting them again.'],
     [409, 'An active invitation already exists for this email in the company', 'There’s already a pending invitation for this email. Resend it below instead.'],
+    [409, "There's already an invitation for this email, but it couldn't be sent. Resend it from the list of pending invitations.", 'There’s already an invitation for this email, but it couldn’t be sent. Resend it below.'],
   ])('explains a %i next to the email', async (status, detail, shown) => {
     const u = userEvent.setup();
     renderInvitations({ 'POST /api/invitation': () => ({ status, body: { status, detail } }) });
@@ -159,7 +184,7 @@ describe('Invitations', () => {
     expect(row.textContent).toContain('PendingExpires in 6 days');
 
     await u.click(within(row).getByRole('button', { name: 'Resend the invitation to clara.jensen@fernhilllabs.com' }));
-    expect(await screen.findByText('New invitation sent to clara.jensen@fernhilllabs.com. The earlier link no longer works.')).toBeTruthy();
+    expect(await screen.findByText('Sending a new invitation to clara.jensen@fernhilllabs.com. The earlier link stops working once it’s sent.')).toBeTruthy();
 
     await u.click(within(row).getByRole('button', { name: 'Cancel the invitation to clara.jensen@fernhilllabs.com' }));
     await u.click(within(screen.getByRole('alertdialog', { name: 'Cancel this invitation?' })).getByRole('button', { name: 'Cancel invitation' }));
@@ -178,23 +203,50 @@ describe('Invitations', () => {
     const row = (await screen.findByText('late@fernhilllabs.com')).closest('tr')!;
     expect(row.textContent).toMatch(/ExpiredExpired [A-Z][a-z]{2} \d{1,2}/);
     await u.click(within(row).getByRole('button', { name: 'Resend the invitation to late@fernhilllabs.com' }));
-    expect(await screen.findByText('New invitation sent to late@fernhilllabs.com.')).toBeTruthy();
+    expect(await screen.findByText('Sending a new invitation to late@fernhilllabs.com.')).toBeTruthy();
     expect(calls.some((c) => c.path === '/api/invitation/i9/resend')).toBe(true);
   });
 
-  it('says when the email couldn’t be sent, and that nothing changed', async () => {
+  it('shows the daily cap’s own words for invites and resends (#65)', async () => {
     const u = userEvent.setup();
+    const cap = { status: 429, title: 'Too many attempts', detail: "Until your company's domain is verified, it can send 50 invitation emails a day. Try again in 7 hours." };
     renderInvitations({
-      'POST /api/invitation': () => ({ status: 503, body: { status: 503, title: 'Email unavailable' } }),
-      'POST /api/invitation/i1/resend': () => ({ status: 503, body: { status: 503 } }),
+      'POST /api/invitation': () => ({ status: 429, body: cap }),
+      'POST /api/invitation/i1/resend': () => ({ status: 429, body: cap }),
     });
     await u.type(await screen.findByLabelText('Email'), 'elena@fernhilllabs.com');
     await u.click(screen.getByRole('button', { name: 'Send invitation' }));
-    expect(await screen.findByText('We couldn’t send the email. Nothing was changed; try again in a moment.')).toBeTruthy();
-    expect((screen.getByLabelText('Email') as HTMLInputElement).value).toBe('elena@fernhilllabs.com'); // kept, to try again
+    expect(await screen.findByText(cap.detail)).toBeTruthy();
+    expect((screen.getByLabelText('Email') as HTMLInputElement).value).toBe('elena@fernhilllabs.com'); // kept, to try later
 
     await u.click(screen.getByRole('button', { name: 'Resend the invitation to clara.jensen@fernhilllabs.com' }));
-    expect(await screen.findAllByText('We couldn’t send the email. Nothing was changed; try again in a moment.')).toHaveLength(2);
+    expect(await screen.findAllByText(cap.detail)).toHaveLength(2);
+  });
+
+  it('says whether each email went out, and checks again until it has (#55)', async () => {
+    const u = userEvent.setup();
+    const sending = invitation({ id: 'i2', email: 'noah@fernhilllabs.com', fullName: 'Noah Becker', emailStatus: 'Pending', emailSentAt: null });
+    const failed = invitation({ id: 'i3', email: 'typo@fernhilllabs.com', emailStatus: 'Failed', emailSentAt: null });
+    let lists = 0;
+    const { calls } = renderInvitations({
+      'GET /api/invitation/pending': () => ({ body: lists++ === 0 ? [sending, failed] : [{ ...sending, emailStatus: 'Sent' }, failed] }),
+      'POST /api/invitation/i3/resend': () => ({ body: { ...failed, emailStatus: 'Pending' } }),
+    });
+
+    // The name the admin gave comes first, then the email
+    const row = (await screen.findByText('Noah Becker')).closest('tr')!;
+    expect(row.textContent).toContain('noah@fernhilllabs.com');
+    expect(row.textContent).toContain('Sending…');
+    expect(within(row).getByRole('button', { name: 'Resend the invitation to noah@fernhilllabs.com' })).toHaveProperty('disabled', true);
+
+    const failedRow = screen.getByText('typo@fernhilllabs.com').closest('tr')!;
+    expect(failedRow.textContent).toContain('Couldn’t send');
+    await u.click(within(failedRow).getByRole('button', { name: 'Resend the invitation to typo@fernhilllabs.com' }));
+    expect(await screen.findByText('Sending a new invitation to typo@fernhilllabs.com.')).toBeTruthy();
+    expect(calls.some((c) => c.path === '/api/invitation/i3/resend')).toBe(true);
+
+    // The list refreshes by itself while an email is on its way
+    await waitFor(() => expect(screen.getByText('Noah Becker').closest('tr')!.textContent).toContain('PendingExpires in 6 days'), { timeout: 4000 });
   });
 
   it('says when nobody is waiting', async () => {

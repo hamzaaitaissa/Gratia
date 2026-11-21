@@ -24,6 +24,13 @@ namespace Gratia.Domain.Entities
 
         public bool IsDomainVerified => DomainVerifiedAt is not null;
 
+        // The invitation emails an unverified workspace has sent (invites and resends) since InvitationWindowStart, for
+        // its daily cap (#65, Onboarding:UnverifiedInvitationsPerDay). A window lasts InvitationWindow from the first
+        // email after the last one ended. Changed only by ICompanyRepository.TryCountInvitationAsync.
+        public static readonly TimeSpan InvitationWindow = TimeSpan.FromHours(24);
+        public DateTime? InvitationWindowStart { get; set; }
+        public int InvitationsInWindow { get; set; }
+
         // Used until an admin sets the company's own branding
         public const string DefaultPrimaryColor = "#4F46E5";
         public const string DefaultSecondaryColor = "#F59E0B";

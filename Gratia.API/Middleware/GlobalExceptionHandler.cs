@@ -1,3 +1,4 @@
+using System.Globalization;
 using Gratia.Application.Exceptions;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
@@ -29,6 +30,8 @@ namespace Gratia.API.Middleware
                 ConflictException => (StatusCodes.Status409Conflict, "Conflict"),
                 ForbiddenException => (StatusCodes.Status403Forbidden, "Forbidden"),
                 BusinessRuleException => (StatusCodes.Status400BadRequest, "Bad request"),
+                // Not "Too many requests", the per-IP limiter's title, so a client can tell the two apart
+                TooManyAttemptsException => (StatusCodes.Status429TooManyRequests, "Too many attempts"),
                 EmailDeliveryException => (StatusCodes.Status503ServiceUnavailable, "Email unavailable"),
                 _ => (StatusCodes.Status500InternalServerError, "An unexpected error occurred")
             };
@@ -47,6 +50,10 @@ namespace Gratia.API.Middleware
                 _logger.LogError(exception, "Couldn't send an email while processing {Method} {Path}",
                     httpContext.Request.Method, httpContext.Request.Path);
             }
+
+            // In seconds, like the per-IP limiter's; FrontendCors exposes it to the browser
+            if (exception is TooManyAttemptsException tooMany)
+                httpContext.Response.Headers.RetryAfter = ((int)Math.Ceiling(tooMany.RetryAfter.TotalSeconds)).ToString(CultureInfo.InvariantCulture);
 
             httpContext.Response.StatusCode = statusCode;
             return await _problemDetailsService.TryWriteAsync(new ProblemDetailsContext

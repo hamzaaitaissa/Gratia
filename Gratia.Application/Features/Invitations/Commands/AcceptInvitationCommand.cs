@@ -1,4 +1,6 @@
 using Gratia.Application.DTOs.Invitation;
+using Gratia.Application.DTOs.Token;
+using Gratia.Application.Features.Auth;
 using Gratia.Application.Exceptions;
 using Gratia.Application.Interfaces;
 using Gratia.Domain.Entities;
@@ -8,18 +10,21 @@ using Microsoft.Extensions.Logging;
 
 namespace Gratia.Application.Features.Invitations.Commands;
 
-public sealed record AcceptInvitationCommand(AcceptInvitationDto Invitation) : ICommand;
+// Creates the account and signs it in on this device (#66): the response is the same as login's
+public sealed record AcceptInvitationCommand(AcceptInvitationDto Invitation) : ICommand<TokenResponseDto>;
 
 public sealed class AcceptInvitationCommandHandler(
     IInvitationRepository invitationRepository,
     IUserRepository userRepository,
+    IRefreshTokenRepository refreshTokenRepository,
     IUnitOfWork unitOfWork,
     IPasswordHashingService passwordHashingService,
+    ITokenService tokenService,
     IEmailService emailService,
     ILogger<AcceptInvitationCommandHandler> logger)
-    : ICommandHandler<AcceptInvitationCommand>
+    : ICommandHandler<AcceptInvitationCommand, TokenResponseDto>
 {
-    public async ValueTask<Unit> Handle(AcceptInvitationCommand command, CancellationToken cancellationToken)
+    public async ValueTask<TokenResponseDto> Handle(AcceptInvitationCommand command, CancellationToken cancellationToken)
     {
         var dto = command.Invitation;
 
@@ -45,7 +50,11 @@ public sealed class AcceptInvitationCommandHandler(
         userRepository.Add(user);
         invitation.IsUsed = true;
 
-        // Saved together: the account is created and the invitation used up, or neither
+        // The token from the email proved the mailbox, and the password was just chosen, so there's nothing left to
+        // check before signing in. The user is new, so the session's company and role are the invitation's.
+        var tokens = Sessions.Start(user, tokenService, refreshTokenRepository);
+
+        // Saved together: the account is created, the invitation used up and the session started, or none of them
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         // The account exists by now, so a failed welcome email shouldn't turn into an error for the new user
@@ -59,6 +68,6 @@ public sealed class AcceptInvitationCommandHandler(
             logger.LogWarning(ex, "Couldn't send the welcome email for user {UserId}", user.Id);
         }
 
-        return Unit.Value;
+        return tokens;
     }
 }

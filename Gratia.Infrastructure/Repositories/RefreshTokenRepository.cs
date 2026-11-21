@@ -14,9 +14,11 @@ namespace Gratia.Infrastructure.Repositories
             _gratiaDbContext = gratiaDbContext;
         }
 
+        // Across companies (#78), for the user it loads: a refresh has no caller, the refresh token is what proves who it is
         public async Task<RefreshToken?> GetByHashAsync(string tokenHash)
         {
             return await _gratiaDbContext.RefreshTokens
+                .AcrossCompanies()
                 .AsNoTracking()
                 .Include(t => t.User)
                 .FirstOrDefaultAsync(t => t.TokenHash == tokenHash);

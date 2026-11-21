@@ -1,13 +1,16 @@
+import { useState } from 'react';
 import { Link } from 'react-router';
 import { useCompany, useMe, usePointsCycle } from '../../api/queries';
 import { useSignOut } from '../../app/AppShell';
 import { useIsMobile } from '../../app/useIsMobile';
 import { Avatar } from '../../components/Avatar';
 import { BreakableEmail } from '../../components/BreakableEmail';
+import { ConfirmDialog } from '../../components/Dialog';
 import { Icon, type IconName } from '../../components/Icon';
 import { PageError, PageHeader } from '../../components/Page';
 import { CardsSkeleton } from '../../components/States';
 import { useThemeMode } from '../../theme/ThemeMode';
+import { ChangePasswordDialog } from './ChangePasswordDialog';
 import styles from './ProfilePage.module.css';
 
 const ADMIN_LINKS: { to: string; label: string; icon: IconName }[] = [
@@ -16,7 +19,10 @@ const ADMIN_LINKS: { to: string; label: string; icon: IconName }[] = [
   { to: '/admin/settings', label: 'Company settings', icon: 'palette' },
 ];
 
-/** "My profile" (design 6.9): both balances side by side. On mobile, the admin area is reached from here. */
+/**
+ * "My profile" (design 6.9): both balances side by side. On mobile, the admin area is reached from here. Below them,
+ * the password and signed-in devices (#85), which the design doesn't have.
+ */
 export function ProfilePage() {
   const users = useMe();
   const { data: company } = useCompany();
@@ -24,6 +30,8 @@ export function ProfilePage() {
   const { mode, toggleMode } = useThemeMode();
   const signOut = useSignOut();
   const isMobile = useIsMobile();
+  const [dialog, setDialog] = useState<'password' | 'everywhere' | null>(null);
+  const [signingOut, setSigningOut] = useState(false);
   const { me } = users;
 
   if (users.isError || (users.isSuccess && !me))
@@ -107,6 +115,32 @@ export function ProfilePage() {
           </nav>
         )}
 
+        <section aria-labelledby="profile-security" className={styles.security}>
+          <h2 id="profile-security" className={styles.securityHeading}>
+            Password and devices
+          </h2>
+          <div className={styles.securityRow}>
+            <Icon name="key" size={22} className={styles.securityIcon} />
+            <div className={styles.securityText}>
+              <div className={styles.securityTitle}>Password</div>
+              <div className={styles.securityNote}>Changing it signs you out on your other devices.</div>
+            </div>
+            <button type="button" className="btn btn-secondary" onClick={() => setDialog('password')}>
+              Change password
+            </button>
+          </div>
+          <div className={styles.securityRow}>
+            <Icon name="devices" size={22} className={styles.securityIcon} />
+            <div className={styles.securityText}>
+              <div className={styles.securityTitle}>Signed-in devices</div>
+              <div className={styles.securityNote}>Lost a phone or used a shared computer? Sign out everywhere at once.</div>
+            </div>
+            <button type="button" className="btn btn-secondary" onClick={() => setDialog('everywhere')}>
+              Sign out everywhere
+            </button>
+          </div>
+        </section>
+
         <div className={styles.actions}>
           <button type="button" className="btn btn-secondary" onClick={toggleMode}>
             <Icon name={mode === 'dark' ? 'light_mode' : 'dark_mode'} />
@@ -118,6 +152,25 @@ export function ProfilePage() {
           </button>
         </div>
       </div>
+
+      {dialog === 'password' && <ChangePasswordDialog onClose={() => setDialog(null)} />}
+      {dialog === 'everywhere' && (
+        <ConfirmDialog
+          title="Sign out everywhere?"
+          body="You’ll be signed out on every device and browser, this one included. Anyone using your account elsewhere is signed out at once."
+          confirmLabel="Sign out everywhere"
+          cancelLabel="Stay signed in"
+          busy={signingOut}
+          onConfirm={() => {
+            setSigningOut(true);
+            void signOut({ everywhere: true }).finally(() => {
+              setSigningOut(false);
+              setDialog(null);
+            });
+          }}
+          onCancel={() => setDialog(null)}
+        />
+      )}
     </>
   );
 }

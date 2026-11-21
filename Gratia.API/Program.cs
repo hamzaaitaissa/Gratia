@@ -57,8 +57,12 @@ if (builder.Environment.IsDevelopment() && !smtpConfigured)
 else
     builder.Services.AddOptions<EmailOptions>().ValidateOnStart();
 
-// Anonymous endpoints that cost something, per client IP (RateLimitPolicies). Behind a proxy every client has the
-// proxy's IP until ForwardedHeaders is set up (#45).
+// Behind a reverse proxy, the client's IP and scheme come from the proxy's headers, from the proxies listed in
+// ForwardedHeaders:KnownProxies / KnownNetworks only (#45)
+builder.Services.AddTrustedProxies();
+
+// Anonymous endpoints that cost something, per client IP (RateLimitPolicies). Behind a proxy, that's the client's IP
+// only when the proxy is listed in ForwardedHeaders (TrustedProxies); otherwise every client shares the proxy's limit.
 static RateLimitPartition<string> PerClientIp(HttpContext httpContext, string limitSetting, int defaultLimit, TimeSpan window) =>
     RateLimitPartition.GetFixedWindowLimiter(
         httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
@@ -74,6 +78,8 @@ builder.Services.AddRateLimiter(options =>
     options.AddPolicy(RateLimitPolicies.Signup, httpContext => PerClientIp(httpContext, "RateLimiting:SignupPerHour", 5, TimeSpan.FromHours(1)));
     options.AddPolicy(RateLimitPolicies.Login, httpContext => PerClientIp(httpContext, "RateLimiting:LoginPerMinute", 20, TimeSpan.FromMinutes(1)));
     options.AddPolicy(RateLimitPolicies.Refresh, httpContext => PerClientIp(httpContext, "RateLimiting:RefreshPerMinute", 60, TimeSpan.FromMinutes(1)));
+    options.AddPolicy(RateLimitPolicies.PasswordReset,
+        httpContext => PerClientIp(httpContext, "RateLimiting:PasswordResetPerHour", 5, TimeSpan.FromHours(1)));
     options.OnRejected = (context, cancellationToken) =>
     {
         // Seconds until the window resets, so a client knows when to retry
@@ -100,6 +106,11 @@ builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 // The monthly points refill, on each company's own day (#19); PointsReset:Enabled=false turns it off
 builder.Services.AddHostedService<PointsResetService>();
 
+// Invitation emails, sent in the background (#55); InvitationEmails:Enabled=false turns the sender off
+builder.Services.AddSingleton<InvitationEmailSignal>();
+builder.Services.AddSingleton<IInvitationEmailQueue>(sp => sp.GetRequiredService<InvitationEmailSignal>());
+builder.Services.AddHostedService<InvitationEmailService>();
+
 // Errors: exceptions from services become ProblemDetails responses
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
@@ -116,6 +127,9 @@ builder.Services.AddFrontendCors();
 
 var app = builder.Build();
 
+// First, so everything after it (the HTTPS redirect, the rate limiter, logs) sees the client's IP and scheme (#45)
+app.UseForwardedHeaders();
+
 // Configure the HTTP request pipeline.
 app.UseExceptionHandler();
 
@@ -125,6 +139,8 @@ if (app.Environment.IsDevelopment())
     app.MapScalarApiReference();
 }
 
+// Behind a proxy that ends TLS, a request the client made over HTTPS counts as one (X-Forwarded-Proto), so it isn't
+// redirected again and again. A container serving only HTTP has no HTTPS port to redirect to, and this does nothing.
 app.UseHttpsRedirection();
 
 // Before authentication, so preflight requests are answered without a token, and before the rate limiter, so a

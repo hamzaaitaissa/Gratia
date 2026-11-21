@@ -3,9 +3,9 @@ import './setup';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render } from '@testing-library/react';
 import type { ReactElement } from 'react';
-import { MemoryRouter } from 'react-router';
+import { createMemoryRouter, RouterProvider } from 'react-router';
 import { vi } from 'vitest';
-import type { ReadCompany, ReadTransaction, ReadUser } from '../api/types';
+import type { Invitation, ReadCompany, ReadTransaction, ReadUser } from '../api/types';
 import { sessionFromTokens, setSession } from '../auth/session';
 import { ToastProvider, ToastViewport } from '../components/Toast';
 import { ThemeModeProvider } from '../theme/ThemeMode';
@@ -53,6 +53,27 @@ export function user(id: string, fullName: string, available: number, acquired: 
     numberOfPointsAcquired: acquired,
     companyId: 'c1',
     ...extra,
+  };
+}
+
+/** A pending invitation whose email has gone out, with 5 days left. */
+export function invitation(over: Partial<Invitation> = {}): Invitation {
+  return {
+    id: 'i1',
+    email: 'clara.jensen@fernhilllabs.com',
+    fullName: null,
+    jobTitle: null,
+    expiresAt: new Date(Date.now() + 5 * 864e5 + 3600e3).toISOString(),
+    isUsed: false,
+    invitedRole: 'Employee',
+    companyName: 'Fernhill Labs',
+    invitedByUserName: 'Maya Okonkwo',
+    createdAt: new Date(Date.now() - 2 * 864e5).toISOString(),
+    isExpired: false,
+    isValid: true,
+    emailStatus: 'Sent',
+    emailSentAt: new Date(Date.now() - 2 * 864e5).toISOString(),
+    ...over,
   };
 }
 
@@ -109,15 +130,17 @@ export function mockApi(routes: Record<string, Handler>) {
 /** `route` is a path, or a path with navigation state (what `navigate(to, { state })` would carry). */
 export function renderWithProviders(ui: ReactElement, { route = '/' }: { route?: string | { pathname: string; state?: unknown } } = {}) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
+  // A data router like the app's (main.tsx), so pages that use useBlocker work
+  const router = createMemoryRouter([{ path: '*', element: ui }], { initialEntries: [route] });
   const result = render(
     <QueryClientProvider client={queryClient}>
       <ThemeModeProvider>
         <ToastProvider>
-          <MemoryRouter initialEntries={[route]}>{ui}</MemoryRouter>
+          <RouterProvider router={router} />
           <ToastViewport />
         </ToastProvider>
       </ThemeModeProvider>
     </QueryClientProvider>,
   );
-  return { ...result, queryClient };
+  return { ...result, queryClient, router };
 }

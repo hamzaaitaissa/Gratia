@@ -13,5 +13,9 @@ namespace Gratia.API
         // Refreshing tokens: RateLimiting:RefreshPerMinute per minute (default 60). A refresh token can't be guessed,
         // so this only limits load; a device normally refreshes once per access-token lifetime.
         public const string Refresh = "refresh";
+
+        // Asking for a forgotten-password link: RateLimiting:PasswordResetPerHour per hour (default 5). Each request
+        // sends an email (#50).
+        public const string PasswordReset = "password-reset";
     }
 }

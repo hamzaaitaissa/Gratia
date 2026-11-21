@@ -1,5 +1,5 @@
 import { QueryClient, useInfiniteQuery, useQuery } from '@tanstack/react-query';
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import { useSession } from '../auth/session';
 import { pointsCycle, type PointsCycle } from '../lib/pointsCycle';
 import { api } from './endpoints';
@@ -46,7 +46,10 @@ export function usePointsCycle(): PointsCycle | undefined {
   return useMemo(() => (data ? pointsCycle(data) : undefined), [data]);
 }
 
-/** Everyone in the caller's company, by name. Also the source of the caller's own balances (no /api/user/me yet, #50). */
+/**
+ * Everyone in the caller's company, by name. Also the source of the caller's own balances: nearly every screen needs
+ * the list anyway, so `GET /api/user/me` would only add a request.
+ */
 export function useUsers() {
   return useQuery({ queryKey: queryKeys.users, queryFn: ({ signal }) => api.companyUsers(signal) });
 }
@@ -96,8 +99,24 @@ export function useDeactivatedUsers() {
   return useQuery({ queryKey: queryKeys.deactivated, queryFn: ({ signal }) => api.deactivatedUsers(signal) });
 }
 
+/**
+ * Pending and expired invitations. While an email is still on its way (#55), the list refreshes itself: every
+ * 2 seconds at first, since one normally goes out within a second, then every 30 while the API keeps retrying.
+ */
 export function usePendingInvitations() {
-  return useQuery({ queryKey: queryKeys.invitations, queryFn: ({ signal }) => api.pendingInvitations(signal) });
+  const sendingSince = useRef<number | null>(null);
+  return useQuery({
+    queryKey: queryKeys.invitations,
+    queryFn: ({ signal }) => api.pendingInvitations(signal),
+    refetchInterval: (query) => {
+      if (!query.state.data?.some((i) => i.emailStatus === 'Pending')) {
+        sendingSince.current = null;
+        return false;
+      }
+      sendingSince.current ??= Date.now();
+      return Date.now() - sendingSince.current < 60_000 ? 2_000 : 30_000;
+    },
+  });
 }
 
 /**

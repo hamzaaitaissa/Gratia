@@ -1,10 +1,13 @@
-﻿using Gratia.Application.DTOs.UserDTO;
+﻿using Gratia.Application.DTOs.Token;
+using Gratia.Application.DTOs.UserDTO;
+using Gratia.Application.Features.Auth.Commands;
 using Gratia.Application.Features.Users.Commands;
 using Gratia.Application.Features.Users.Queries;
 using Gratia.Application.Interfaces;
 using Mediator;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Gratia.API.Controllers
 {
@@ -24,6 +27,26 @@ namespace Gratia.API.Controllers
         }
 
         // Accounts are created by accepting an invitation (POST /api/invitation/accept)
+
+        // The caller's own account (#50)
+        [HttpGet("me")]
+        public async Task<ActionResult<ReadUserDto>> GetMe(CancellationToken cancellationToken)
+        {
+            var user = await _sender.Send(new GetUserByIdQuery(_currentUserService.UserId, _currentUserService.CompanyId), cancellationToken);
+            return Ok(user);
+        }
+
+        // The caller's own password (#50). Every session ends, this one's included; the response is this device's new
+        // tokens, as login's. 400 when the current password is wrong; limited like login against guessing it.
+        [HttpPost("me/password")]
+        [EnableRateLimiting(RateLimitPolicies.Login)]
+        public async Task<ActionResult<TokenResponseDto>> ChangePassword([FromBody] ChangePasswordDto changePasswordDto,
+            CancellationToken cancellationToken)
+        {
+            var tokens = await _sender.Send(
+                new ChangePasswordCommand(_currentUserService.UserId, _currentUserService.CompanyId, changePasswordDto), cancellationToken);
+            return Ok(tokens);
+        }
 
         [HttpGet("{userId:guid}")]
         public async Task<ActionResult<ReadUserDto>> Get(Guid userId, CancellationToken cancellationToken)

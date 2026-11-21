@@ -82,8 +82,9 @@ function AcceptForm({ invitation, token, onProblem }: { invitation: Invitation; 
   const navigate = useNavigate();
   const toast = useToast();
   const queryClient = useQueryClient();
-  const [fullName, setFullName] = useState('');
-  const [jobTitle, setJobTitle] = useState('');
+  // What the admin or the spreadsheet filled in (#54), still the invitee's to change
+  const [fullName, setFullName] = useState(invitation.fullName ?? '');
+  const [jobTitle, setJobTitle] = useState(invitation.jobTitle ?? '');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [errors, setErrors] = useState<{ fullName?: string; password?: string; confirm?: string }>({});
@@ -105,8 +106,10 @@ function AcceptForm({ invitation, token, onProblem }: { invitation: Invitation; 
     if (Object.keys(errs).length) return;
 
     setBusy(true);
+    let session;
     try {
-      await api.acceptInvitation({ token, fullName: fullName.trim(), password, jobTitle: jobTitle.trim() });
+      // Accepting signs the new member in, with the same tokens as login (#66)
+      session = sessionFromTokens(await api.acceptInvitation({ token, fullName: fullName.trim(), password, jobTitle: jobTitle.trim() }));
     } catch (err) {
       setBusy(false);
       if (err instanceof ApiError && err.status === 409) return onProblem('used');
@@ -116,18 +119,17 @@ function AcceptForm({ invitation, token, onProblem }: { invitation: Invitation; 
       return setFailure(err instanceof NetworkError ? 'You seem to be offline. Check your connection and try again.' : 'Something went wrong on our side. Try again in a moment.');
     }
 
-    // Accepting doesn't sign you in yet (TASKS.md #66), but this page knows the email and the new password
-    try {
-      const session = sessionFromTokens(await api.login(invitation.email, password));
-      if (!session) throw new Error('No usable token');
-      queryClient.clear();
-      setSession(session);
-      navigate('/', { replace: true });
-      toast(founding ? `Welcome to Gratia. ${company} is ready.` : `Welcome to ${company}, ${fullName.trim().split(/\s+/)[0]}.`);
-    } catch {
+    if (!session) {
+      // The account exists; only the tokens were unusable
       navigate('/sign-in', { replace: true, state: { email: invitation.email } });
       toast('Your account is ready. Sign in to continue.');
+      return;
     }
+    // Whoever was signed in on this browser before isn't any more
+    queryClient.clear();
+    setSession(session);
+    navigate('/', { replace: true });
+    toast(founding ? `Welcome to Gratia. ${company} is ready.` : `Welcome to ${company}, ${fullName.trim().split(/\s+/)[0]}.`);
   };
 
   return (
@@ -174,7 +176,7 @@ function AcceptForm({ invitation, token, onProblem }: { invitation: Invitation; 
           id="accept-name"
           className="input"
           autoComplete="name"
-          maxLength={100}
+          maxLength={200}
           value={fullName}
           aria-invalid={errors.fullName ? true : undefined}
           aria-describedby={errors.fullName ? 'accept-name-e' : undefined}
@@ -195,7 +197,7 @@ function AcceptForm({ invitation, token, onProblem }: { invitation: Invitation; 
         <label htmlFor="accept-job" className="field-label">
           Job title <span className={styles.optional}>(optional)</span>
         </label>
-        <input id="accept-job" className="input" autoComplete="organization-title" maxLength={100} value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} />
+        <input id="accept-job" className="input" autoComplete="organization-title" maxLength={200} value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} />
       </div>
 
       <div className={styles.field}>

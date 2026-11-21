@@ -3,10 +3,9 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.RegularExpressions;
 using Gratia.Application.DTOs.Transaction;
-using Gratia.Domain.Repositories;
 using Gratia.Infrastructure.Data;
+using Gratia.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace GratiaTests.Integration;
 
@@ -108,6 +107,38 @@ public sealed class TransactionEndpointsTests(GratiaApiFactory factory) : IClass
         Assert.Equal(HttpStatusCode.NotFound, (await outsider.GetAsync($"/api/transaction/{Guid.NewGuid()}")).StatusCode);
     }
 
+    [Fact]
+    public async Task Each_list_shows_only_the_callers_own_recognitions()
+    {
+        var (_, giverEmail) = await factory.AddUserAsync(factory.Acme);
+        var (_, bystanderEmail) = await factory.AddUserAsync(factory.Acme);
+        var (_, globexGiverEmail) = await factory.AddUserAsync(factory.Globex);
+        var giver = await factory.CreateClientForAsync(giverEmail);
+        var acmeGift = await SendAsync(giver, await factory.UserIdAsync(factory.AcmeAdminEmail));
+        var globexGift = await SendAsync(await factory.CreateClientForAsync(globexGiverEmail), await factory.UserIdAsync(factory.GlobexAdminEmail));
+
+        Assert.Equal([acmeGift], await ListAsync(giver, "my-history"));
+        Assert.Equal([acmeGift], await ListAsync(giver, "sent"));
+        Assert.Empty(await ListAsync(giver, "received"));
+
+        // Neither a colleague who wasn't part of it nor anyone in another company sees it
+        var bystander = await factory.CreateClientForAsync(bystanderEmail);
+        foreach (var list in new[] { "my-history", "sent", "received" })
+            Assert.Empty(await ListAsync(bystander, list));
+        Assert.DoesNotContain(acmeGift, await ListAsync(await factory.CreateClientForAsync(factory.GlobexAdminEmail), "my-history"));
+        Assert.DoesNotContain(globexGift, await ListAsync(await factory.CreateClientForAsync(factory.AcmeAdminEmail), "my-history"));
+    }
+
+    private static async Task<Guid> SendAsync(HttpClient sender, Guid receiverId)
+    {
+        var response = await sender.PostAsJsonAsync("/api/transaction", Gift(receiverId, 1));
+        response.EnsureSuccessStatusCode();
+        return (await response.Content.ReadFromJsonAsync<ReadTransactionDto>(GratiaApiFactory.Json))!.Id;
+    }
+
+    private static async Task<List<Guid>> ListAsync(HttpClient caller, string list) =>
+        (await caller.GetFromJsonAsync<List<ReadTransactionDto>>($"/api/transaction/{list}", GratiaApiFactory.Json))!.Select(t => t.Id).ToList();
+
     // #11, at the repository level: SQLite in tests can't run two requests truly at once, so these check the property
     // that makes concurrent sends safe instead. The balance is checked and changed in the database, in one statement,
     // never from a copy the handler read earlier.
@@ -116,8 +147,8 @@ public sealed class TransactionEndpointsTests(GratiaApiFactory factory) : IClass
     public async Task Spending_checks_the_balance_in_the_database_not_a_stale_copy()
     {
         var (id, _) = await factory.AddUserAsync(factory.Acme, pointsAvailable: 10);
-        using var scope = factory.Services.CreateScope();
-        var users = scope.ServiceProvider.GetRequiredService<IUserRepository>();
+        await using var db = factory.CreateDbContextFor(factory.Acme);
+        var users = new UserRepository(db);
 
         // This request read the balance, then another send spent 6 of the 10 points before it got to spend them
         var stale = await users.GetByIdAsync(id);
@@ -134,8 +165,8 @@ public sealed class TransactionEndpointsTests(GratiaApiFactory factory) : IClass
     public async Task Received_points_are_added_not_overwritten()
     {
         var (id, _) = await factory.AddUserAsync(factory.Acme);
-        using var scope = factory.Services.CreateScope();
-        var users = scope.ServiceProvider.GetRequiredService<IUserRepository>();
+        await using var db = factory.CreateDbContextFor(factory.Acme);
+        var users = new UserRepository(db);
         var stale = await users.GetByIdAsync(id); // reads 0 received, like two gifts arriving at the same moment
 
         await users.AddAcquiredPointsAsync(id, 5);

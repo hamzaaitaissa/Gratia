@@ -1,0 +1,553 @@
+/* Bulk import (design 6.13) */
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  max-width: 1040px;
+}
+
+/* ---------- Progress ---------- */
+.stepper {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.stepItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 0;
+  min-width: 0;
+}
+.stepItem:last-child {
+  flex: none;
+}
+.stepCircle {
+  width: 28px;
+  height: 28px;
+  flex: none;
+  box-sizing: border-box;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  font-weight: 700;
+  background: var(--g-surface2);
+  color: var(--g-ink3);
+  border: 1.5px solid var(--g-line2);
+}
+.stepLabel {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--g-ink3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.stepLine {
+  flex: 1;
+  min-width: 8px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--g-line2);
+}
+.stepItem[data-state='current'] .stepCircle {
+  background: var(--g-surface);
+  color: var(--g-primary-ink);
+  border-color: var(--g-primary);
+}
+.stepItem[data-state='current'] .stepLabel {
+  color: var(--g-ink);
+  font-weight: 600;
+}
+.stepItem[data-state='done'] .stepCircle {
+  background: var(--g-primary);
+  color: var(--g-on-primary);
+  border-color: var(--g-primary);
+}
+.stepItem[data-state='done'] .stepLabel {
+  color: var(--g-ink2);
+}
+.stepItem[data-state='done'] .stepLine {
+  background: var(--g-primary);
+}
+/* On a phone only the current step keeps its label, whole; the others' would only be cut off */
+@media (max-width: 520px) {
+  .stepItem[aria-current] {
+    flex: 1 0 auto;
+  }
+  .stepItem:not([aria-current]) .stepLabel {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+}
+
+/* ---------- Panels (download, upload, done) ---------- */
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: clamp(20px, 3.4cqw, 32px);
+  border-radius: 20px;
+  background: var(--g-surface);
+  border: 1px solid var(--g-line);
+  box-shadow: var(--g-sh1);
+}
+.stepTitle {
+  margin: 0 0 6px;
+  font-size: 20px;
+  font-weight: 600;
+}
+.stepTitle:focus {
+  outline: none;
+}
+.lead {
+  margin: 0;
+  color: var(--g-ink2);
+  max-width: 62ch;
+  text-wrap: pretty;
+}
+.columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px;
+}
+.column {
+  padding: 14px;
+  border-radius: 14px;
+  background: var(--g-surface2);
+}
+.columnName {
+  font-weight: 600;
+}
+.required {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--g-danger);
+}
+.optional {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--g-ink3);
+}
+.columnNote {
+  font-size: 13.5px;
+  color: var(--g-ink2);
+}
+.note {
+  margin: 0;
+  font-size: 14px;
+  color: var(--g-ink2);
+}
+.actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.quiet {
+  min-height: 44px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--g-ink2);
+  font-weight: 600;
+  cursor: pointer;
+}
+.quiet:hover {
+  background: var(--g-surface2);
+}
+
+/* ---------- Upload ---------- */
+.drop {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 220px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 28px;
+  border-radius: 18px;
+  border: 2px dashed var(--g-line2);
+  background: var(--g-surface);
+  color: var(--g-ink);
+  text-align: center;
+  cursor: pointer;
+}
+.drop:hover {
+  border-color: var(--g-primary-ink);
+}
+.drop[data-problem] {
+  border-color: var(--g-danger);
+}
+.drop[data-drag] {
+  border-color: var(--g-primary);
+  background: var(--g-primary-soft);
+}
+.dropIcon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--g-primary-soft);
+  color: var(--g-primary-ink);
+}
+.dropTitle {
+  font-size: 17px;
+  font-weight: 600;
+}
+.dropButton {
+  margin-top: 6px;
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 10px;
+  background: var(--g-primary);
+  color: var(--g-on-primary);
+  font-weight: 600;
+  font-size: 14.5px;
+}
+.problem {
+  display: flex;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: var(--g-danger-soft);
+  color: var(--g-ink);
+}
+.problemIcon {
+  color: var(--g-danger);
+  flex: none;
+}
+.problemText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 14.5px;
+}
+.problemText strong {
+  font-weight: 600;
+  color: var(--g-danger);
+}
+.problemLink {
+  all: unset;
+  cursor: pointer;
+  margin-top: 4px;
+  align-self: flex-start;
+  color: var(--g-danger);
+  font-weight: 600;
+  text-decoration: underline;
+}
+.problemLink:focus-visible {
+  outline: 2px solid var(--g-focus);
+  outline-offset: 2px;
+}
+.checking {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 28px;
+  border-radius: 18px;
+  border: 1px solid var(--g-line);
+  background: var(--g-surface2);
+}
+.checkingHead {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.checkingIcon {
+  color: var(--g-primary-ink);
+  flex: none;
+}
+.checkingTitle {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.progress {
+  height: 6px;
+  border-radius: 6px;
+  background: var(--g-line);
+  overflow: hidden;
+}
+.progressBar {
+  width: 40%;
+  height: 100%;
+  border-radius: 6px;
+  background: var(--g-primary);
+  animation: importProgress 1.4s ease-in-out infinite;
+}
+@keyframes importProgress {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(250%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .progressBar {
+    width: 62%;
+    animation: none;
+  }
+}
+
+/* ---------- Review ---------- */
+.review {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.reviewHead {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+.reviewHead .stepTitle {
+  margin-bottom: 4px;
+}
+.chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.chip {
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid var(--g-line2);
+  background: var(--g-surface);
+  color: var(--g-ink);
+  font-size: 14px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+.chip[aria-pressed='true'] {
+  background: var(--g-ink);
+  border-color: var(--g-ink);
+  color: var(--g-bg);
+}
+.none {
+  margin: 0;
+  padding: 24px;
+  text-align: center;
+  color: var(--g-ink2);
+}
+.tableWrap {
+  max-height: 560px;
+}
+.tableWrap thead {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+.errorRow td,
+.errorCard {
+  background: var(--g-danger-soft);
+}
+.rowNumber {
+  color: var(--g-ink3);
+  font-variant-numeric: tabular-nums;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+td.rowNumber {
+  font-size: 14px;
+  font-weight: 400;
+}
+.emailCell {
+  min-width: 220px;
+}
+.cellInput {
+  height: 40px;
+  font-size: 14px;
+  padding: 0 10px;
+}
+.cellSelect {
+  height: 40px;
+  padding: 0 8px;
+  border-radius: 10px;
+  border: 1px solid var(--g-line2);
+  background: var(--g-surface);
+  color: var(--g-ink);
+  font-size: 14px;
+}
+.status {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: flex-start;
+}
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 24px;
+  padding: 0 9px 0 7px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.ok {
+  background: var(--g-ok-soft);
+  color: var(--g-ok);
+}
+.danger {
+  background: var(--g-danger-soft);
+  color: var(--g-danger);
+}
+.warn {
+  background: var(--g-warn-soft);
+  color: var(--g-warn);
+}
+.info {
+  background: var(--g-info-soft);
+  color: var(--g-info);
+}
+.neutral {
+  background: var(--g-surface2);
+  color: var(--g-ink2);
+}
+/* An error row's badge sits on the row's own danger tint */
+.errorRow .danger,
+.errorCard .danger {
+  background: var(--g-surface);
+}
+.reason {
+  font-size: 12.5px;
+  color: var(--g-ink2);
+}
+.fixed {
+  font-size: 12.5px;
+  color: var(--g-ok);
+}
+.muted {
+  color: var(--g-ink2) !important;
+}
+.cardHead {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: center;
+}
+.cardMeta {
+  font-size: 13.5px;
+  color: var(--g-ink2);
+}
+.cardLabel {
+  font-size: 13px;
+  font-weight: 600;
+}
+.cardButton {
+  min-height: 44px;
+}
+.footer {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: var(--g-surface);
+  border: 1px solid var(--g-line);
+  box-shadow: var(--g-sh2);
+}
+.footerNote,
+.footerFailure {
+  margin: 0;
+  flex: 1 1 260px;
+  font-size: 13.5px;
+  color: var(--g-ink2);
+}
+.footerFailure {
+  display: flex;
+  gap: 6px;
+  color: var(--g-danger);
+  font-weight: 500;
+}
+.send {
+  min-height: 48px;
+  font-size: 15.5px;
+  font-variant-numeric: tabular-nums;
+}
+/* On a phone the bar stays small over the cards: the filter chips already say what's skipped */
+@media (max-width: 520px) {
+  .footer {
+    padding: 10px;
+  }
+  .footerNote {
+    display: none;
+  }
+  .send {
+    flex: 1;
+  }
+}
+
+/* ---------- Done ---------- */
+.doneIcon {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--g-ok-soft);
+  color: var(--g-ok);
+}
+.panel [role='status'] .stepTitle {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: clamp(32px, 4.4cqw, 42px);
+  line-height: 1.05;
+}
+.skipped {
+  display: flex;
+  flex-direction: column;
+  border-radius: 16px;
+  border: 1px solid var(--g-line);
+  overflow: hidden;
+}
+.skippedHead {
+  padding: 12px 16px;
+  background: var(--g-surface2);
+  font-weight: 600;
+  font-size: 14.5px;
+}
+.skippedList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 360px;
+  overflow: auto;
+}
+.skippedList li {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px 16px;
+  border-top: 1px solid var(--g-line);
+  font-size: 14.5px;
+}
+.skippedEmail {
+  flex: 1 1 200px;
+  overflow-wrap: anywhere;
+}
+.skippedReason {
+  color: var(--g-ink2);
+}

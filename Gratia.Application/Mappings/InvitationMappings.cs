@@ -9,6 +9,8 @@ public static class InvitationMappings
     {
         Id = invitation.Id,
         Email = invitation.Email,
+        FullName = invitation.FullName,
+        JobTitle = invitation.JobTitle,
         ExpiresAt = invitation.ExpiresAt,
         IsUsed = invitation.IsUsed,
         InvitedRole = invitation.InvitedRole,
@@ -16,6 +18,8 @@ public static class InvitationMappings
         InvitedByUserName = invitation.InvitedByUser?.FullName ?? "",
         CreatedAt = invitation.CreatedDate,
         IsExpired = invitation.IsExpired,
-        IsValid = invitation.IsValid
+        IsValid = invitation.IsValid,
+        EmailStatus = invitation.EmailStatus,
+        EmailSentAt = invitation.EmailSentAt
     };
 }

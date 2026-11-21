@@ -4,7 +4,16 @@
   gap: 28px;
 }
 
+/* The two ways to invite, side by side with equal weight, stacked when there's no room */
+.cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: stretch;
+}
 .formCard {
+  flex: 1 1 340px;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -13,7 +22,50 @@
   background: var(--g-surface);
   border: 1px solid var(--g-line);
   box-shadow: var(--g-sh1);
-  max-width: 760px;
+}
+.formCard:first-child {
+  flex-grow: 1.4;
+}
+.cardText {
+  margin: 0;
+  color: var(--g-ink2);
+  text-wrap: pretty;
+}
+.steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 14.5px;
+}
+.steps li {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.stepNumber {
+  width: 24px;
+  height: 24px;
+  flex: none;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--g-surface2);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+.optionalField {
+  flex: 1 1 160px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.optional {
+  font-weight: 400;
+  color: var(--g-ink3);
 }
 .cardTitle {
   margin: 0;
@@ -80,6 +132,7 @@
 }
 .send {
   align-self: flex-start;
+  margin-top: auto;
 }
 
 .status {
@@ -131,6 +184,10 @@
 .expired {
   background: var(--g-warn-soft, #fbf0d8);
   color: var(--g-warn, #8a5a00);
+}
+.failed {
+  background: var(--g-danger-soft);
+  color: var(--g-danger);
 }
 .failure {
   display: flex;

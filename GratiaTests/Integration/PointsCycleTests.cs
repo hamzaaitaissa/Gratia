@@ -172,7 +172,7 @@ public sealed class PointsCycleTests(GratiaApiFactory factory) : IClassFixture<G
         var accept = await factory.CreateClient().PostAsJsonAsync("/api/invitation/accept",
             new { token, fullName = "New Joiner", password = GratiaApiFactory.Password });
 
-        Assert.Equal(HttpStatusCode.NoContent, accept.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, accept.StatusCode);
         Assert.Equal(40, await factory.WithDbAsync(db => db.Users.Where(u => u.Email == email).Select(u => u.NumberOfPointsAvailable).SingleAsync()));
     }
 

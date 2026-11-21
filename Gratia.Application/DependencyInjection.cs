@@ -12,7 +12,9 @@ namespace Gratia.Application
         {
             // The points allowance and reset day are per company now (#19), so they aren't settings
             services.AddOptions<OnboardingOptions>()
-                .Bind(configuration.GetSection(OnboardingOptions.SectionName));
+                .Bind(configuration.GetSection(OnboardingOptions.SectionName))
+                .Validate(o => o.UnverifiedInvitationsPerDay > 0, "Onboarding:UnverifiedInvitationsPerDay must be positive.")
+                .ValidateOnStart();
 
             // The Mediator source generator finds every command, query and handler at compile time and
             // generates this registration. Scoped, because handlers use the request's DbContext

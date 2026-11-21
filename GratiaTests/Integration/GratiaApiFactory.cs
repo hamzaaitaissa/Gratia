@@ -4,10 +4,12 @@ using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Gratia.Application.DTOs.Token;
+using Gratia.Application.Features.Invitations.Commands;
 using Gratia.Application.Interfaces;
 using Gratia.Domain.Entities;
 using Gratia.Domain.Enum;
 using Gratia.Infrastructure.Data;
+using Mediator;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -54,8 +56,13 @@ public sealed class GratiaApiFactory : WebApplicationFactory<Program>, IAsyncLif
         builder.UseSetting("RateLimiting:SignupPerHour", "1000");
         builder.UseSetting("RateLimiting:LoginPerMinute", "1000");
         builder.UseSetting("RateLimiting:RefreshPerMinute", "1000");
+        builder.UseSetting("RateLimiting:PasswordResetPerHour", "1000");
+        // The seeded companies are unverified; InvitationQuotaTests lowers the daily invitation cap (#65) on a copy
+        builder.UseSetting("Onboarding:UnverifiedInvitationsPerDay", "1000");
         // The background refill would share the SQLite connection with the tests; PointsCycleTests sends the command itself
         builder.UseSetting("PointsReset:Enabled", "false");
+        // Likewise the background invitation emails (#55): tests send them with SendInvitationEmailsAsync
+        builder.UseSetting("InvitationEmails:Enabled", "false");
 
         builder.ConfigureTestServices(services =>
         {
@@ -98,11 +105,41 @@ public sealed class GratiaApiFactory : WebApplicationFactory<Program>, IAsyncLif
         await _connection.DisposeAsync();
     }
 
-    /// <summary>Runs code against the test database, for setting up a state the API can't reach or checking the result.</summary>
+    /// <summary>
+    /// Runs code against the test database, for setting up a state the API can't reach or checking the result. It sees
+    /// every company's rows; the API's own context sees only the caller's company (#78).
+    /// </summary>
     public async Task<T> WithDbAsync<T>(Func<GratiaDbContext, Task<T>> action)
     {
-        using var scope = Services.CreateScope();
-        return await action(scope.ServiceProvider.GetRequiredService<GratiaDbContext>());
+        await using var db = new AllCompaniesDbContext(DbOptions);
+        return await action(db);
+    }
+
+    /// <summary>A context that sees only this company's rows, like a request from one of its members (#78).</summary>
+    public GratiaDbContext CreateDbContextFor(Company company) => new(DbOptions, new CallerIn(company.Id));
+
+    /// <summary>A context with no caller, like the background refill's or an anonymous request's: it sees nothing (#78).</summary>
+    public GratiaDbContext CreateDbContextWithNoCaller() => new(DbOptions);
+
+    // The API's database, for contexts made outside a request. Not the API's own options: those belong to a scope.
+    private DbContextOptions<GratiaDbContext> DbOptions => new DbContextOptionsBuilder<GratiaDbContext>().UseSqlite(_connection).Options;
+
+    // The API's model without the tenant filter. Its own type, so EF builds and caches its model apart from the API's.
+    private sealed class AllCompaniesDbContext(DbContextOptions<GratiaDbContext> options) : GratiaDbContext(options)
+    {
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+            foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+                entityType.SetQueryFilter(TenantFilter, null);
+        }
+    }
+
+    private sealed class CallerIn(Guid companyId) : ICurrentUserService
+    {
+        public Guid UserId => Guid.Empty;
+        public Guid CompanyId => companyId;
+        public UserRole? Role => null;
     }
 
     /// <summary>
@@ -132,6 +169,16 @@ public sealed class GratiaApiFactory : WebApplicationFactory<Program>, IAsyncLif
             return db.SaveChangesAsync();
         });
         return company;
+    }
+
+    /// <summary>
+    /// Sends the invitation emails that are due, as the API's background sender would (#55). Invites and resends only
+    /// queue their email. Returns how many went out.
+    /// </summary>
+    public async Task<int> SendInvitationEmailsAsync(DateTime? now = null)
+    {
+        using var scope = Services.CreateScope();
+        return await scope.ServiceProvider.GetRequiredService<ISender>().Send(new SendInvitationEmailsCommand(now ?? DateTime.UtcNow));
     }
 
     public Task<Guid> UserIdAsync(string email) =>

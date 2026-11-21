@@ -1,4 +1,4 @@
-using System.Security.Cryptography;
+using Gratia.Application.Common;
 
 namespace Gratia.Application.Features.Invitations;
 
@@ -8,9 +8,5 @@ internal static class InvitationTokens
     public static readonly TimeSpan Lifetime = TimeSpan.FromDays(7);
 
     // URL-safe, so it can go straight into the /accept-invitation/{token} link
-    public static string Generate()
-    {
-        var bytes = RandomNumberGenerator.GetBytes(32);
-        return Convert.ToBase64String(bytes).Replace("+", "").Replace("/", "").Replace("=", "");
-    }
+    public static string Generate() => SecretTokens.Generate();
 }

@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router';
 import { api } from '../../api/endpoints';
+import { isRateLimited, limitDetail, waitText } from '../../api/errors';
 import { ApiError, NetworkError } from '../../api/http';
 import { sessionFromTokens, setSession, useSession } from '../../auth/session';
 import { Icon } from '../../components/Icon';
@@ -21,6 +22,8 @@ export function SignInPage() {
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   const [failure, setFailure] = useState('');
+  // The email is locked after failed sign-ins (#72): resetting the password is the way back in
+  const [locked, setLocked] = useState(false);
   const [busy, setBusy] = useState(false);
 
   if (session) return <Navigate to={from} replace />;
@@ -32,6 +35,7 @@ export function SignInPage() {
     if (password.length < 8) errs.password = 'Your password has at least 8 characters.';
     setErrors(errs);
     setFailure('');
+    setLocked(false);
     if (errs.email || errs.password) return;
 
     setBusy(true);
@@ -41,16 +45,22 @@ export function SignInPage() {
       setSession(next);
       navigate(from, { replace: true });
     } catch (err) {
+      // The API's per-email lock explains itself ("Too many failed sign-ins with this email. Try again in 15 minutes.");
+      // the per-IP limiter is about the network, whatever the email
+      const lock = limitDetail(err);
+      setLocked(!!lock);
       setFailure(
-        err instanceof ApiError && err.status === 400
-          ? 'Email or password is incorrect.'
-          : err instanceof ApiError && err.status === 403
-            ? 'This account has been deactivated. Ask an admin of your workspace to reactivate it.'
-            : err instanceof ApiError && err.status === 429
-              ? 'Too many sign-in attempts from your network. Wait a minute and try again.'
-              : err instanceof NetworkError
-                ? 'We couldn’t reach Gratia. Check your connection and try again.'
-                : 'Something went wrong on our side. Try again in a moment.',
+        lock
+          ? lock
+          : err instanceof ApiError && err.status === 400
+            ? 'Email or password is incorrect.'
+            : err instanceof ApiError && err.status === 403
+              ? 'This account has been deactivated. Ask an admin of your workspace to reactivate it.'
+              : isRateLimited(err)
+                ? `Too many sign-in attempts from your network. Wait ${waitText((err as ApiError).retryAfter)} and try again.`
+                : err instanceof NetworkError
+                  ? 'We couldn’t reach Gratia. Check your connection and try again.'
+                  : 'Something went wrong on our side. Try again in a moment.',
       );
       setPassword('');
     } finally {
@@ -71,7 +81,19 @@ export function SignInPage() {
         {failure && (
           <div role="alert" className={styles.failure}>
             <Icon name="error" />
-            <span>{failure}</span>
+            <span>
+              {failure}
+              {locked && (
+                <>
+                  {' '}
+                  Or{' '}
+                  <Link to="/forgot-password" state={{ email: email.trim() }}>
+                    reset your password
+                  </Link>{' '}
+                  to sign in now.
+                </>
+              )}
+            </span>
           </div>
         )}
 
@@ -84,6 +106,7 @@ export function SignInPage() {
             className="input"
             type="email"
             autoComplete="email"
+            maxLength={254}
             value={email}
             aria-invalid={errors.email ? true : undefined}
             aria-describedby={errors.email ? 'signin-email-e' : undefined}
@@ -101,9 +124,14 @@ export function SignInPage() {
         </div>
 
         <div className={styles.field}>
-          <label htmlFor="signin-password" className="field-label">
-            Password
-          </label>
+          <div className={styles.labelRow}>
+            <label htmlFor="signin-password" className="field-label">
+              Password
+            </label>
+            <Link to="/forgot-password" state={{ email: email.trim() }} className={styles.labelLink}>
+              Forgot your password?
+            </Link>
+          </div>
           <input
             id="signin-password"
             className="input"

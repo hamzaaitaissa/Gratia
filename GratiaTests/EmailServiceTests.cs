@@ -36,6 +36,26 @@ namespace GratiaTests
         }
 
         [Fact]
+        public async Task The_reset_email_links_to_the_reset_page()
+        {
+            await CreateService("http://localhost:5173/").SendPasswordResetEmailAsync("ada@acme.test", "Ada", "tok");
+
+            var (to, content) = Assert.Single(_sender.Sent);
+            Assert.Equal("ada@acme.test", to);
+            Assert.Contains("http://localhost:5173/reset-password/tok", content.HtmlBody);
+        }
+
+        [Fact]
+        public async Task The_email_changed_notice_goes_to_the_old_address()
+        {
+            await CreateService("http://localhost:5173").SendEmailChangedEmailAsync("old@acme.test", "new@acme.test", "Acme");
+
+            var (to, content) = Assert.Single(_sender.Sent);
+            Assert.Equal("old@acme.test", to);
+            Assert.Contains("new@acme.test", content.HtmlBody);
+        }
+
+        [Fact]
         public async Task The_development_log_sender_writes_the_link_as_text()
         {
             var logger = new CapturingLogger<LogEmailSender>();

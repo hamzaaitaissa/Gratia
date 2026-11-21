@@ -18,5 +18,14 @@ namespace Gratia.Application.Interfaces
 
         Task SendWelcomeEmailAsync(string toEmail, string fullName, string companyName, int monthlyAllowance,
             CancellationToken cancellationToken = default);
+
+        // Forgotten password (#50). The answer to the request is the same either way, so only the mailbox owner learns
+        // whether the address has an active account: it gets the link, or the notice that there's none.
+        Task SendPasswordResetEmailAsync(string toEmail, string fullName, string token, CancellationToken cancellationToken = default);
+        Task SendPasswordResetUnavailableEmailAsync(string toEmail, CancellationToken cancellationToken = default);
+
+        // Security notices (#50): the password was changed or reset, or an admin changed the sign-in email (to the old address)
+        Task SendPasswordChangedEmailAsync(string toEmail, string fullName, CancellationToken cancellationToken = default);
+        Task SendEmailChangedEmailAsync(string oldEmail, string newEmail, string companyName, CancellationToken cancellationToken = default);
     }
 }

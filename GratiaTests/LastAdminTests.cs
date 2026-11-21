@@ -1,9 +1,11 @@
 using Gratia.Application.DTOs.UserDTO;
 using Gratia.Application.Exceptions;
 using Gratia.Application.Features.Users.Commands;
+using Gratia.Application.Interfaces;
 using Gratia.Domain.Entities;
 using Gratia.Domain.Enum;
 using Gratia.Domain.Repositories;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 
 namespace GratiaTests
@@ -110,7 +112,8 @@ namespace GratiaTests
         private async Task UpdateAsync(User user, UserRole role)
         {
             _users.Setup(u => u.GetByIdInCompanyAsync(user.Id, CompanyId)).ReturnsAsync(user);
-            var handler = new UpdateUserCommandHandler(_users.Object, _companies.Object, _unitOfWork.Object);
+            var handler = new UpdateUserCommandHandler(_users.Object, _companies.Object, _unitOfWork.Object, Mock.Of<IEmailService>(),
+                NullLogger<UpdateUserCommandHandler>.Instance);
             // The same email, so the domain and duplicate checks don't run
             var dto = new UpdateUserDto { Id = user.Id, FullName = user.FullName, Email = user.Email, JobTitle = user.JobTitle, Role = role };
             await handler.Handle(new UpdateUserCommand(CompanyId, dto), CancellationToken.None);

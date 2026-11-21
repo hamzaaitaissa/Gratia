@@ -10,10 +10,13 @@ import { useToast } from '../../components/Toast';
 import styles from './Admin.module.css';
 
 const isEmail = (e: string) => /^[^\s@,;]+@[^\s@,;]+\.[A-Za-z]{2,}$/.test(e.trim());
-type Field = 'fullName' | 'email' | 'jobTitle';
+type Field = 'fullName' | 'email' | 'jobTitle' | 'role';
 
-/** Edit member (design 6.10a): name, email, job title and role. The password is the member's own business (#17). */
-export function EditMemberDialog({ member, isSelf, onClose }: { member: ReadUser; isSelf: boolean; onClose: () => void }) {
+/**
+ * Edit member (design 6.10a): name, email, job title and role. The password is the member's own business (#17).
+ * `onlyAdmin` is true when the member is the company's one active admin, who can't be made an Employee (#63).
+ */
+export function EditMemberDialog({ member, isSelf, onlyAdmin, onClose }: { member: ReadUser; isSelf: boolean; onlyAdmin: boolean; onClose: () => void }) {
   const queryClient = useQueryClient();
   const toast = useToast();
   const [values, setValues] = useState({ fullName: member.fullName, email: member.email, jobTitle: member.jobTitle, role: member.role });
@@ -37,8 +40,12 @@ export function EditMemberDialog({ member, isSelf, onClose }: { member: ReadUser
           jobTitle: fields.jobTitle,
         });
       if (err instanceof ApiError && err.status === 409) return setErrors({ email: 'Another account already uses this email.' });
-      // The domain rule: until the domain is verified, members keep addresses on it
-      if (err instanceof ApiError && err.status === 400 && err.problem.detail) return setErrors({ email: err.problem.detail });
+      if (err instanceof ApiError && err.status === 400 && err.problem.detail) {
+        // The domain rule ("…you can only invite @… addresses") applies only to a changed email. Otherwise it's the
+        // last admin (#63): "A company needs at least one admin. Make someone else an admin first."
+        const emailChanged = values.email.trim().toLowerCase() !== member.email.toLowerCase();
+        return setErrors(emailChanged && !/admin/i.test(err.problem.detail) ? { email: err.problem.detail } : { role: err.problem.detail });
+      }
       if (err instanceof ApiError && err.status === 404) {
         void queryClient.invalidateQueries({ queryKey: queryKeys.users });
         return setFailure('This member no longer exists. They may have been deactivated in the meantime.');
@@ -57,7 +64,7 @@ export function EditMemberDialog({ member, isSelf, onClose }: { member: ReadUser
     if (!Object.keys(errs).length) save.mutate();
   };
 
-  const field = (key: Field, label: string, opts: { type?: string; optional?: boolean; autofocus?: boolean } = {}) => (
+  const field = (key: Exclude<Field, 'role'>, label: string, opts: { type?: string; optional?: boolean; autofocus?: boolean } = {}) => (
     <div className={d.field}>
       <label htmlFor={`member-${key}`} className="field-label">
         {label} {opts.optional && <span className={d.optional}>(optional)</span>}
@@ -105,12 +112,29 @@ export function EditMemberDialog({ member, isSelf, onClose }: { member: ReadUser
             id="member-role"
             className={d.select}
             value={values.role}
-            onChange={(e) => setValues((v) => ({ ...v, role: e.target.value as UserRole }))}
+            aria-invalid={errors.role ? true : undefined}
+            aria-describedby={errors.role ? 'member-role-e member-role-h' : 'member-role-h'}
+            onChange={(e) => {
+              setValues((v) => ({ ...v, role: e.target.value as UserRole }));
+              setErrors((x) => ({ ...x, role: undefined }));
+            }}
           >
-            <option value="Employee">Employee</option>
+            <option value="Employee" disabled={onlyAdmin && member.role === 'Admin'}>
+              Employee
+            </option>
             <option value="Admin">Admin</option>
           </select>
-          <p className={d.hint}>Admins can manage members, invitations and company settings.</p>
+          {errors.role && (
+            <p id="member-role-e" role="alert" className="field-error">
+              <Icon name="error" size={18} />
+              {errors.role}
+            </p>
+          )}
+          <p id="member-role-h" className={d.hint}>
+            {onlyAdmin && member.role === 'Admin'
+              ? `${isSelf ? 'You’re' : `${member.fullName} is`} the only admin, so the role stays Admin. Make someone else an admin first.`
+              : 'Admins can manage members, invitations and company settings.'}
+          </p>
           {isSelf && member.role === 'Admin' && values.role === 'Employee' && (
             <p role="alert" className={styles.warnInline}>
               <Icon name="warning" size={18} />

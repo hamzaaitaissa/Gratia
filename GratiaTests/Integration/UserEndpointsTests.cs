@@ -69,7 +69,7 @@ public sealed class UserEndpointsTests(GratiaApiFactory factory) : IClassFixture
     public async Task A_changed_email_is_normalized_and_becomes_the_login()
     {
         var admin = await factory.CreateClientForAsync(factory.AcmeAdminEmail);
-        var (id, _) = await factory.AddUserAsync(factory.Acme);
+        var (id, oldEmail) = await factory.AddUserAsync(factory.Acme);
         var newEmail = $"renamed-{Guid.NewGuid():N}@acme.test";
 
         var update = await admin.PutAsJsonAsync($"/api/user/{id}", UpdateFor(id, $"  {newEmail.ToUpperInvariant()} ", "Engineer"));
@@ -77,6 +77,15 @@ public sealed class UserEndpointsTests(GratiaApiFactory factory) : IClassFixture
         Assert.Equal(HttpStatusCode.OK, update.StatusCode);
         Assert.Equal(newEmail, (await update.Content.ReadFromJsonAsync<ReadUserDto>(GratiaApiFactory.Json))!.Email);
         await factory.CreateClientForAsync(newEmail);
+
+        // The old address hears of it (#50): with a forgotten-password link to the new one, it's a way into the account
+        var notice = Assert.Single(factory.Emails.SentTo(oldEmail));
+        Assert.Equal((EmailKind.EmailChanged, newEmail, "Acme"), (notice.Kind, notice.NewEmail, notice.CompanyName));
+
+        // Saving again with the same email sends nothing more
+        await admin.PutAsJsonAsync($"/api/user/{id}", UpdateFor(id, newEmail, "Engineer"));
+        Assert.Single(factory.Emails.SentTo(oldEmail));
+        Assert.Empty(factory.Emails.SentTo(newEmail));
     }
 
     [Theory]
@@ -254,6 +263,23 @@ public sealed class UserEndpointsTests(GratiaApiFactory factory) : IClassFixture
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         await factory.CreateClientForAsync(factory.AcmeAdminEmail);
+    }
+
+    [Fact]
+    public async Task The_deactivated_list_only_shows_your_own_company()
+    {
+        var (acmeId, _) = await factory.AddUserAsync(factory.Acme);
+        var (globexId, _) = await factory.AddUserAsync(factory.Globex);
+        var acmeAdmin = await factory.CreateClientForAsync(factory.AcmeAdminEmail);
+        var globexAdmin = await factory.CreateClientForAsync(factory.GlobexAdminEmail);
+        Assert.Equal(HttpStatusCode.NoContent, (await acmeAdmin.PostAsync($"/api/user/{acmeId}/deactivate", null)).StatusCode);
+        Assert.Equal(HttpStatusCode.NoContent, (await globexAdmin.PostAsync($"/api/user/{globexId}/deactivate", null)).StatusCode);
+
+        var deactivated = (await acmeAdmin.GetFromJsonAsync<List<ReadUserDto>>("/api/user/deactivated", GratiaApiFactory.Json))!;
+
+        Assert.Contains(deactivated, u => u.Id == acmeId);
+        Assert.DoesNotContain(deactivated, u => u.Id == globexId);
+        Assert.All(deactivated, u => Assert.Equal(factory.Acme.Id, u.CompanyId));
     }
 
     [Fact]

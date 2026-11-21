@@ -39,9 +39,17 @@ namespace Gratia.Infrastructure.Repositories
         }
 
         // Single-entity reads are tracked so services can change them and save through the unit of work
+
+        // Across companies (#78): an email is unique across all of them, and login and signup have no caller yet
         public async Task<User?> GetByEmailAsync(string email)
         {
-            return await _gratiaDbContext.Users.FirstOrDefaultAsync(u => u.Email == email);
+            return await _gratiaDbContext.Users.AcrossCompanies().FirstOrDefaultAsync(u => u.Email == email);
+        }
+
+        // Across companies (#78), like GetByEmailAsync: an import checks the emails against every company's accounts
+        public async Task<IReadOnlyList<User>> GetByEmailsAsync(IReadOnlyCollection<string> emails, CancellationToken cancellationToken = default)
+        {
+            return await _gratiaDbContext.Users.AcrossCompanies().AsNoTracking().Where(u => emails.Contains(u.Email)).ToListAsync(cancellationToken);
         }
 
         public async Task<User?> GetByIdAsync(Guid id)
@@ -59,10 +67,20 @@ namespace Gratia.Infrastructure.Repositories
             return await _gratiaDbContext.Users.FirstOrDefaultAsync(u => u.Id == id && u.CompanyId == companyId);
         }
 
-        public async Task<bool> IsActiveWithRoleAsync(Guid id, Guid companyId, UserRole role, CancellationToken cancellationToken = default)
+        // Across companies (#78): it runs while the access token is checked, before the request has a caller. The company
+        // comes from the token.
+        public async Task<bool> IsAccessTokenCurrentAsync(Guid id, Guid companyId, UserRole role, Guid sessionStamp,
+            CancellationToken cancellationToken = default)
         {
-            return await _gratiaDbContext.Users.AnyAsync(
-                u => u.Id == id && u.CompanyId == companyId && u.Role == role && u.DeactivatedAt == null, cancellationToken);
+            return await _gratiaDbContext.Users.AcrossCompanies().AnyAsync(
+                u => u.Id == id && u.CompanyId == companyId && u.Role == role && u.SessionStamp == sessionStamp && u.DeactivatedAt == null,
+                cancellationToken);
+        }
+
+        // Across companies (#78): resetting a forgotten password has no caller; the token from the email is the proof
+        public async Task<User?> GetByPasswordResetTokenHashAsync(string tokenHash)
+        {
+            return await _gratiaDbContext.Users.AcrossCompanies().FirstOrDefaultAsync(u => u.PasswordResetTokenHash == tokenHash);
         }
 
         public async Task<bool> HasOtherActiveAdminAsync(Guid companyId, Guid exceptUserId, CancellationToken cancellationToken = default)
@@ -71,15 +89,18 @@ namespace Gratia.Infrastructure.Repositories
                 u => u.CompanyId == companyId && u.Role == UserRole.Admin && u.DeactivatedAt == null && u.Id != exceptUserId, cancellationToken);
         }
 
+        // Across companies (#78): signup asks it, which has no caller
         public async Task<bool> AnyInCompanyAsync(Guid companyId)
         {
-            return await _gratiaDbContext.Users.AnyAsync(u => u.CompanyId == companyId);
+            return await _gratiaDbContext.Users.AcrossCompanies().AnyAsync(u => u.CompanyId == companyId);
         }
 
-        // Deactivated users too, so they have this month's allowance if they're reactivated
+        // Deactivated users too, so they have this month's allowance if they're reactivated. Across companies (#78): the
+        // background refill has no caller.
         public async Task<int> ResetAvailablePointsAsync(Guid companyId, int points, CancellationToken cancellationToken = default)
         {
             return await _gratiaDbContext.Users
+                .AcrossCompanies()
                 .Where(u => u.CompanyId == companyId)
                 .ExecuteUpdateAsync(setters => setters.SetProperty(u => u.NumberOfPointsAvailable, points), cancellationToken);
         }

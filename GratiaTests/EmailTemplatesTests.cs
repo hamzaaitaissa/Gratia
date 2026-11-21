@@ -20,6 +20,23 @@ namespace GratiaTests
         }
 
         [Fact]
+        public void The_account_emails_encode_what_users_typed()
+        {
+            const string evil = "<img src=x onerror=alert(1)>";
+
+            foreach (var email in new[]
+            {
+                EmailTemplates.PasswordReset(evil, "http://localhost:5173/reset-password/abc"),
+                EmailTemplates.PasswordChanged(evil, "http://localhost:5173/forgot-password"),
+                EmailTemplates.EmailChanged(evil, evil),
+            })
+            {
+                Assert.DoesNotContain("<img", email.HtmlBody);
+                Assert.Contains("&lt;img", email.HtmlBody);
+            }
+        }
+
+        [Fact]
         public void Subjects_stay_on_one_line()
         {
             var email = EmailTemplates.CompanySetup("Peter", "Initech\r\nBcc: someone@else.test", "http://localhost:5173/accept-invitation/abc");

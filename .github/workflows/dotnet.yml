@@ -3,11 +3,13 @@
 
 name: .NET
 
+# main and the working branch develop, pull requests into either, and by hand from the Actions tab (TASKS.md #44)
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "develop" ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ "main", "develop" ]
+  workflow_dispatch:
 
 jobs:
   build:

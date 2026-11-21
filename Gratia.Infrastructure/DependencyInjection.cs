@@ -5,6 +5,7 @@ using Gratia.Infrastructure.Authentication;
 using Gratia.Infrastructure.Data;
 using Gratia.Infrastructure.Email;
 using Gratia.Infrastructure.Repositories;
+using Gratia.Infrastructure.Spreadsheets;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -27,6 +28,7 @@ namespace Gratia.Infrastructure
             services.AddScoped<ITransactionRepository, TransactionRepository>();
             services.AddScoped<IInvitationRepository, InvitationRepository>();
             services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+            services.AddScoped<ILoginAttemptRepository, LoginAttemptRepository>();
 
             // Authentication. Only the API checks these settings at startup (.ValidateOnStart() in its Program.cs);
             // the Worker never issues tokens, so it can run without the signing key.
@@ -60,6 +62,9 @@ namespace Gratia.Infrastructure
                     "(the AppSettings__FrontendUrl environment variable outside Development).");
             services.AddTransient<IEmailSender, SmtpEmailSender>();
             services.AddTransient<IEmailService, EmailService>();
+
+            // Bulk invitations (#54)
+            services.AddSingleton<IInvitationSpreadsheet, InvitationSpreadsheet>();
 
             return services;
         }

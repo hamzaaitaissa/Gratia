@@ -2,8 +2,10 @@ using Gratia.Application.DTOs.Invitation;
 using Gratia.Application.Exceptions;
 using Gratia.Application.Interfaces;
 using Gratia.Application.Mappings;
+using Gratia.Application.Settings;
 using Gratia.Domain.Repositories;
 using Mediator;
+using Microsoft.Extensions.Options;
 
 namespace Gratia.Application.Features.Invitations.Commands;
 
@@ -14,7 +16,8 @@ public sealed class ResendInvitationCommandHandler(
     IUserRepository userRepository,
     ICompanyRepository companyRepository,
     IUnitOfWork unitOfWork,
-    IEmailService emailService)
+    IInvitationEmailQueue emailQueue,
+    IOptions<OnboardingOptions> onboardingOptions)
     : ICommandHandler<ResendInvitationCommand, InvitationDto>
 {
     public async ValueTask<InvitationDto> Handle(ResendInvitationCommand command, CancellationToken cancellationToken)
@@ -45,28 +48,19 @@ public sealed class ResendInvitationCommandHandler(
         var inviter = await userRepository.GetByIdAsync(inviterId)
             ?? throw new NotFoundException("User not found");
 
-        // A new token, so a link from an earlier email stops working; the 7 days start again. Saved before sending, so
-        // the new link works the moment it arrives.
-        var (previousToken, previousExpiry) = (invitation.InvitationToken, invitation.ExpiresAt);
-        invitation.InvitationToken = InvitationTokens.Generate();
-        invitation.ExpiresAt = DateTime.UtcNow.Add(InvitationTokens.Lifetime);
-        await unitOfWork.SaveChangesAsync(cancellationToken);
-
-        try
+        // A new link, in the background like an invite (#55). It replaces the old one, which then stops working, once its
+        // email has gone out, with 7 days from then; until that happens the link the invitee has keeps working (#20).
+        // It's another email, so it counts for the daily cap like an invite (#65), in the same commit.
+        var now = DateTime.UtcNow;
+        await using (var dbTransaction = await unitOfWork.BeginTransactionAsync(cancellationToken))
         {
-            await emailService.SendInvitationEmailAsync(invitation.Email, invitation.InvitationToken, company.Name, inviter.FullName,
-                inviter.Email, cancellationToken);
-        }
-        catch
-        {
-            // #20: otherwise the link the invitee already has would stop working with no new one to replace it.
-            // Not cancellable: the request may be what was cancelled.
-            invitation.InvitationToken = previousToken;
-            invitation.ExpiresAt = previousExpiry;
-            await unitOfWork.SaveChangesAsync(CancellationToken.None);
-            throw;
+            await InvitationQuota.CountAsync(company, companyRepository, onboardingOptions.Value, now, cancellationToken);
+            invitation.QueueResend(InvitationTokens.Generate(), now);
+            await unitOfWork.SaveChangesAsync(cancellationToken);
+            await dbTransaction.CommitAsync(cancellationToken);
         }
 
+        emailQueue.Notify();
         return invitation.ToDto();
     }
 }

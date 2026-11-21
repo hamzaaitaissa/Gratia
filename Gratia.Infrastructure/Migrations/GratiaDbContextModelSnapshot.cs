@@ -38,6 +38,12 @@ namespace Gratia.Infrastructure.Migrations
                     b.Property<DateTime?>("DomainVerifiedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<DateTime?>("InvitationWindowStart")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("InvitationsInWindow")
+                        .HasColumnType("int");
+
                     b.Property<string>("LogoUrl")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -93,8 +99,24 @@ namespace Gratia.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<int>("EmailAttempts")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("EmailNextAttemptAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("EmailSentAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("EmailStatus")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("ExpiresAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<string>("FullName")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
                     b.Property<string>("InvitationToken")
                         .IsRequired()
@@ -109,6 +131,14 @@ namespace Gratia.Infrastructure.Migrations
                     b.Property<bool>("IsUsed")
                         .HasColumnType("bit");
 
+                    b.Property<string>("JobTitle")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("PendingToken")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("CompanyId");
@@ -116,11 +146,36 @@ namespace Gratia.Infrastructure.Migrations
                     b.HasIndex("InvitationToken")
                         .IsUnique();
 
-                    b.HasIndex("InvitedByUserId");
-
                     b.HasIndex("Email", "CompanyId");
 
+                    b.HasIndex("EmailStatus", "EmailNextAttemptAt");
+
+                    b.HasIndex("InvitedByUserId", "CompanyId");
+
                     b.ToTable("CompanyInvitations");
+                });
+
+            modelBuilder.Entity("Gratia.Domain.Entities.LoginAttempt", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(254)
+                        .HasColumnType("nvarchar(254)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedDate");
+
+                    b.HasIndex("Email", "CreatedDate");
+
+                    b.ToTable("LoginAttempts");
                 });
 
             modelBuilder.Entity("Gratia.Domain.Entities.RefreshToken", b =>
@@ -186,9 +241,9 @@ namespace Gratia.Infrastructure.Migrations
 
                     b.HasIndex("CompanyId");
 
-                    b.HasIndex("ReceiverId");
+                    b.HasIndex("ReceiverId", "CompanyId");
 
-                    b.HasIndex("SenderId");
+                    b.HasIndex("SenderId", "CompanyId");
 
                     b.ToTable("Transactions");
                 });
@@ -230,8 +285,18 @@ namespace Gratia.Infrastructure.Migrations
                     b.Property<int>("NumberOfPointsAvailable")
                         .HasColumnType("int");
 
+                    b.Property<DateTime?>("PasswordResetExpiresAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("PasswordResetTokenHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
                     b.Property<int>("Role")
                         .HasColumnType("int");
+
+                    b.Property<Guid>("SessionStamp")
+                        .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
 
@@ -239,6 +304,10 @@ namespace Gratia.Infrastructure.Migrations
 
                     b.HasIndex("Email")
                         .IsUnique();
+
+                    b.HasIndex("PasswordResetTokenHash")
+                        .IsUnique()
+                        .HasFilter("[PasswordResetTokenHash] IS NOT NULL");
 
                     b.ToTable("Users");
                 });
@@ -253,7 +322,8 @@ namespace Gratia.Infrastructure.Migrations
 
                     b.HasOne("Gratia.Domain.Entities.User", "InvitedByUser")
                         .WithMany()
-                        .HasForeignKey("InvitedByUserId")
+                        .HasForeignKey("InvitedByUserId", "CompanyId")
+                        .HasPrincipalKey("Id", "CompanyId")
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Company");
@@ -282,13 +352,15 @@ namespace Gratia.Infrastructure.Migrations
 
                     b.HasOne("Gratia.Domain.Entities.User", "Receiver")
                         .WithMany("ReceivedTransactions")
-                        .HasForeignKey("ReceiverId")
+                        .HasForeignKey("ReceiverId", "CompanyId")
+                        .HasPrincipalKey("Id", "CompanyId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("Gratia.Domain.Entities.User", "Sender")
                         .WithMany("SentTransactions")
-                        .HasForeignKey("SenderId")
+                        .HasForeignKey("SenderId", "CompanyId")
+                        .HasPrincipalKey("Id", "CompanyId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 

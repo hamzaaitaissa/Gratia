@@ -7,12 +7,15 @@ export const API_BASE_URL: string = (import.meta.env.VITE_API_BASE_URL as string
 export class ApiError extends Error {
   readonly status: number;
   readonly problem: ProblemDetails;
+  /** A 429's Retry-After, in seconds, when the API sent one. */
+  readonly retryAfter: number | undefined;
 
-  constructor(status: number, problem: ProblemDetails) {
+  constructor(status: number, problem: ProblemDetails, retryAfter?: number) {
     super(problem.detail || problem.title || `Request failed with status ${status}`);
     this.name = 'ApiError';
     this.status = status;
     this.problem = problem;
+    this.retryAfter = retryAfter;
   }
 
   get traceId(): string | undefined {
@@ -30,6 +33,7 @@ export class NetworkError extends Error {
 
 interface RequestOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
+  /** Sent as JSON, or as it is when it's a FormData (a file upload). */
   body?: unknown;
   /** Send the access token, and refresh it once on a 401. Defaults to true. */
   auth?: boolean;
@@ -37,14 +41,16 @@ interface RequestOptions {
 }
 
 async function send(path: string, opts: RequestOptions, accessToken: string | null): Promise<Response> {
+  const form = opts.body instanceof FormData ? opts.body : null;
   const headers: Record<string, string> = { Accept: 'application/json' };
-  if (opts.body !== undefined) headers['Content-Type'] = 'application/json';
+  // A FormData's Content-Type carries its boundary, which fetch writes itself
+  if (opts.body !== undefined && !form) headers['Content-Type'] = 'application/json';
   if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
   try {
     return await fetch(API_BASE_URL + path, {
       method: opts.method ?? 'GET',
       headers,
-      body: opts.body === undefined ? undefined : JSON.stringify(opts.body),
+      body: opts.body === undefined ? undefined : (form ?? JSON.stringify(opts.body)),
       signal: opts.signal,
     });
   } catch (e) {
@@ -61,7 +67,8 @@ async function toError(res: Response): Promise<ApiError> {
   } catch {
     // Not JSON: keep the status only
   }
-  return new ApiError(res.status, problem);
+  const retryAfter = Number(res.headers.get('Retry-After'));
+  return new ApiError(res.status, problem, Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter : undefined);
 }
 
 // A refresh token works only once: the API swaps it for a new one. So one refresh at a time, across tabs too
@@ -94,7 +101,8 @@ function refreshSession(tokenUsed: string): Promise<boolean> {
   return refreshing;
 }
 
-export async function request<T>(path: string, opts: RequestOptions = {}): Promise<T> {
+/** Sends the request, refreshing the session once on a 401, and returns the response if it's a success. */
+async function fetchOk(path: string, opts: RequestOptions): Promise<Response> {
   const auth = opts.auth ?? true;
   const tokenUsed = auth ? (getSession()?.accessToken ?? null) : null;
   let res = await send(path, opts, tokenUsed);
@@ -111,7 +119,21 @@ export async function request<T>(path: string, opts: RequestOptions = {}): Promi
   }
 
   if (!res.ok) throw await toError(res);
+  return res;
+}
+
+export async function request<T>(path: string, opts: RequestOptions = {}): Promise<T> {
+  const res = await fetchOk(path, opts);
   if (res.status === 204) return undefined as T;
   const text = await res.text();
   return (text ? JSON.parse(text) : undefined) as T;
+}
+
+/** A file the API sends (a download), named as its Content-Disposition says when it says. */
+export async function download(path: string, fallbackName: string): Promise<{ blob: Blob; fileName: string }> {
+  const res = await fetchOk(path, {});
+  const disposition = res.headers.get('Content-Disposition') ?? '';
+  const encoded = /filename\*=UTF-8''([^;]+)/i.exec(disposition)?.[1];
+  const plain = /filename="?([^";]+)"?/i.exec(disposition)?.[1];
+  return { blob: await res.blob(), fileName: encoded ? decodeURIComponent(encoded) : (plain ?? fallbackName) };
 }

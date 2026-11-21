@@ -12,6 +12,9 @@ namespace Gratia.Infrastructure.Authentication
 {
     public class TokenService : ITokenService
     {
+        // The access token's claim for User.SessionStamp (#50)
+        public const string SessionStampClaim = "SessionStamp";
+
         private readonly JwtOptions _jwtOptions;
 
         public TokenService(IOptions<JwtOptions> jwtOptions)
@@ -19,11 +22,11 @@ namespace Gratia.Infrastructure.Authentication
             _jwtOptions = jwtOptions.Value;
         }
 
-        public TokenResponseDto GenerateTokens(ReadUserDto readUserDto)
+        public TokenResponseDto GenerateTokens(ReadUserDto readUserDto, Guid sessionStamp)
         {
             return new TokenResponseDto
             {
-                AccessToken = CreateToken(readUserDto),
+                AccessToken = CreateToken(readUserDto, sessionStamp),
                 RefreshToken = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32)),
                 // The same moment the server stores, so the client can rely on it (it said 1 hour while 7 days were stored)
                 RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(_jwtOptions.RefreshTokenDays)
@@ -60,7 +63,7 @@ namespace Gratia.Infrastructure.Authentication
             return principal;
         }
 
-        private string CreateToken(ReadUserDto user)
+        private string CreateToken(ReadUserDto user, Guid sessionStamp)
         {
             var claims = new List<Claim>
             {
@@ -68,7 +71,9 @@ namespace Gratia.Infrastructure.Authentication
                 new Claim(ClaimTypes.Email, user.Email),
                 new Claim(ClaimTypes.Role, user.Role.ToString()), // the name ("Admin"), which [Authorize(Roles = ...)] compares
 
-                new Claim("CompanyId", user.CompanyId.ToString())
+                new Claim("CompanyId", user.CompanyId.ToString()),
+                // AccessTokenCheck refuses the token once the user's stamp has changed (#50)
+                new Claim(SessionStampClaim, sessionStamp.ToString())
             };
 
             var creds = new SigningCredentials(_jwtOptions.CreateSigningKey(), SecurityAlgorithms.HmacSha512);

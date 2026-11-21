@@ -27,6 +27,19 @@ namespace Gratia.Application.Exceptions
     }
 
     /// <summary>
+    /// Too many attempts, e.g. failed sign-ins with one email (#72): 429, with RetryAfter as the Retry-After header.
+    /// </summary>
+    public sealed class TooManyAttemptsException : Exception
+    {
+        public TooManyAttemptsException(string message, TimeSpan retryAfter) : base(message)
+        {
+            RetryAfter = retryAfter;
+        }
+
+        public TimeSpan RetryAfter { get; }
+    }
+
+    /// <summary>
     /// An email couldn't be sent, e.g. the SMTP server is down (503, so the caller knows to try again). Thrown by
     /// IEmailService; a handler that saved something the email was about undoes it first (#20).
     /// </summary>

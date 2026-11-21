@@ -3,9 +3,12 @@ using Gratia.Application.DTOs.Invitation;
 using Gratia.Application.Exceptions;
 using Gratia.Application.Interfaces;
 using Gratia.Application.Mappings;
+using Gratia.Application.Settings;
 using Gratia.Domain.Entities;
+using Gratia.Domain.Enum;
 using Gratia.Domain.Repositories;
 using Mediator;
+using Microsoft.Extensions.Options;
 
 namespace Gratia.Application.Features.Invitations.Commands;
 
@@ -16,7 +19,8 @@ public sealed class InviteUserCommandHandler(
     IUserRepository userRepository,
     ICompanyRepository companyRepository,
     IUnitOfWork unitOfWork,
-    IEmailService emailService)
+    IInvitationEmailQueue emailQueue,
+    IOptions<OnboardingOptions> onboardingOptions)
     : ICommandHandler<InviteUserCommand, InvitationDto>
 {
     public async ValueTask<InvitationDto> Handle(InviteUserCommand command, CancellationToken cancellationToken)
@@ -41,7 +45,9 @@ public sealed class InviteUserCommandHandler(
 
         var existingInvitation = await invitationRepository.GetByEmailAndCompanyIdAsync(email, command.CompanyId);
         if (existingInvitation is not null && existingInvitation.IsValid)
-            throw new ConflictException("An active invitation already exists for this email in the company");
+            throw new ConflictException(existingInvitation.EmailStatus == InvitationEmailStatus.Failed
+                ? "An invitation to this email couldn't be sent. Resend it from the list of pending invitations."
+                : "An active invitation already exists for this email in the company");
 
         var token = InvitationTokens.Generate();
         var invitation = new CompanyInvitation(
@@ -54,26 +60,25 @@ public sealed class InviteUserCommandHandler(
         {
             // So the response carries the company and inviter names
             Company = company,
-            InvitedByUser = inviter
+            InvitedByUser = inviter,
+            FullName = string.IsNullOrWhiteSpace(command.Invitation.FullName) ? null : command.Invitation.FullName.Trim(),
+            JobTitle = string.IsNullOrWhiteSpace(command.Invitation.JobTitle) ? null : command.Invitation.JobTitle.Trim()
         };
 
-        // Saved before sending, so the link works the moment it arrives
-        invitationRepository.Add(invitation);
-        await unitOfWork.SaveChangesAsync(cancellationToken);
-
-        try
+        // The email goes out in the background (#55), so this answers at once and a slow or failing mail server doesn't
+        // fail the invite: the email is retried, and the list shows it as Failed if it never goes out, for Resend.
+        // Counted for the daily cap in the same commit (#65).
+        var now = DateTime.UtcNow;
+        invitation.QueueEmail(now);
+        await using (var dbTransaction = await unitOfWork.BeginTransactionAsync(cancellationToken))
         {
-            await emailService.SendInvitationEmailAsync(email, token, company.Name, inviter.FullName, inviter.Email, cancellationToken);
-        }
-        catch
-        {
-            // #20: an invitation nobody received would block inviting the address again for 7 days. Undone, the
-            // admin gets a 503 and can simply try again. Not cancellable: the request may be what was cancelled.
-            invitationRepository.Remove(invitation);
-            await unitOfWork.SaveChangesAsync(CancellationToken.None);
-            throw;
+            await InvitationQuota.CountAsync(company, companyRepository, onboardingOptions.Value, now, cancellationToken);
+            invitationRepository.Add(invitation);
+            await unitOfWork.SaveChangesAsync(cancellationToken);
+            await dbTransaction.CommitAsync(cancellationToken);
         }
 
+        emailQueue.Notify();
         return invitation.ToDto();
     }
 }

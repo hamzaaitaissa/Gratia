@@ -20,11 +20,16 @@ namespace Gratia.Domain.Repositories
 
         // Expects a normalized email (EmailAddresses.Normalize)
         Task<User?> GetByEmailAsync(string email);
+        // The same for many at once (an import, #54), untracked: the users with any of these emails, in any company
+        Task<IReadOnlyList<User>> GetByEmailsAsync(IReadOnlyCollection<string> emails, CancellationToken cancellationToken = default);
         Task<bool> AnyInCompanyAsync(Guid companyId);
 
-        // Whether the user is active, in that company and has that role: what an access token claims (#73). One
-        // primary-key lookup with nothing loaded, because it runs on every authenticated request.
-        Task<bool> IsActiveWithRoleAsync(Guid id, Guid companyId, UserRole role, CancellationToken cancellationToken = default);
+        // Whether the user is active, in that company, has that role and that session stamp: what an access token claims
+        // (#73, #50). One primary-key lookup with nothing loaded, because it runs on every authenticated request.
+        Task<bool> IsAccessTokenCurrentAsync(Guid id, Guid companyId, UserRole role, Guid sessionStamp, CancellationToken cancellationToken = default);
+
+        // The user a forgotten-password link was sent to, by the SHA-256 of its token (#50), deactivated or not
+        Task<User?> GetByPasswordResetTokenHashAsync(string tokenHash);
 
         // Whether the company has an active admin other than exceptUserId (#63)
         Task<bool> HasOtherActiveAdminAsync(Guid companyId, Guid exceptUserId, CancellationToken cancellationToken = default);

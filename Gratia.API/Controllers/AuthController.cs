@@ -1,4 +1,5 @@
 ﻿using Gratia.Application.DTOs.CompanyDTO;
+using Gratia.Application.DTOs.Token;
 using Gratia.Application.DTOs.UserDTO;
 using Gratia.Application.Features.Auth.Commands;
 using Gratia.Application.Features.Companies.Commands;
@@ -57,6 +58,25 @@ namespace Gratia.API.Controllers
                 return Problem(detail: "Invalid refresh token", statusCode: StatusCodes.Status401Unauthorized);
 
             return Ok(tokenResponse);
+        }
+
+        // A forgotten-password link (#50). Always 202 for valid input: what happened is told only by email, so this can't
+        // be used to find out who has an account.
+        [HttpPost("forgot-password")]
+        [EnableRateLimiting(RateLimitPolicies.PasswordReset)]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto forgotPasswordDto, CancellationToken cancellationToken)
+        {
+            await _sender.Send(new ForgotPasswordCommand(forgotPasswordDto), cancellationToken);
+            return Accepted();
+        }
+
+        // Sets the new password with the link's token, ends every other session and signs in here, with the same tokens
+        // as login (#50). 400 when the link is unknown, used or expired.
+        [HttpPost("reset-password")]
+        [EnableRateLimiting(RateLimitPolicies.Login)]
+        public async Task<ActionResult<TokenResponseDto>> ResetPassword([FromBody] ResetPasswordDto resetPasswordDto, CancellationToken cancellationToken)
+        {
+            return Ok(await _sender.Send(new ResetPasswordCommand(resetPasswordDto), cancellationToken));
         }
 
         // Signing out (#15). With the refresh token as the body (a JSON string, like refresh-token), only that device is

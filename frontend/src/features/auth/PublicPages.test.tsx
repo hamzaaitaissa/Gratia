@@ -3,32 +3,24 @@ import userEvent from '@testing-library/user-event';
 import { Route, Routes } from 'react-router';
 import type { Invitation } from '../../api/types';
 import { getSession, setSession } from '../../auth/session';
-import { fakeToken, mockApi, renderWithProviders } from '../../test/utils';
+import { fakeToken, invitation as baseInvitation, mockApi, renderWithProviders } from '../../test/utils';
 import { AcceptInvitationPage } from './AcceptInvitationPage';
 import { CreateWorkspacePage } from './CreateWorkspacePage';
 
-const invitation = (over: Partial<Invitation> = {}): Invitation => ({
-  id: 'i1',
-  email: 'noah.becker@fernhill.example',
-  expiresAt: new Date(Date.now() + 5 * 864e5).toISOString(),
-  isUsed: false,
-  invitedRole: 'Employee',
-  companyName: 'Fernhill Labs',
-  invitedByUserName: 'Jonas Lindqvist',
-  createdAt: new Date().toISOString(),
-  isExpired: false,
-  isValid: true,
-  ...over,
+const invitation = (over: Partial<Invitation> = {}): Invitation =>
+  baseInvitation({ email: 'noah.becker@fernhill.example', invitedByUserName: 'Jonas Lindqvist', ...over });
+
+const tokens = (userId: string) => ({
+  accessToken: fakeToken({ nameid: userId, CompanyId: 'c1', role: 'Employee', email: 'noah.becker@fernhill.example' }),
+  refreshToken: 'r-' + userId,
+  refreshTokenExpiryTime: '',
 });
 
-function renderAccept(lookup: { status?: number; body?: unknown }, accept: { status?: number; body?: unknown } = { status: 204 }) {
+function renderAccept(lookup: { status?: number; body?: unknown }, accept: { status?: number; body?: unknown } = { body: tokens('u9') }) {
   setSession(null);
   const api = mockApi({
     'GET /api/invitation/token/tok123': () => lookup,
     'POST /api/invitation/accept': () => accept,
-    'POST /api/auth/login': () => ({
-      body: { accessToken: fakeToken({ nameid: 'u9', CompanyId: 'c1', role: 'Employee', email: 'noah.becker@fernhill.example' }), refreshToken: 'r9', refreshTokenExpiryTime: '' },
-    }),
   });
   renderWithProviders(
     <Routes>
@@ -66,9 +58,16 @@ describe('Accept invitation', () => {
 
     expect(await screen.findByRole('heading', { name: 'Home page' })).toBeTruthy();
     expect(calls.find((c) => c.path === '/api/invitation/accept')?.body).toEqual({ token: 'tok123', fullName: 'Noah Becker', password: 'long-enough-1', jobTitle: 'Product Manager' });
-    expect(calls.find((c) => c.path === '/api/auth/login')?.body).toEqual({ email: 'noah.becker@fernhill.example', hashedPassword: 'long-enough-1' });
+    // Accepting returns the session itself (#66): no second sign-in, which would leave a second session behind
+    expect(calls.some((c) => c.path === '/api/auth/login')).toBe(false);
     expect(getSession()?.userId).toBe('u9');
     expect(screen.getByText('Welcome to Fernhill Labs, Noah.')).toBeTruthy();
+  });
+
+  it('starts with the name and job title the admin filled in (#54)', async () => {
+    renderAccept({ body: invitation({ fullName: 'Noah Becker', jobTitle: 'Product Manager' }) });
+    expect(((await screen.findByLabelText('Full name')) as HTMLInputElement).value).toBe('Noah Becker');
+    expect((screen.getByLabelText(/Job title/) as HTMLInputElement).value).toBe('Product Manager');
   });
 
   it('speaks to the founder of a new workspace', async () => {

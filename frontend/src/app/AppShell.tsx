@@ -264,18 +264,30 @@ export function useSignOut() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const toast = useToast();
-  return async () => {
-    // This device's session only; the user's other devices stay signed in
-    const refreshToken = syncFromStorage()?.refreshToken;
-    try {
-      if (refreshToken) await api.revokeToken(refreshToken);
-    } catch {
-      // Signing out locally still works if the API can't be reached
+  /**
+   * Signs out this device, and the user's other devices stay signed in. With `everywhere`, every device is signed out
+   * and their access tokens stop working at once (#50); if the API can't be reached for that, nothing changes.
+   */
+  return async ({ everywhere = false }: { everywhere?: boolean } = {}) => {
+    if (everywhere) {
+      try {
+        await api.revokeAllTokens();
+      } catch {
+        toast('We couldn’t sign out your other devices. Check your connection and try again.', 'error');
+        return;
+      }
+    } else {
+      const refreshToken = syncFromStorage()?.refreshToken;
+      try {
+        if (refreshToken) await api.revokeToken(refreshToken);
+      } catch {
+        // Signing out locally still works if the API can't be reached
+      }
     }
     setSession(null);
     rememberBrand(null);
     queryClient.clear();
     navigate('/sign-in', { replace: true });
-    toast('You’ve signed out.');
+    toast(everywhere ? 'You’ve signed out on every device.' : 'You’ve signed out.');
   };
 }

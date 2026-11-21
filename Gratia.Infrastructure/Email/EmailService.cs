@@ -35,6 +35,19 @@ namespace Gratia.Infrastructure.Email
             CancellationToken cancellationToken = default) =>
             SendAsync(toEmail, EmailTemplates.Welcome(fullName, companyName, monthlyAllowance, FrontendUrl("/login")), cancellationToken);
 
+        public Task SendPasswordResetEmailAsync(string toEmail, string fullName, string token, CancellationToken cancellationToken = default) =>
+            SendAsync(toEmail, EmailTemplates.PasswordReset(fullName, FrontendUrl($"/reset-password/{Uri.EscapeDataString(token)}")),
+                cancellationToken);
+
+        public Task SendPasswordResetUnavailableEmailAsync(string toEmail, CancellationToken cancellationToken = default) =>
+            SendAsync(toEmail, EmailTemplates.PasswordResetUnavailable(), cancellationToken);
+
+        public Task SendPasswordChangedEmailAsync(string toEmail, string fullName, CancellationToken cancellationToken = default) =>
+            SendAsync(toEmail, EmailTemplates.PasswordChanged(fullName, FrontendUrl("/forgot-password")), cancellationToken);
+
+        public Task SendEmailChangedEmailAsync(string oldEmail, string newEmail, string companyName, CancellationToken cancellationToken = default) =>
+            SendAsync(oldEmail, EmailTemplates.EmailChanged(newEmail, companyName), cancellationToken);
+
         private string AcceptUrl(string token) => FrontendUrl($"/accept-invitation/{Uri.EscapeDataString(token)}");
 
         private string FrontendUrl(string path) => _frontend.FrontendUrl.TrimEnd('/') + path;

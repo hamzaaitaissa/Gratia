@@ -9,6 +9,8 @@ namespace Gratia.Application.Interfaces
     public interface IPasswordHashingService
     {
         string HashPassword(string password);
-        bool VerifyPassword(string password, string HashedPassword);
+        // With no hash (no account has the email), checks the password against a dummy hash and answers false, so it
+        // takes as long as a wrong password does and the response time doesn't tell whether an account exists (#82)
+        bool VerifyPassword(string password, string? hashedPassword);
     }
 }

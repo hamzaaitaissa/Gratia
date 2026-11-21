@@ -282,7 +282,14 @@ export function MembersPage() {
         )}
       </div>
 
-      {editing && <EditMemberDialog member={editing} isSelf={isMe(editing)} onClose={() => setEditing(null)} />}
+      {editing && (
+        <EditMemberDialog
+          member={editing}
+          isSelf={isMe(editing)}
+          onlyAdmin={(users.data ?? []).filter((u) => u.role === 'Admin').length <= 1}
+          onClose={() => setEditing(null)}
+        />
+      )}
       {confirming && (
         <ConfirmDialog
           title={`Deactivate ${confirming.fullName}?`}

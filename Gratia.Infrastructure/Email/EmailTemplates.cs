@@ -55,6 +55,42 @@ namespace Gratia.Infrastructure.Email
                 {Button(signInUrl, "Sign in")}
                 """);
 
+        public static EmailContent PasswordReset(string fullName, string resetUrl) => new(
+            Subject: "Reset your Gratia password",
+            HtmlBody: $"""
+                <h2>Hi {H(fullName)},</h2>
+                <p>Someone asked to reset the password of your Gratia account. Choose a new one with this link:</p>
+                {Button(resetUrl, "Choose a new password")}
+                <p>The link expires in 1 hour and works once. Choosing a new password signs you out on every device.</p>
+                <p>If you didn't ask for this, you can ignore this email: your password stays as it is.</p>
+                {LinkFallback(resetUrl)}
+                """);
+
+        public static EmailContent PasswordResetUnavailable() => new(
+            Subject: "Your Gratia password reset",
+            HtmlBody: """
+                <p>Someone asked to reset the password of a Gratia account with this email address, but there's no active account with it.</p>
+                <p>If you think there should be, ask an admin of your workspace: they may have deactivated your account, or invited you with another address.</p>
+                <p>If you didn't ask for this, you can ignore this email. Nothing was changed.</p>
+                """);
+
+        public static EmailContent PasswordChanged(string fullName, string forgotPasswordUrl) => new(
+            Subject: "Your Gratia password was changed",
+            HtmlBody: $"""
+                <h2>Hi {H(fullName)},</h2>
+                <p>The password of your Gratia account was just changed, and every device that was signed in has been signed out.</p>
+                <p>If you didn't do this, choose a new password now, then tell an admin of your workspace:</p>
+                {Button(forgotPasswordUrl, "Reset your password")}
+                """);
+
+        public static EmailContent EmailChanged(string newEmail, string companyName) => new(
+            Subject: "Your Gratia sign-in email was changed",
+            HtmlBody: $"""
+                <p>An admin of {H(companyName)} changed the email address you sign in to Gratia with, from this address to {H(newEmail)}.</p>
+                <p>From now on, sign in and reset your password with the new address.</p>
+                <p>If you didn't expect this, contact an admin of your workspace.</p>
+                """);
+
         private static string H(string value) => WebUtility.HtmlEncode(value);
 
         // A subject can't contain line breaks

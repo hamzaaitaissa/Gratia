@@ -3,13 +3,15 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Security.Claims;
 using Gratia.Infrastructure.Authentication;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
 namespace GratiaTests.Integration;
 
-// The API only accepts access tokens it issued itself, for itself (#25), that still describe their user (#73). Each
+// The API only accepts access tokens it issued itself, for itself (#25), that still describe their user (#73) and
+// whose sessions haven't been ended (#50). Each
 // token here is signed with the real key, so the one thing wrong with it is what gets it refused.
 public sealed class JwtValidationTests(GratiaApiFactory factory) : IClassFixture<GratiaApiFactory>
 {
@@ -51,14 +53,22 @@ public sealed class JwtValidationTests(GratiaApiFactory factory) : IClassFixture
         Assert.Equal(HttpStatusCode.Unauthorized, await CallWithAsync(await TokenAsync(role: "Admin")));
         Assert.Equal(HttpStatusCode.Unauthorized, await CallWithAsync(await TokenAsync(companyId: factory.Globex.Id)));
         Assert.Equal(HttpStatusCode.Unauthorized, await CallWithAsync(await TokenAsync(userId: Guid.NewGuid())));
+
+        // Its sessions were ended since (a new password, signing out everywhere), or it's from before session stamps (#50)
+        Assert.Equal(HttpStatusCode.Unauthorized, await CallWithAsync(await TokenAsync(sessionStamp: Guid.NewGuid())));
+        Assert.Equal(HttpStatusCode.Unauthorized, await CallWithAsync(await TokenAsync(sessionStamp: Guid.Empty, withStamp: false)));
     }
 
     private async Task<string> TokenAsync(string? issuer = null, string? audience = null, string algorithm = SecurityAlgorithms.HmacSha512,
-        DateTime? expires = null, Guid? userId = null, string role = "Employee", Guid? companyId = null)
+        DateTime? expires = null, Guid? userId = null, string role = "Employee", Guid? companyId = null, Guid? sessionStamp = null,
+        bool withStamp = true)
     {
         var options = factory.Services.GetRequiredService<IOptions<JwtOptions>>().Value;
         var subject = userId ?? await factory.UserIdAsync(factory.AcmeEmployeeEmail);
         var expiry = expires ?? DateTime.UtcNow.AddMinutes(10);
+        var stamp = sessionStamp ?? await factory.WithDbAsync(db =>
+            db.Users.Where(u => u.Email == factory.AcmeEmployeeEmail).Select(u => u.SessionStamp).SingleAsync());
+        Claim[] stampClaim = withStamp ? [new Claim(TokenService.SessionStampClaim, stamp.ToString())] : [];
 
         var token = new JwtSecurityToken(
             issuer: issuer ?? options.Issuer,
@@ -68,7 +78,8 @@ public sealed class JwtValidationTests(GratiaApiFactory factory) : IClassFixture
                 new Claim(ClaimTypes.NameIdentifier, subject.ToString()),
                 new Claim(ClaimTypes.Email, factory.AcmeEmployeeEmail),
                 new Claim(ClaimTypes.Role, role),
-                new Claim("CompanyId", (companyId ?? factory.Acme.Id).ToString())
+                new Claim("CompanyId", (companyId ?? factory.Acme.Id).ToString()),
+                .. stampClaim
             ],
             notBefore: expiry.AddHours(-1),
             expires: expiry,

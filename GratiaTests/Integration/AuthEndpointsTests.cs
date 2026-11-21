@@ -3,6 +3,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Security.Cryptography;
 using System.Text;
+using Gratia.Application.DTOs.CompanyDTO;
 using Gratia.Application.DTOs.Token;
 using Microsoft.EntityFrameworkCore;
 
@@ -92,6 +93,10 @@ public sealed class AuthEndpointsTests(GratiaApiFactory factory) : IClassFixture
         Assert.Equal(HttpStatusCode.NoContent, signOut.StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, (await RefreshAsync(laptop.RefreshToken)).StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, (await RefreshAsync(phone.RefreshToken)).StatusCode);
+
+        // The access tokens they still hold stop working at once too (#50), not when they expire
+        Assert.Equal(HttpStatusCode.Unauthorized, (await ClientWith(phone.AccessToken).GetAsync("/api/user/me")).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await ClientWith(laptop.AccessToken).GetAsync("/api/user/me")).StatusCode);
     }
 
     [Fact]
@@ -183,6 +188,28 @@ public sealed class AuthEndpointsTests(GratiaApiFactory factory) : IClassFixture
         Assert.Equal(HttpStatusCode.Forbidden, (await ClientWith(asEmployee.AccessToken).GetAsync("/api/invitation/pending")).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await ClientWith(asEmployee.AccessToken).GetAsync("/api/user")).StatusCode);
     }
+
+    [Fact]
+    public async Task A_session_belongs_to_its_users_company()
+    {
+        // Login and refresh find the account with no caller yet (#78), and must still hand out the user's own company
+        var (_, globexEmail) = await factory.AddUserAsync(factory.Globex);
+        var (_, acmeEmail) = await factory.AddUserAsync(factory.Acme);
+        var globex = await LoginAsync(globexEmail);
+        var acme = await LoginAsync(acmeEmail);
+
+        Assert.Equal(factory.Globex.Id, await CompanyOfAsync(globex.AccessToken));
+        var refreshed = await RefreshedAsync(globex.RefreshToken);
+        Assert.Equal(factory.Globex.Id, await CompanyOfAsync(refreshed.AccessToken));
+
+        // Signing out everywhere ends the caller's own sessions only
+        Assert.Equal(HttpStatusCode.NoContent, (await ClientWith(refreshed.AccessToken).PostAsync("/api/auth/revoke-token", null)).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await RefreshAsync(refreshed.RefreshToken)).StatusCode);
+        Assert.Equal(factory.Acme.Id, await CompanyOfAsync((await RefreshedAsync(acme.RefreshToken)).AccessToken));
+    }
+
+    private async Task<Guid> CompanyOfAsync(string? accessToken) =>
+        (await ClientWith(accessToken).GetFromJsonAsync<ReadCompanyDto>("/api/company/me"))!.Id;
 
     private static Task<HttpResponseMessage> ChangeRoleAsync(HttpClient admin, Guid id, string email, string role) =>
         admin.PutAsJsonAsync($"/api/user/{id}", new { id, fullName = "Temp User", email, jobTitle = "Lead", role });
