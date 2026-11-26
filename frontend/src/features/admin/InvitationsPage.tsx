@@ -28,7 +28,8 @@ function conflictMessage(err: ApiError) {
   // "…couldn't be sent. Resend it from the list of pending invitations." (#55)
   if (/couldn.t be sent/i.test(detail)) return 'There’s already an invitation for this email, but it couldn’t be sent. Resend it below.';
   if (/invitation/i.test(detail)) return 'There’s already a pending invitation for this email. Resend it below instead.';
-  return 'Someone with this email already has an account.';
+  // Only a member of this company: an account elsewhere is invited like any address, and its owner told why (#61)
+  return 'This person is already a member of your company.';
 }
 
 function expiresText(i: Invitation) {
@@ -200,15 +201,28 @@ export function InvitationsPage() {
             {/* While an error explains the problem, the hint would only repeat it */}
             {!emailError && (
               <p id="invite-email-h" className={inv.hint}>
-                {restricted
-                  ? `Until ${restricted} is verified, you can only invite @${restricted} addresses. They get an email with a link that works for 7 days.`
-                  : 'They get an email with a link that works for 7 days. The name and job title are filled in for them, and they can change both.'}
+                {restricted ? (
+                  <>
+                    Until {restricted} is verified, you can only invite @{restricted} addresses (<Link to="/admin/settings#domain">verify it</Link>). They
+                    get an email with a link that works for 7 days.
+                  </>
+                ) : (
+                  'They get an email with a link that works for 7 days. The name and job title are filled in for them, and they can change both.'
+                )}
               </p>
             )}
             {sendFailure && (
               <div role="alert" className={inv.failure}>
                 <Icon name="error" />
-                <span>{sendFailure}</span>
+                <span>
+                  {sendFailure}
+                  {restricted && (
+                    <>
+                      {' '}
+                      <Link to="/admin/settings#domain">Verify {restricted}</Link> to lift the limit.
+                    </>
+                  )}
+                </span>
               </div>
             )}
             <button type="submit" className={`btn btn-primary ${inv.send}`} disabled={invite.isPending} aria-busy={invite.isPending}>

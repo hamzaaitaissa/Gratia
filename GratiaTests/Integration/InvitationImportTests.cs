@@ -55,11 +55,11 @@ public sealed class InvitationImportTests(GratiaApiFactory factory) : IClassFixt
             ["", ready.ToUpperInvariant(), "", ""],             // row 8
             ["", factory.AcmeEmployeeEmail, "", ""],            // row 9
             ["", invited, "", ""],                              // row 10
-            ["", elsewhere, "", ""]));                          // row 11
+            ["", elsewhere, "", ""]));                          // row 11: like any address (#61)
 
         Assert.Equal(HttpStatusCode.OK, preview.StatusCode);
         var result = (await preview.Content.ReadFromJsonAsync<ImportPreviewDto>(GratiaApiFactory.Json))!;
-        Assert.Equal(1, result.Ready);
+        Assert.Equal(2, result.Ready);
         Assert.Equal(
         [
             (2, ImportRowStatus.Ready, null),
@@ -70,7 +70,8 @@ public sealed class InvitationImportTests(GratiaApiFactory factory) : IClassFixt
             (8, ImportRowStatus.Duplicate, "The same email as row 2."),
             (9, ImportRowStatus.Member, "Already a member."),
             (10, ImportRowStatus.Invited, "Already invited."),
-            ((int Row, ImportRowStatus Status, string? Message))(11, ImportRowStatus.Error, "This email already has a Gratia account.")
+            // An account in another company isn't the admin's business: the invitee's email will say why they can't join
+            ((int Row, ImportRowStatus Status, string? Message))(11, ImportRowStatus.Ready, null)
         ], result.Rows.Select(r => (r.Row, r.Status, r.Message)));
         var first = result.Rows[0];
         Assert.Equal((ready, "Ada Lovelace", "Engineer", "Admin"), (first.Email, first.FullName, first.JobTitle, first.Role));

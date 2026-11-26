@@ -90,6 +90,7 @@ public sealed class OnboardingTests(GratiaApiFactory factory) : IClassFixture<Gr
         var notice = Assert.Single(factory.Emails.SentTo(rival));
         Assert.Equal(EmailKind.WorkspaceExists, notice.Kind);
         Assert.Equal(company.Name, notice.CompanyName);
+        Assert.NotNull(notice.Token); // a link to claim it through DNS instead (#61, DomainVerificationTests)
         Assert.Equal(1, await factory.WithDbAsync(db => db.Companies.CountAsync(c => c.Domain == company.Domain)));
         Assert.False(await factory.WithDbAsync(db => db.CompanyInvitations.AnyAsync(i => i.Email == rival)));
     }

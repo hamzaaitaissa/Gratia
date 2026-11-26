@@ -1,3 +1,4 @@
+using Gratia.Application.Interfaces;
 using Gratia.Infrastructure.Email;
 
 namespace GratiaTests
@@ -29,6 +30,9 @@ namespace GratiaTests
                 EmailTemplates.PasswordReset(evil, "http://localhost:5173/reset-password/abc"),
                 EmailTemplates.PasswordChanged(evil, "http://localhost:5173/forgot-password"),
                 EmailTemplates.EmailChanged(evil, evil),
+                EmailTemplates.InvitationAccountElsewhere(evil, evil, evil, "http://localhost:5173/login"),
+                EmailTemplates.WorkspaceExists(evil, evil, "http://localhost:5173/claim-workspace/abc"),
+                EmailTemplates.DomainVerified(evil, evil, evil, DomainVerifiedBy.MemberMadeAdmin),
             })
             {
                 Assert.DoesNotContain("<img", email.HtmlBody);
@@ -43,6 +47,17 @@ namespace GratiaTests
 
             Assert.DoesNotContain("\r", email.Subject);
             Assert.DoesNotContain("\n", email.Subject);
+        }
+
+        [Fact]
+        public void The_domain_verified_notice_says_what_it_did()
+        {
+            Assert.DoesNotContain("admin of", EmailTemplates.DomainVerified("Acme", "acme.test", "ivy@acme.test", DomainVerifiedBy.Admin).HtmlBody);
+            Assert.Contains("is now an admin of Acme",
+                EmailTemplates.DomainVerified("Acme", "acme.test", "ivy@acme.test", DomainVerifiedBy.MemberMadeAdmin).HtmlBody);
+            var invited = EmailTemplates.DomainVerified("Acme", "acme.test", "ivy@acme.test", DomainVerifiedBy.InvitedAsAdmin);
+            Assert.Contains("invited to join Acme on Gratia as an admin", invited.HtmlBody);
+            Assert.Equal("ivy@acme.test was invited to Acme as an admin", invited.Subject);
         }
 
         [Fact]

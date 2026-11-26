@@ -17,5 +17,9 @@ namespace Gratia.API
         // Asking for a forgotten-password link: RateLimiting:PasswordResetPerHour per hour (default 5). Each request
         // sends an email (#50).
         public const string PasswordReset = "password-reset";
+
+        // Checking a domain's DNS for its verification record (#61): RateLimiting:DomainChecksPerMinute per minute (default
+        // 10). Each check makes a DNS lookup.
+        public const string DomainCheck = "domain-check";
     }
 }

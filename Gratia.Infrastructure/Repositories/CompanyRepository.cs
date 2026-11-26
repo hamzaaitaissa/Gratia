@@ -71,8 +71,10 @@ namespace Gratia.Infrastructure.Repositories
         public async Task LockAsync(Guid companyId, CancellationToken cancellationToken = default)
         {
             // SQL Server takes the exclusive row lock even though the value doesn't change, and other writers to the row
-            // wait for the commit (checked on LocalDB). SQLite locks the whole database for a write.
+            // wait for the commit (checked on LocalDB). SQLite locks the whole database for a write. Across companies (#78):
+            // signup locks its domain's workspace, and has no caller. It changes nothing, in the one company.
             await _gratiaDbContext.Companies
+                .AcrossCompanies()
                 .Where(c => c.Id == companyId)
                 .ExecuteUpdateAsync(setters => setters.SetProperty(c => c.Name, c => c.Name), cancellationToken);
         }

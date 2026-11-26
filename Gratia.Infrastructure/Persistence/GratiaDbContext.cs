@@ -39,6 +39,7 @@ namespace Gratia.Infrastructure.Data
         public DbSet<CompanyInvitation> CompanyInvitations { get; set; }
         public DbSet<RefreshToken> RefreshTokens { get; set; }
         public DbSet<LoginAttempt> LoginAttempts { get; set; }
+        public DbSet<DomainVerification> DomainVerifications { get; set; }
 
         public async Task<IDatabaseTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default) =>
             new DatabaseTransaction(await Database.BeginTransactionAsync(cancellationToken));
@@ -84,6 +85,7 @@ namespace Gratia.Infrastructure.Data
             modelBuilder.Entity<User>().HasQueryFilter(TenantFilter, u => u.CompanyId == CurrentCompanyId);
             modelBuilder.Entity<Transaction>().HasQueryFilter(TenantFilter, t => t.CompanyId == CurrentCompanyId);
             modelBuilder.Entity<CompanyInvitation>().HasQueryFilter(TenantFilter, i => i.CompanyId == CurrentCompanyId);
+            modelBuilder.Entity<DomainVerification>().HasQueryFilter(TenantFilter, v => v.CompanyId == CurrentCompanyId);
 
             modelBuilder.Entity<User>()
                 .HasIndex(u => u.Email)
@@ -185,6 +187,28 @@ namespace Gratia.Infrastructure.Data
             modelBuilder.Entity<Company>()
                 .HasIndex(c => c.Domain)
                 .IsUnique();
+
+            // Domain verification (#61): one per member, and one per address without an account. An emailed link is found by
+            // the SHA-256 (hex) of its token, unique where set. Email is as long as the users' and invitations' (450); the
+            // record token is 32 hex characters. The member is in the same company, as the database checks (#79).
+            modelBuilder.Entity<DomainVerification>(verification =>
+            {
+                verification.Property(v => v.Email).HasMaxLength(450);
+                verification.Property(v => v.RecordToken).HasMaxLength(64);
+                verification.Property(v => v.LinkTokenHash).HasMaxLength(64);
+                verification.HasIndex(v => new { v.CompanyId, v.Email }).IsUnique().HasFilter("[UserId] IS NULL");
+                verification.HasIndex(v => v.UserId).IsUnique();
+                verification.HasIndex(v => v.LinkTokenHash).IsUnique();
+                verification.HasOne<User>()
+                    .WithMany()
+                    .HasForeignKey(v => new { v.UserId, v.CompanyId })
+                    .HasPrincipalKey(u => new { u.Id, u.CompanyId })
+                    .OnDelete(DeleteBehavior.Restrict);
+                verification.HasOne(v => v.Company)
+                    .WithMany()
+                    .HasForeignKey(v => v.CompanyId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
 
             // The points cycle (#19). A day past 28 doesn't exist in every month and would break the reset job.
             modelBuilder.Entity<Company>().ToTable(table =>

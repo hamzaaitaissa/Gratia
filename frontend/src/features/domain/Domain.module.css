@@ -1,0 +1,242 @@
+/* Domain verification (#61): the card in Company settings and My profile, and the claim page */
+.card {
+  display: flex;
+  flex-direction: column;
+  padding: 22px;
+  border-radius: 20px;
+  background: var(--g-surface);
+  border: 1px solid var(--g-line);
+  box-shadow: var(--g-sh1);
+  scroll-margin-top: 24px;
+}
+/* Spaced with margins rather than gap, so the live region below takes no room while it's empty */
+.card > * + * {
+  margin-top: 16px;
+}
+.card > .outcome:empty {
+  margin-top: 0;
+}
+.head {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.headIcon {
+  width: 40px;
+  height: 40px;
+  flex: none;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: var(--g-primary-soft);
+  color: var(--g-primary-ink);
+}
+.headIcon[data-tone='ok'] {
+  background: var(--g-ok-soft);
+  color: var(--g-ok);
+}
+.headText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.text {
+  margin: 0;
+  color: var(--g-ink2);
+  max-width: 68ch;
+  text-wrap: pretty;
+}
+.fine {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--g-ink3);
+  text-wrap: pretty;
+}
+.actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.link {
+  color: var(--g-primary-ink);
+  font-weight: 600;
+  text-underline-offset: 2px;
+}
+
+/* ---------- The two steps: add the record, check for it ---------- */
+.steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.step {
+  display: flex;
+  gap: 12px;
+}
+.stepNumber {
+  width: 28px;
+  height: 28px;
+  flex: none;
+  box-sizing: border-box;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  font-weight: 700;
+  background: var(--g-surface2);
+  color: var(--g-ink2);
+  border: 1.5px solid var(--g-line2);
+}
+.stepBody {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.stepTitle {
+  font-weight: 600;
+  padding-top: 3px;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- The record, with copy buttons ---------- */
+.record {
+  margin: 0;
+  border: 1px solid var(--g-line);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.recordRow {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  padding: 10px 12px;
+}
+/* On a phone the label goes above, leaving the value the whole width */
+@media (max-width: 520px) {
+  .recordRow {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2px;
+  }
+}
+.recordRow + .recordRow {
+  border-top: 1px solid var(--g-line);
+}
+.recordLabel {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--g-ink3);
+}
+.recordCell {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 36px;
+}
+.recordText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.recordValue {
+  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 14px;
+  /* Lines filled evenly, not broken at the value's hyphen first */
+  word-break: break-all;
+  user-select: all;
+}
+.recordNote {
+  font-size: 12.5px;
+  color: var(--g-ink3);
+}
+.copy {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 10px;
+  border-radius: 10px;
+  border: 1px solid var(--g-line2);
+  background: var(--g-surface);
+  color: var(--g-ink);
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.copy:hover {
+  background: var(--g-surface2);
+}
+.copy[data-copied] {
+  color: var(--g-ok);
+}
+
+/* ---------- What a check found ---------- */
+.result {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 12px 14px;
+  border-radius: 12px;
+  font-size: 14.5px;
+  text-wrap: pretty;
+}
+.result[data-tone='ok'] {
+  background: var(--g-ok-soft);
+  color: var(--g-ink);
+}
+.result[data-tone='ok'] > :first-child {
+  color: var(--g-ok);
+}
+.result[data-tone='warn'] {
+  background: var(--g-warn-soft);
+  color: var(--g-ink);
+}
+.result[data-tone='warn'] > :first-child {
+  color: var(--g-warn);
+}
+.result[data-tone='danger'] {
+  background: var(--g-danger-soft);
+  color: var(--g-danger);
+  font-weight: 500;
+}
+.next {
+  margin: 10px 0 0;
+  font-size: 14.5px;
+}
+.result a {
+  color: inherit;
+  font-weight: 600;
+  text-underline-offset: 2px;
+}
+
+/* ---------- The claim page ---------- */
+.claim {
+  max-width: 540px;
+}
+.verified {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 8px;
+  color: var(--g-ok);
+  font-size: 13px;
+  font-weight: 600;
+}

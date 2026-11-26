@@ -5,6 +5,7 @@ using Gratia.Application.Interfaces;
 using Gratia.Application.Settings;
 using Gratia.Infrastructure;
 using Gratia.Infrastructure.Authentication;
+using Gratia.Infrastructure.Dns;
 using Gratia.Infrastructure.Email;
 using Gratia.API;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -57,6 +58,9 @@ if (builder.Environment.IsDevelopment() && !smtpConfigured)
 else
     builder.Services.AddOptions<EmailOptions>().ValidateOnStart();
 
+// Domain verification's DNS servers (#61), if set: IP addresses
+builder.Services.AddOptions<DomainVerificationOptions>().ValidateOnStart();
+
 // Behind a reverse proxy, the client's IP and scheme come from the proxy's headers, from the proxies listed in
 // ForwardedHeaders:KnownProxies / KnownNetworks only (#45)
 builder.Services.AddTrustedProxies();
@@ -80,6 +84,8 @@ builder.Services.AddRateLimiter(options =>
     options.AddPolicy(RateLimitPolicies.Refresh, httpContext => PerClientIp(httpContext, "RateLimiting:RefreshPerMinute", 60, TimeSpan.FromMinutes(1)));
     options.AddPolicy(RateLimitPolicies.PasswordReset,
         httpContext => PerClientIp(httpContext, "RateLimiting:PasswordResetPerHour", 5, TimeSpan.FromHours(1)));
+    options.AddPolicy(RateLimitPolicies.DomainCheck,
+        httpContext => PerClientIp(httpContext, "RateLimiting:DomainChecksPerMinute", 10, TimeSpan.FromMinutes(1)));
     options.OnRejected = (context, cancellationToken) =>
     {
         // Seconds until the window resets, so a client knows when to retry

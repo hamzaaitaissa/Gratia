@@ -7,6 +7,8 @@ export function parseUtc(value: string | Date): Date {
 
 export const shortDate = (d: string | Date) => parseUtc(d).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 
+export const longDate = (d: string | Date) => parseUtc(d).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' });
+
 export const exactDate = (d: string | Date) =>
   parseUtc(d).toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
 

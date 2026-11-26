@@ -95,6 +95,22 @@ describe('Members', () => {
     }
   });
 
+  it('puts the domain rule of a verified workspace under the email (#61)', async () => {
+    const u = userEvent.setup();
+    const detail = 'A member’s address can only be changed to an @fernhilllabs.com one. To add someone on another domain, invite them.';
+    renderMembers({ 'PUT /api/user/u3': () => ({ status: 400, body: { status: 400, detail } }) });
+
+    await u.click(await screen.findByRole('button', { name: 'Edit Priya Raman' }));
+    const dialog = screen.getByRole('dialog', { name: 'Edit member' });
+    const email = within(dialog).getByLabelText('Email');
+    await u.clear(email);
+    await u.type(email, 'priya@contractor.example');
+    await u.click(within(dialog).getByRole('button', { name: 'Save changes' }));
+
+    expect(await within(dialog).findByText(detail)).toBeTruthy();
+    expect(email.getAttribute('aria-invalid')).toBe('true');
+  });
+
   it('shows a duplicate email next to the field', async () => {
     const u = userEvent.setup();
     renderMembers({ 'PUT /api/user/u3': () => ({ status: 409, body: { status: 409, detail: 'Another account already uses this email' } }) });
@@ -145,6 +161,7 @@ describe('Invitations', () => {
     const { calls } = renderInvitations({ 'POST /api/invitation': (req) => ({ status: 201, body: { ...pending, id: 'i2', email: (req.body as { email: string }).email } }) });
 
     expect(await screen.findByText(/Until fernhilllabs.com is verified, you can only invite @fernhilllabs.com addresses/)).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'verify it' }).getAttribute('href')).toBe('/admin/settings#domain');
     await u.type(screen.getByLabelText('Email'), 'elena.petrova@fernhilllabs.com');
     await u.click(screen.getByRole('radio', { name: 'Admin' }));
     await u.type(screen.getByLabelText('Full name (optional)'), ' Elena Petrova ');
@@ -162,6 +179,8 @@ describe('Invitations', () => {
     [409, 'This person\'s account was deactivated. Reactivate it instead of inviting them again.', 'This person’s account was deactivated. Reactivate them in Members instead of inviting them again.'],
     [409, 'An active invitation already exists for this email in the company', 'There’s already a pending invitation for this email. Resend it below instead.'],
     [409, "There's already an invitation for this email, but it couldn't be sent. Resend it from the list of pending invitations.", 'There’s already an invitation for this email, but it couldn’t be sent. Resend it below.'],
+    // An account in another workspace is invited like anyone (#61): only a member is a 409
+    [409, 'This person is already a member of your company.', 'This person is already a member of your company.'],
   ])('explains a %i next to the email', async (status, detail, shown) => {
     const u = userEvent.setup();
     renderInvitations({ 'POST /api/invitation': () => ({ status, body: { status, detail } }) });
@@ -216,11 +235,14 @@ describe('Invitations', () => {
     });
     await u.type(await screen.findByLabelText('Email'), 'elena@fernhilllabs.com');
     await u.click(screen.getByRole('button', { name: 'Send invitation' }));
-    expect(await screen.findByText(cap.detail)).toBeTruthy();
+    // With the way to lift it
+    const failure = (await screen.findByText(cap.detail, { exact: false })).closest('[role="alert"]')!;
+    expect(failure.textContent).toBe(`error${cap.detail} Verify fernhilllabs.com to lift the limit.`);
+    expect(within(failure as HTMLElement).getByRole('link', { name: 'Verify fernhilllabs.com' }).getAttribute('href')).toBe('/admin/settings#domain');
     expect((screen.getByLabelText('Email') as HTMLInputElement).value).toBe('elena@fernhilllabs.com'); // kept, to try later
 
     await u.click(screen.getByRole('button', { name: 'Resend the invitation to clara.jensen@fernhilllabs.com' }));
-    expect(await screen.findAllByText(cap.detail)).toHaveLength(2);
+    expect(await screen.findByText(cap.detail)).toBeTruthy(); // the toast
   });
 
   it('says whether each email went out, and checks again until it has (#55)', async () => {

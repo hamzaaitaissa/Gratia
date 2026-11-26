@@ -37,6 +37,9 @@ public sealed class GratiaApiFactory : WebApplicationFactory<Program>, IAsyncLif
 
     public FakeEmailService Emails { get; } = new();
 
+    // The domains' DNS, for domain verification (#61): no real lookups
+    public FakeDns Dns { get; } = new();
+
     // Two provisional (unverified) companies, so the tests can check that one company's admin can't touch the other's data
     public Company Acme { get; } = new("Acme", "https://example.com/acme.png", "#112233", "#445566") { Domain = "acme.test" };
     public Company Globex { get; } = new("Globex", "https://example.com/globex.png", "#665544", "#332211") { Domain = "globex.test" };
@@ -57,6 +60,7 @@ public sealed class GratiaApiFactory : WebApplicationFactory<Program>, IAsyncLif
         builder.UseSetting("RateLimiting:LoginPerMinute", "1000");
         builder.UseSetting("RateLimiting:RefreshPerMinute", "1000");
         builder.UseSetting("RateLimiting:PasswordResetPerHour", "1000");
+        builder.UseSetting("RateLimiting:DomainChecksPerMinute", "1000");
         // The seeded companies are unverified; InvitationQuotaTests lowers the daily invitation cap (#65) on a copy
         builder.UseSetting("Onboarding:UnverifiedInvitationsPerDay", "1000");
         // The background refill would share the SQLite connection with the tests; PointsCycleTests sends the command itself
@@ -73,6 +77,9 @@ public sealed class GratiaApiFactory : WebApplicationFactory<Program>, IAsyncLif
 
             services.RemoveAll<IEmailService>();
             services.AddSingleton<IEmailService>(Emails);
+
+            services.RemoveAll<IDomainVerifier>();
+            services.AddSingleton<IDomainVerifier>(Dns);
         });
     }
 

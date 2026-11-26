@@ -203,6 +203,88 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/Auth/domain-claim/{token}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    token: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["DomainClaimDto"];
+                        "application/json": components["schemas"]["DomainClaimDto"];
+                        "text/json": components["schemas"]["DomainClaimDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Auth/domain-claim/check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CheckDomainClaimDto"];
+                    "text/json": components["schemas"]["CheckDomainClaimDto"];
+                    "application/*+json": components["schemas"]["CheckDomainClaimDto"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["DomainCheckResultDto"];
+                        "application/json": components["schemas"]["DomainCheckResultDto"];
+                        "text/json": components["schemas"]["DomainCheckResultDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/Auth/revoke-token": {
         parameters: {
             query?: never;
@@ -337,6 +419,101 @@ export interface paths {
             };
         };
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Company/domain-verification": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["DomainVerificationDto"];
+                        "application/json": components["schemas"]["DomainVerificationDto"];
+                        "text/json": components["schemas"]["DomainVerificationDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["DomainVerificationDto"];
+                        "application/json": components["schemas"]["DomainVerificationDto"];
+                        "text/json": components["schemas"]["DomainVerificationDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Company/domain-verification/check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["DomainCheckResultDto"];
+                        "application/json": components["schemas"]["DomainCheckResultDto"];
+                        "text/json": components["schemas"]["DomainCheckResultDto"];
+                    };
+                };
+            };
+        };
         delete?: never;
         options?: never;
         head?: never;
@@ -1249,6 +1426,9 @@ export interface components {
             currentPassword: null | string;
             newPassword: null | string;
         };
+        CheckDomainClaimDto: {
+            token: null | string;
+        };
         CompanySignupDto: {
             companyName: string;
             fullName: string;
@@ -1261,6 +1441,36 @@ export interface components {
             amount: number | string;
             message: null | string;
             typeOfDonation: null | string;
+        };
+        DnsRecordDto: {
+            type?: string;
+            name?: string;
+            value?: string;
+        };
+        DomainCheckResultDto: {
+            status?: components["schemas"]["DomainCheckStatus"];
+            message?: string;
+            invitationToken?: null | string;
+        };
+        /** @enum {unknown} */
+        DomainCheckStatus: "Verified" | "NotFound" | "LookupFailed";
+        DomainClaimDto: {
+            companyName?: string;
+            domain?: string;
+            email?: string;
+            isVerified?: boolean;
+            isUsed?: boolean;
+            record?: components["schemas"]["DnsRecordDto"];
+            /** Format: date-time */
+            expiresAt?: string;
+        };
+        DomainVerificationDto: {
+            domain?: null | string;
+            isVerified?: boolean;
+            /** Format: date-time */
+            verifiedAt?: null | string;
+            isAdmin?: boolean;
+            record?: null | components["schemas"]["DnsRecordDto"];
         };
         ForgotPasswordDto: {
             email: null | string;

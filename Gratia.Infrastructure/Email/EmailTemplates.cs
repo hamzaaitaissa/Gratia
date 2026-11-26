@@ -1,4 +1,5 @@
 using System.Net;
+using Gratia.Application.Interfaces;
 
 namespace Gratia.Infrastructure.Email
 {
@@ -20,6 +21,16 @@ namespace Gratia.Infrastructure.Email
                 {LinkFallback(acceptUrl)}
                 """);
 
+        // An invitation to an address that has an account in another workspace (#61): it can't join, and only its owner learns why
+        public static EmailContent InvitationAccountElsewhere(string companyName, string inviterName, string inviterEmail, string signInUrl) => new(
+            Subject: OneLine($"{inviterName} invited you to join {companyName} on Gratia"),
+            HtmlBody: $"""
+                <p>{H(inviterName)} ({H(inviterEmail)}) invited you to join {H(companyName)} on Gratia, but this address already has an account in another Gratia workspace.</p>
+                <p>An address can belong to only one workspace. To join {H(companyName)}, ask {H(inviterName)} to invite another address of yours. Your account stays as it is:</p>
+                {Button(signInUrl, "Sign in")}
+                <p>If you weren't expecting this invitation, you can ignore this email.</p>
+                """);
+
         public static EmailContent CompanySetup(string founderName, string companyName, string setupUrl) => new(
             Subject: OneLine($"Finish setting up {companyName} on Gratia"),
             HtmlBody: $"""
@@ -38,12 +49,15 @@ namespace Gratia.Infrastructure.Email
                 <p>If that wasn't you, you can ignore this email. Nothing was changed.</p>
                 """);
 
-        public static EmailContent WorkspaceExists(string companyName) => new(
+        public static EmailContent WorkspaceExists(string companyName, string domain, string claimUrl) => new(
             Subject: OneLine($"{companyName} is already on Gratia"),
             HtmlBody: $"""
                 <p>Someone tried to create a new Gratia workspace with this email address, but your company already has one: {H(companyName)}.</p>
-                <p>Ask an admin there to invite you.</p>
-                <p>If that wasn't you, you can ignore this email. Nothing was changed.</p>
+                <p>To join it, ask an admin there to invite you.</p>
+                <p>If you manage {H(domain)}'s DNS settings (usually your IT team), you can become an admin of {H(companyName)} yourself, by adding a record we give you to the domain:</p>
+                {Button(claimUrl, "Claim the workspace")}
+                <p>The link expires in 7 days. If that wasn't you, you can ignore this email. Nothing was changed.</p>
+                {LinkFallback(claimUrl)}
                 """);
 
         public static EmailContent Welcome(string fullName, string companyName, int monthlyAllowance, string signInUrl) => new(
@@ -90,6 +104,28 @@ namespace Gratia.Infrastructure.Email
                 <p>From now on, sign in and reset your password with the new address.</p>
                 <p>If you didn't expect this, contact an admin of your workspace.</p>
                 """);
+
+        // To a company's other admins (#61). Only someone who manages the domain could have done it, but it changes who
+        // runs the workspace, so they hear of it.
+        public static EmailContent DomainVerified(string companyName, string domain, string verifiedByEmail, DomainVerifiedBy by) => new(
+            Subject: OneLine(by switch
+            {
+                DomainVerifiedBy.MemberMadeAdmin => $"{verifiedByEmail} is now an admin of {companyName}",
+                DomainVerifiedBy.InvitedAsAdmin => $"{verifiedByEmail} was invited to {companyName} as an admin",
+                _ => $"{domain} is verified on Gratia"
+            }),
+            HtmlBody: $"""
+                <p>{H(verifiedByEmail)} proved that they manage {H(domain)}, by adding a record to its DNS settings{DomainVerifiedOutcome(companyName, by)}.</p>
+                <p>{H(companyName)}'s domain is verified, so its admins can invite people on any domain, with no daily limit.</p>
+                <p>If you don't know who this is, ask whoever manages {H(domain)}: only they could have added the record.</p>
+                """);
+
+        private static string DomainVerifiedOutcome(string companyName, DomainVerifiedBy by) => by switch
+        {
+            DomainVerifiedBy.MemberMadeAdmin => $", and is now an admin of {H(companyName)} on Gratia",
+            DomainVerifiedBy.InvitedAsAdmin => $", and was invited to join {H(companyName)} on Gratia as an admin",
+            _ => ""
+        };
 
         private static string H(string value) => WebUtility.HtmlEncode(value);
 

@@ -25,7 +25,8 @@ internal static class InvitationImport
             throw new Exceptions.BusinessRuleException($"An import can have at most {MaxRows} people. Split the list and import each part.");
 
         var emails = rows.Select(r => EmailAddresses.Normalize(r.Email)).Where(e => e.Length > 0).Distinct().ToList();
-        var accounts = (await userRepository.GetByEmailsAsync(emails, cancellationToken)).ToDictionary(u => u.Email);
+        // Only this company's: an address with an account elsewhere is invited like any other, as with one invite (#61)
+        var accounts = (await userRepository.GetInCompanyByEmailsAsync(company.Id, emails, cancellationToken)).ToDictionary(u => u.Email);
         var invited = (await invitationRepository.GetActiveByEmailsAsync(company.Id, emails, cancellationToken))
             .GroupBy(i => i.Email)
             .ToDictionary(g => g.Key, g => g.Any(i => i.EmailStatus == InvitationEmailStatus.Failed));
@@ -78,13 +79,9 @@ internal static class InvitationImport
         firstRowOf[email] = row.Row;
 
         if (accounts.TryGetValue(email, out var account))
-        {
-            if (account.CompanyId != company.Id)
-                return (role, ImportRowStatus.Error, "This email already has a Gratia account.");
             return (role, ImportRowStatus.Member, account.DeactivatedAt is null
                 ? "Already a member."
                 : "A deactivated member: reactivate them instead.");
-        }
 
         if (invited.TryGetValue(email, out var failed))
             return (role, ImportRowStatus.Invited, failed

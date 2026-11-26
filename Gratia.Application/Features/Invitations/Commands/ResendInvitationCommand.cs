@@ -34,8 +34,9 @@ public sealed class ResendInvitationCommandHandler(
         if (invitation.InvitedByUserId is not Guid inviterId)
             throw new BusinessRuleException("This is a company setup link; sign up again to get a new one");
 
-        if (await userRepository.GetByEmailAsync(invitation.Email) is not null)
-            throw new ConflictException("User with this email already exists");
+        // Only a member of this company is reported, as when inviting (#61)
+        if (await userRepository.GetByEmailAsync(invitation.Email) is { } account && account.CompanyId == invitation.CompanyId)
+            throw new ConflictException("This person is already a member of your company.");
 
         // After an invitation expires the admin can invite the same email again, so an older one may be resent
         var active = await invitationRepository.GetByEmailAndCompanyIdAsync(invitation.Email, invitation.CompanyId);

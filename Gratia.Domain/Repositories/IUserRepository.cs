@@ -20,9 +20,14 @@ namespace Gratia.Domain.Repositories
 
         // Expects a normalized email (EmailAddresses.Normalize)
         Task<User?> GetByEmailAsync(string email);
-        // The same for many at once (an import, #54), untracked: the users with any of these emails, in any company
-        Task<IReadOnlyList<User>> GetByEmailsAsync(IReadOnlyCollection<string> emails, CancellationToken cancellationToken = default);
+        // For many at once (an import, #54), untracked: the company's users with any of these emails, deactivated ones
+        // included. Only this company's: whether an address has an account elsewhere isn't an admin's business (#61).
+        Task<IReadOnlyList<User>> GetInCompanyByEmailsAsync(Guid companyId, IReadOnlyCollection<string> emails,
+            CancellationToken cancellationToken = default);
         Task<bool> AnyInCompanyAsync(Guid companyId);
+
+        // The company's active admins, untracked, e.g. to tell them its domain was verified (#61)
+        Task<IReadOnlyList<User>> GetActiveAdminsAsync(Guid companyId, CancellationToken cancellationToken = default);
 
         // Whether the user is active, in that company, has that role and that session stamp: what an access token claims
         // (#73, #50). One primary-key lookup with nothing loaded, because it runs on every authenticated request.
@@ -33,6 +38,10 @@ namespace Gratia.Domain.Repositories
 
         // Whether the company has an active admin other than exceptUserId (#63)
         Task<bool> HasOtherActiveAdminAsync(Guid companyId, Guid exceptUserId, CancellationToken cancellationToken = default);
+
+        // Runs immediately as one conditional UPDATE: makes the company's member an admin (#61), unless they're deactivated,
+        // which returns false. Use it inside IUnitOfWork.BeginTransactionAsync.
+        Task<bool> TryMakeAdminAsync(Guid userId, Guid companyId, CancellationToken cancellationToken = default);
 
         // Saved by IUnitOfWork.SaveChangesAsync
         void Add(User user);

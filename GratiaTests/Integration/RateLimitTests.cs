@@ -43,6 +43,34 @@ public sealed class RateLimitTests(GratiaApiFactory factory) : IClassFixture<Gra
     }
 
     [Fact]
+    public async Task Domain_checks_are_limited_per_client()
+    {
+        // Each one makes a DNS lookup (#61)
+        await using var api = WithLimit("RateLimiting:DomainChecksPerMinute", 1);
+        var client = api.CreateClient();
+        var check = new { token = "not-a-token" };
+
+        Assert.Equal(HttpStatusCode.NotFound, (await client.PostAsJsonAsync("/api/auth/domain-claim/check", check)).StatusCode);
+        Assert.Equal(HttpStatusCode.TooManyRequests, (await client.PostAsJsonAsync("/api/auth/domain-claim/check", check)).StatusCode);
+
+        // A member's check counts against the same limit
+        var login = await client.PostAsJsonAsync("/api/auth/login", new { email = factory.AcmeEmployeeEmail, hashedPassword = GratiaApiFactory.Password });
+        var tokens = (await login.Content.ReadFromJsonAsync<TokenResponseDto>())!;
+        client.DefaultRequestHeaders.Authorization = new("Bearer", tokens.AccessToken);
+        Assert.Equal(HttpStatusCode.TooManyRequests, (await client.PostAsync("/api/company/domain-verification/check", null)).StatusCode);
+    }
+
+    [Theory]
+    [InlineData("DomainVerification:NameServers:0", "dns.example.com")]
+    [InlineData("DomainVerification:TimeoutSeconds", "0")]
+    public async Task Invalid_dns_settings_stop_the_api_from_starting(string setting, string value)
+    {
+        await using var api = factory.WithWebHostBuilder(builder => builder.UseSetting(setting, value));
+
+        Assert.Throws<Microsoft.Extensions.Options.OptionsValidationException>(() => api.CreateClient());
+    }
+
+    [Fact]
     public async Task A_rejected_request_tells_the_browser_when_to_retry()
     {
         await using var api = WithLimit("RateLimiting:LoginPerMinute", 1);

@@ -4,6 +4,9 @@ import type {
   ChangePassword,
   CompanySignup,
   CreateTransaction,
+  DomainCheckResult,
+  DomainClaim,
+  DomainVerification,
   ImportPreview,
   ImportResult,
   ImportRow,
@@ -38,6 +41,16 @@ export const api = {
 
   myCompany: (signal?: AbortSignal) => request<ReadCompany>('/api/company/me', { signal }),
   updateCompany: (body: UpdateCompany) => request<ReadCompany>(`/api/company/${id(body.id)}`, { method: 'PUT', body }),
+
+  // Domain verification (#61), for every member: an admin verifies the domain, anyone else becomes an admin by it
+  domainVerification: (signal?: AbortSignal) => request<DomainVerification>('/api/company/domain-verification', { signal }),
+  /** The caller's own DNS record: the same one each time, until it has been found. */
+  startDomainVerification: () => request<DomainVerification>('/api/company/domain-verification', { method: 'POST' }),
+  /** 200 whether the record is there or not: `status` says which, `message` what to do. */
+  checkDomainVerification: () => request<DomainCheckResult>('/api/company/domain-verification/check', { method: 'POST' }),
+  /** The claim link from signup's "already on Gratia" email: the workspace and the record to add. */
+  domainClaim: (token: string, signal?: AbortSignal) => request<DomainClaim>(`/api/auth/domain-claim/${id(token)}`, { signal, auth: false }),
+  checkDomainClaim: (token: string) => request<DomainCheckResult>('/api/auth/domain-claim/check', { method: 'POST', body: { token }, auth: false }),
 
   /** New tokens for this device: every session, this one's old tokens included, has ended (#50). */
   changePassword: (body: ChangePassword) => request<TokenResponse>('/api/user/me/password', { method: 'POST', body }),

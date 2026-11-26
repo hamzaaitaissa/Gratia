@@ -5,6 +5,7 @@ using Gratia.Application.Interfaces;
 using Mediator;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Gratia.API.Controllers
 {
@@ -50,6 +51,34 @@ namespace Gratia.API.Controllers
 
             var company = await _sender.Send(new UpdateCompanyCommand(_currentUserService.CompanyId, updateCompanyDto), cancellationToken);
             return Ok(company);
+        }
+
+        // Domain verification (#61), for any member: an admin verifies the workspace's domain, anyone else becomes an
+        // admin by it. Each member has their own DNS record.
+
+        // Whether the domain is verified, and the caller's record if they've started. Domain is null for a workspace with none.
+        [HttpGet("domain-verification")]
+        public async Task<ActionResult<DomainVerificationDto>> GetDomainVerification(CancellationToken cancellationToken)
+        {
+            return Ok(await _sender.Send(new GetDomainVerificationQuery(_currentUserService.UserId, _currentUserService.CompanyId),
+                cancellationToken));
+        }
+
+        // The caller's record to add to the domain's DNS: the same one each time. 409 for an admin of a verified workspace.
+        [HttpPost("domain-verification")]
+        public async Task<ActionResult<DomainVerificationDto>> StartDomainVerification(CancellationToken cancellationToken)
+        {
+            return Ok(await _sender.Send(new StartDomainVerificationCommand(_currentUserService.UserId, _currentUserService.CompanyId),
+                cancellationToken));
+        }
+
+        // Looks for the caller's record. 200 whether it's found or not: the status says which, and the message what to do.
+        [HttpPost("domain-verification/check")]
+        [EnableRateLimiting(RateLimitPolicies.DomainCheck)]
+        public async Task<ActionResult<DomainCheckResultDto>> CheckDomainVerification(CancellationToken cancellationToken)
+        {
+            return Ok(await _sender.Send(new CheckDomainVerificationCommand(_currentUserService.UserId, _currentUserService.CompanyId),
+                cancellationToken));
         }
     }
 }

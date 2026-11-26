@@ -36,6 +36,27 @@ namespace GratiaTests
         }
 
         [Fact]
+        public async Task The_workspace_notice_links_to_the_claim_page()
+        {
+            await CreateService("http://localhost:5173/").SendWorkspaceExistsEmailAsync("it@acme.test", "Acme", "acme.test", "tok");
+
+            var (to, content) = Assert.Single(_sender.Sent);
+            Assert.Equal("it@acme.test", to);
+            Assert.Contains("http://localhost:5173/claim-workspace/tok", content.HtmlBody);
+            Assert.Contains("acme.test", content.HtmlBody);
+        }
+
+        [Fact]
+        public async Task An_invitation_to_an_address_with_an_account_elsewhere_has_no_link_to_accept()
+        {
+            await CreateService("http://localhost:5173").SendInvitationAccountElsewhereEmailAsync("bob@acme.test", "Acme", "Ada", "ada@acme.test");
+
+            var content = Assert.Single(_sender.Sent).Content;
+            Assert.DoesNotContain("accept-invitation", content.HtmlBody);
+            Assert.Contains("already has an account", content.HtmlBody);
+        }
+
+        [Fact]
         public async Task The_reset_email_links_to_the_reset_page()
         {
             await CreateService("http://localhost:5173/").SendPasswordResetEmailAsync("ada@acme.test", "Ada", "tok");

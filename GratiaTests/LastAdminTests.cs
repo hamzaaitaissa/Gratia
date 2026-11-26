@@ -112,7 +112,7 @@ namespace GratiaTests
         private async Task UpdateAsync(User user, UserRole role)
         {
             _users.Setup(u => u.GetByIdInCompanyAsync(user.Id, CompanyId)).ReturnsAsync(user);
-            var handler = new UpdateUserCommandHandler(_users.Object, _companies.Object, _unitOfWork.Object, Mock.Of<IEmailService>(),
+            var handler = new UpdateUserCommandHandler(_users.Object, _companies.Object, Mock.Of<IDomainVerificationRepository>(), _unitOfWork.Object, Mock.Of<IEmailService>(),
                 NullLogger<UpdateUserCommandHandler>.Instance);
             // The same email, so the domain and duplicate checks don't run
             var dto = new UpdateUserDto { Id = user.Id, FullName = user.FullName, Email = user.Email, JobTitle = user.JobTitle, Role = role };

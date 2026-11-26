@@ -3,6 +3,7 @@ using Gratia.Application.DTOs.Token;
 using Gratia.Application.DTOs.UserDTO;
 using Gratia.Application.Features.Auth.Commands;
 using Gratia.Application.Features.Companies.Commands;
+using Gratia.Application.Features.Companies.Queries;
 using Gratia.Application.Interfaces;
 using Mediator;
 using Microsoft.AspNetCore.Authorization;
@@ -77,6 +78,24 @@ namespace Gratia.API.Controllers
         public async Task<ActionResult<TokenResponseDto>> ResetPassword([FromBody] ResetPasswordDto resetPasswordDto, CancellationToken cancellationToken)
         {
             return Ok(await _sender.Send(new ResetPasswordCommand(resetPasswordDto), cancellationToken));
+        }
+
+        // Claiming a workspace through DNS (#61), with the link from signup's "already on Gratia" email: the workspace and
+        // the record to add. 404 when the link is unknown or expired.
+        [HttpGet("domain-claim/{token}")]
+        public async Task<ActionResult<DomainClaimDto>> GetDomainClaim(string token, CancellationToken cancellationToken)
+        {
+            return Ok(await _sender.Send(new GetDomainClaimQuery(token), cancellationToken));
+        }
+
+        // Looks for the claimant's record. Found: the workspace is verified, and the answer carries an admin invitation's
+        // token for the accept page (or, with an account there already, the account is now an admin). 200 either way.
+        [HttpPost("domain-claim/check")]
+        [EnableRateLimiting(RateLimitPolicies.DomainCheck)]
+        public async Task<ActionResult<DomainCheckResultDto>> CheckDomainClaim([FromBody] CheckDomainClaimDto checkDomainClaimDto,
+            CancellationToken cancellationToken)
+        {
+            return Ok(await _sender.Send(new CheckDomainClaimCommand(checkDomainClaimDto.Token!), cancellationToken));
         }
 
         // Signing out (#15). With the refresh token as the body (a JSON string, like refresh-token), only that device is

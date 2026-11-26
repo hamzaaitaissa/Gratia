@@ -97,6 +97,34 @@ public sealed class InvitationEndpointsTests(GratiaApiFactory factory) : IClassF
 
         var response = await admin.PostAsJsonAsync("/api/invitation", new { email = factory.AcmeEmployeeEmail });
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+        Assert.Contains("already a member", await response.Content.ReadAsStringAsync());
+    }
+
+    [Fact]
+    public async Task An_address_with_an_account_elsewhere_is_invited_like_any_other_and_only_its_owner_learns_why_it_cannot_join()
+    {
+        // #61: otherwise inviting would tell an admin whether any address has a Gratia account, and once a domain is
+        // verified, an admin can invite any address
+        var (globexUserId, _) = await factory.AddUserAsync(factory.Globex);
+        var email = NewEmail();
+        await factory.WithDbAsync(db => db.Users.Where(u => u.Id == globexUserId).ExecuteUpdateAsync(setters => setters.SetProperty(u => u.Email, email)));
+        var admin = await factory.CreateClientForAsync(factory.AcmeAdminEmail);
+
+        var response = await admin.PostAsJsonAsync("/api/invitation", new { email });
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        var invitation = (await response.Content.ReadFromJsonAsync<InvitationDto>(GratiaApiFactory.Json))!;
+        await factory.SendInvitationEmailsAsync();
+
+        // The admin sees an invitation like any other; its owner gets a notice without a link
+        Assert.Equal(InvitationEmailStatus.Sent, (await PendingAsync(admin)).Single(i => i.Id == invitation.Id).EmailStatus);
+        var notice = Assert.Single(factory.Emails.SentTo(email));
+        Assert.Equal((EmailKind.InvitationAccountElsewhere, null, "Acme"), (notice.Kind, notice.Token, notice.CompanyName));
+
+        // Resending is the same
+        Assert.Equal(HttpStatusCode.OK, (await admin.PostAsync($"/api/invitation/{invitation.Id}/resend", null)).StatusCode);
+        await factory.SendInvitationEmailsAsync();
+        Assert.All(factory.Emails.SentTo(email), e => Assert.Equal(EmailKind.InvitationAccountElsewhere, e.Kind));
+        Assert.Equal(globexUserId, await factory.WithDbAsync(db => db.Users.Where(u => u.Email == email).Select(u => u.Id).SingleAsync()));
     }
 
     [Fact]

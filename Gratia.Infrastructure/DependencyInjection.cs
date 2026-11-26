@@ -3,6 +3,7 @@ using Gratia.Application.Settings;
 using Gratia.Domain.Repositories;
 using Gratia.Infrastructure.Authentication;
 using Gratia.Infrastructure.Data;
+using Gratia.Infrastructure.Dns;
 using Gratia.Infrastructure.Email;
 using Gratia.Infrastructure.Repositories;
 using Gratia.Infrastructure.Spreadsheets;
@@ -10,6 +11,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
+using DnsClient;
 using System.Text;
 
 namespace Gratia.Infrastructure
@@ -29,6 +32,7 @@ namespace Gratia.Infrastructure
             services.AddScoped<IInvitationRepository, InvitationRepository>();
             services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
             services.AddScoped<ILoginAttemptRepository, LoginAttemptRepository>();
+            services.AddScoped<IDomainVerificationRepository, DomainVerificationRepository>();
 
             // Authentication. Only the API checks these settings at startup (.ValidateOnStart() in its Program.cs);
             // the Worker never issues tokens, so it can run without the signing key.
@@ -65,6 +69,29 @@ namespace Gratia.Infrastructure
 
             // Bulk invitations (#54)
             services.AddSingleton<IInvitationSpreadsheet, InvitationSpreadsheet>();
+
+            // Domain verification (#61). No cache: someone checking again after adding the record must get a fresh answer.
+            // Only the API checks these settings at startup (.ValidateOnStart() in its Program.cs).
+            services.AddOptions<DomainVerificationOptions>()
+                .Bind(configuration.GetSection(DomainVerificationOptions.SectionName))
+                .Validate(o => o.IsValid(),
+                    "DomainVerification:NameServers must be IP addresses, optionally with a port (1.1.1.1:53), and " +
+                    "DomainVerification:TimeoutSeconds between 1 and 30.");
+            services.AddSingleton<IDnsQuery>(sp =>
+            {
+                var settings = sp.GetRequiredService<IOptions<DomainVerificationOptions>>().Value;
+                var nameServers = settings.NameServers
+                    .Select(s => DomainVerificationOptions.TryParse(s, out var endPoint) ? new NameServer(endPoint) : null)
+                    .OfType<NameServer>()
+                    .ToArray();
+                var options = nameServers.Length == 0 ? new LookupClientOptions() : new LookupClientOptions(nameServers);
+                options.UseCache = false;
+                options.Timeout = TimeSpan.FromSeconds(settings.TimeoutSeconds);
+                options.Retries = 1;
+                options.ThrowDnsErrors = false;
+                return new LookupClient(options);
+            });
+            services.AddSingleton<IDomainVerifier, DnsDomainVerifier>();
 
             return services;
         }

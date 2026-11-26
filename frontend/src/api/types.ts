@@ -36,6 +36,15 @@ export type Invitation = Sent<S['InvitationDto'], 'fullName' | 'jobTitle' | 'ema
 export type InvitationEmailStatus = S['InvitationEmailStatus'];
 export type TokenResponse = Sent<S['TokenResponseDto']>;
 
+/** Domain verification (#61). `domain` is null for a workspace founded with a personal address; `record` is the caller's
+ * own, null until they start and again once it has been found (it works once). */
+export type DomainVerification = Sent<S['DomainVerificationDto'], 'domain' | 'verifiedAt' | 'record'>;
+export type DnsRecord = Sent<S['DnsRecordDto']>;
+export type DomainCheckStatus = S['DomainCheckStatus'];
+/** `invitationToken` only for a claim by someone without an account: their admin invitation, for the accept page. */
+export type DomainCheckResult = Sent<S['DomainCheckResultDto'], 'invitationToken'>;
+export type DomainClaim = Sent<S['DomainClaimDto']>;
+
 export type ImportRowStatus = S['ImportRowStatus'];
 /** `message` says why, when the row isn't Ready. */
 export type ImportPreviewRow = Sent<S['ImportPreviewRowDto'], 'message'>;

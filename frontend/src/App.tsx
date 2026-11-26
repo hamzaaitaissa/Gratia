@@ -13,6 +13,7 @@ import { InvitationsPage } from './features/admin/InvitationsPage';
 import { MembersPage } from './features/admin/MembersPage';
 import { RequireAdmin } from './features/admin/RequireAdmin';
 import { AcceptInvitationPage } from './features/auth/AcceptInvitationPage';
+import { ClaimWorkspacePage } from './features/auth/ClaimWorkspacePage';
 import { CreateWorkspacePage } from './features/auth/CreateWorkspacePage';
 import { ForgotPasswordPage, ResetPasswordPage } from './features/auth/PasswordPages';
 import { SessionExpiredPage } from './features/auth/SessionExpiredPage';
@@ -59,6 +60,7 @@ export function App() {
             <Route path="/accept-invitation/:token" element={<AcceptInvitationPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
+            <Route path="/claim-workspace/:token" element={<ClaimWorkspacePage />} />
             <Route
               element={
                 <RequireAuth>

@@ -10,6 +10,7 @@ import { Icon, type IconName } from '../../components/Icon';
 import { PageError, PageHeader } from '../../components/Page';
 import { CardsSkeleton } from '../../components/States';
 import { useThemeMode } from '../../theme/ThemeMode';
+import { DomainVerificationCard } from '../domain/DomainVerificationCard';
 import { ChangePasswordDialog } from './ChangePasswordDialog';
 import styles from './ProfilePage.module.css';
 
@@ -21,7 +22,8 @@ const ADMIN_LINKS: { to: string; label: string; icon: IconName }[] = [
 
 /**
  * "My profile" (design 6.9): both balances side by side. On mobile, the admin area is reached from here. Below them,
- * the password and signed-in devices (#85), which the design doesn't have.
+ * the password and signed-in devices (#85), and for someone who isn't an admin, the domain verification that makes
+ * whoever manages the domain's DNS one (#61). The design has neither.
  */
 export function ProfilePage() {
   const users = useMe();
@@ -140,6 +142,8 @@ export function ProfilePage() {
             </button>
           </div>
         </section>
+
+        <DomainVerificationCard place="profile" />
 
         <div className={styles.actions}>
           <button type="button" className="btn btn-secondary" onClick={toggleMode}>

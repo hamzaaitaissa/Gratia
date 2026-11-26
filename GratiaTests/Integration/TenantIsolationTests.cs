@@ -27,10 +27,16 @@ public sealed class TenantIsolationTests(GratiaApiFactory factory) : IClassFixtu
         ["POST api/Auth/reset-password"] = nameof(AccountEndpointsTests.A_forgotten_password_is_reset_once_with_the_emailed_link),
         ["GET api/Invitation/token/{token}"] = nameof(InvitationEndpointsTests.An_unknown_token_is_not_found),
         ["POST api/Invitation/accept"] = nameof(InvitationEndpointsTests.Invited_user_can_accept_and_then_log_in),
+        ["GET api/Auth/domain-claim/{token}"] = nameof(DomainVerificationTests.IT_claims_a_workspace_someone_else_set_up),
+        ["POST api/Auth/domain-claim/check"] = nameof(DomainVerificationTests.IT_claims_a_workspace_someone_else_set_up),
 
         ["GET api/Company/me"] = nameof(CompanyEndpointsTests.Users_see_their_own_company),
         ["GET api/Company/{id:guid}"] = nameof(CompanyEndpointsTests.Another_company_looks_the_same_as_one_that_does_not_exist),
         ["PUT api/Company/{id:guid}"] = nameof(CompanyEndpointsTests.Admins_cannot_update_another_company),
+        // The caller's own workspace and record: there's no id to point at another company's
+        ["GET api/Company/domain-verification"] = nameof(DomainVerificationTests.Each_member_verifies_only_their_own_workspace_with_their_own_record),
+        ["POST api/Company/domain-verification"] = nameof(DomainVerificationTests.Each_member_verifies_only_their_own_workspace_with_their_own_record),
+        ["POST api/Company/domain-verification/check"] = nameof(DomainVerificationTests.Each_member_verifies_only_their_own_workspace_with_their_own_record),
 
         ["POST api/Invitation"] = nameof(InvitationEndpointsTests.An_invitation_is_always_to_the_admins_own_company),
         ["GET api/Invitation/pending"] = nameof(InvitationEndpointsTests.An_admin_cannot_see_resend_or_cancel_another_companys_invitations),
@@ -123,7 +129,7 @@ public sealed class TenantIsolationTests(GratiaApiFactory factory) : IClassFixtu
     }
 
     [Fact]
-    public async Task The_database_refuses_a_recognition_or_invitation_across_companies()
+    public async Task The_database_refuses_a_recognition_invitation_or_domain_verification_across_companies()
     {
         // #79: whatever a handler does, not only what CreateTransactionCommand and InviteUserCommand check
         var (acmeId, _) = await factory.AddUserAsync(factory.Acme);
@@ -135,6 +141,7 @@ public sealed class TenantIsolationTests(GratiaApiFactory factory) : IClassFixtu
         await AssertRefusedAsync(Recognition(globexId, acmeId, factory.Acme)); // the sender
         await AssertRefusedAsync(Recognition(globexId, globexAdminId, factory.Acme)); // both, in the wrong company's feed
         await AssertRefusedAsync(Invitation(factory.Acme, invitedBy: globexAdminId));
+        await AssertRefusedAsync(new DomainVerification(factory.Acme.Id, globexAdminId, "x@acme.test", "token")); // #61
 
         // Inside one company they're fine, and so is a founding invitation, which has no inviter
         Assert.Equal(3, await factory.WithDbAsync(db =>

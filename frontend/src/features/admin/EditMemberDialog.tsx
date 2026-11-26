@@ -41,10 +41,12 @@ export function EditMemberDialog({ member, isSelf, onlyAdmin, onClose }: { membe
         });
       if (err instanceof ApiError && err.status === 409) return setErrors({ email: 'Another account already uses this email.' });
       if (err instanceof ApiError && err.status === 400 && err.problem.detail) {
-        // The domain rule ("…you can only invite @… addresses") applies only to a changed email. Otherwise it's the
-        // last admin (#63): "A company needs at least one admin. Make someone else an admin first."
+        // The domain rule applies only to a changed email: "…members can only have @… addresses", or in a verified
+        // workspace "A member's address can only be changed to an @… one…" (#61). Otherwise it's the last admin (#63):
+        // "A company needs at least one admin. Make someone else an admin first."
         const emailChanged = values.email.trim().toLowerCase() !== member.email.toLowerCase();
-        return setErrors(emailChanged && !/admin/i.test(err.problem.detail) ? { email: err.problem.detail } : { role: err.problem.detail });
+        const lastAdmin = /at least one admin/i.test(err.problem.detail);
+        return setErrors(emailChanged && !lastAdmin ? { email: err.problem.detail } : { role: err.problem.detail });
       }
       if (err instanceof ApiError && err.status === 404) {
         void queryClient.invalidateQueries({ queryKey: queryKeys.users });

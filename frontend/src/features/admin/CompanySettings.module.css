@@ -196,3 +196,9 @@
 .select {
   padding: 0 12px;
 }
+
+/* Domain verification (#61), under the form and the preview */
+.domain {
+  margin-top: 28px;
+  max-width: 1040px;
+}

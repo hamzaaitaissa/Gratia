@@ -65,6 +65,15 @@ export function AppShell() {
     if (company) rememberBrand({ primary: company.primaryColor, secondary: company.secondaryColor });
   }, [company]);
 
+  // The pages scroll inside <main>, which the browser doesn't reset between pages: a new page starts at its top. A link
+  // to a part of a page (/admin/settings#domain) scrolls there itself.
+  const { pathname, hash } = location;
+  // Runs for a new page only, not a new hash on the same one; it reads the hash the new page came with.
+  useEffect(() => {
+    const main = document.getElementById('main');
+    if (main && !hash) main.scrollTop = 0;
+  }, [pathname]);
+
   const active = activeKey(location.pathname);
   const isAdmin = (me?.role ?? session?.role) === 'Admin';
   const left = me?.numberOfPointsAvailable ?? 0;

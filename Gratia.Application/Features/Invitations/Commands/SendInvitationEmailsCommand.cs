@@ -13,6 +13,7 @@ public sealed record SendInvitationEmailsCommand(DateTime Now) : ICommand<int>;
 
 public sealed class SendInvitationEmailsCommandHandler(
     IInvitationRepository invitationRepository,
+    IUserRepository userRepository,
     IEmailService emailService,
     ILogger<SendInvitationEmailsCommandHandler> logger)
     : ICommandHandler<SendInvitationEmailsCommand, int>
@@ -44,8 +45,14 @@ public sealed class SendInvitationEmailsCommandHandler(
             var token = invitation.PendingToken ?? invitation.InvitationToken;
             try
             {
-                await emailService.SendInvitationEmailAsync(invitation.Email, token, invitation.Company.Name, inviter.FullName,
-                    inviter.Email, cancellationToken);
+                // An address with an account in another company can't join, and gets a notice instead of a link. The
+                // admin isn't told, so inviting can't be used to find out who has a Gratia account (#61).
+                if (await userRepository.GetByEmailAsync(invitation.Email) is { } account && account.CompanyId != invitation.CompanyId)
+                    await emailService.SendInvitationAccountElsewhereEmailAsync(invitation.Email, invitation.Company.Name, inviter.FullName,
+                        inviter.Email, cancellationToken);
+                else
+                    await emailService.SendInvitationEmailAsync(invitation.Email, token, invitation.Company.Name, inviter.FullName,
+                        inviter.Email, cancellationToken);
             }
             catch (EmailDeliveryException ex)
             {

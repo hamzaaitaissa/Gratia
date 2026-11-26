@@ -46,10 +46,23 @@ namespace Gratia.Infrastructure.Repositories
             return await _gratiaDbContext.Users.AcrossCompanies().FirstOrDefaultAsync(u => u.Email == email);
         }
 
-        // Across companies (#78), like GetByEmailAsync: an import checks the emails against every company's accounts
-        public async Task<IReadOnlyList<User>> GetByEmailsAsync(IReadOnlyCollection<string> emails, CancellationToken cancellationToken = default)
+        public async Task<IReadOnlyList<User>> GetInCompanyByEmailsAsync(Guid companyId, IReadOnlyCollection<string> emails,
+            CancellationToken cancellationToken = default)
         {
-            return await _gratiaDbContext.Users.AcrossCompanies().AsNoTracking().Where(u => emails.Contains(u.Email)).ToListAsync(cancellationToken);
+            return await _gratiaDbContext.Users
+                .AsNoTracking()
+                .Where(u => u.CompanyId == companyId && emails.Contains(u.Email))
+                .ToListAsync(cancellationToken);
+        }
+
+        // Across companies (#78): a domain claim (#61) has no caller. Only the given company's admins.
+        public async Task<IReadOnlyList<User>> GetActiveAdminsAsync(Guid companyId, CancellationToken cancellationToken = default)
+        {
+            return await _gratiaDbContext.Users
+                .AcrossCompanies()
+                .AsNoTracking()
+                .Where(u => u.CompanyId == companyId && u.Role == UserRole.Admin && u.DeactivatedAt == null)
+                .ToListAsync(cancellationToken);
         }
 
         public async Task<User?> GetByIdAsync(Guid id)
@@ -87,6 +100,16 @@ namespace Gratia.Infrastructure.Repositories
         {
             return await _gratiaDbContext.Users.AnyAsync(
                 u => u.CompanyId == companyId && u.Role == UserRole.Admin && u.DeactivatedAt == null && u.Id != exceptUserId, cancellationToken);
+        }
+
+        // Across companies (#78): a domain claim (#61) has no caller. Only the one member, of the given company.
+        public async Task<bool> TryMakeAdminAsync(Guid userId, Guid companyId, CancellationToken cancellationToken = default)
+        {
+            var updated = await _gratiaDbContext.Users
+                .AcrossCompanies()
+                .Where(u => u.Id == userId && u.CompanyId == companyId && u.DeactivatedAt == null)
+                .ExecuteUpdateAsync(setters => setters.SetProperty(u => u.Role, UserRole.Admin), cancellationToken);
+            return updated == 1;
         }
 
         // Across companies (#78): signup asks it, which has no caller

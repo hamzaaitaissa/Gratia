@@ -11,6 +11,7 @@ import { useToast } from '../../components/Toast';
 import { parseUtc } from '../../lib/format';
 import { buildTheme, isValidHex, normalizeHex } from '../../theme/theme';
 import { rememberBrand, useThemeMode } from '../../theme/ThemeMode';
+import { DomainVerificationCard } from '../domain/DomainVerificationCard';
 import { BrandPreview } from './BrandPreview';
 import s from './CompanySettings.module.css';
 
@@ -43,7 +44,10 @@ export function ordinal(n: number) {
   return n + suffix;
 }
 
-/** Admin · Company settings (design 6.10c): name, logo and colours, with a live preview in the draft colours. */
+/**
+ * Admin · Company settings (design 6.10c): name, logo and colours, with a live preview in the draft colours. Below them,
+ * the domain verification (#61), which the design doesn't have.
+ */
 export function CompanySettingsPage() {
   const company = useCompany();
   const header = <PageHeader title="Company settings" sub={company.data ? `Your name, logo, colours and points, as everyone at ${company.data.name} sees them.` : undefined} />;
@@ -55,6 +59,9 @@ export function CompanySettingsPage() {
       {header}
       {/* A new key after saving starts the form again from what the server stored */}
       <SettingsForm key={[c.id, c.name, c.logoUrl, c.primaryColor, c.secondaryColor, c.monthlyPointsAllowance, c.pointsResetDay].join('|')} company={c} />
+      <div className={s.domain}>
+        <DomainVerificationCard place="settings" />
+      </div>
     </>
   );
 }

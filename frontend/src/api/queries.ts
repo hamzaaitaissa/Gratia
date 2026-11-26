@@ -18,6 +18,7 @@ export const queryKeys = {
   /** Under the users prefix, so invalidating users refreshes it too. */
   deactivated: ['users', 'deactivated'] as const,
   invitations: ['invitations', 'pending'] as const,
+  domainVerification: ['domain-verification'] as const,
 };
 
 export const FEED_PAGE_SIZE = 10;
@@ -38,6 +39,11 @@ export const sameId = (a: string | null | undefined, b: string | null | undefine
 
 export function useCompany() {
   return useQuery({ queryKey: queryKeys.company, queryFn: ({ signal }) => api.myCompany(signal), staleTime: 5 * 60_000 });
+}
+
+/** Whether the company's domain is verified, and the caller's own DNS record if they've started (#61). */
+export function useDomainVerification() {
+  return useQuery({ queryKey: queryKeys.domainVerification, queryFn: ({ signal }) => api.domainVerification(signal) });
 }
 
 /** The company's allowance and refill dates; undefined until the company has loaded. */

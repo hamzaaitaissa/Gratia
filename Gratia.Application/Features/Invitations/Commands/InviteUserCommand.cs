@@ -37,11 +37,13 @@ public sealed class InviteUserCommandHandler(
         if (company.Domain is not null && !company.IsDomainVerified && !EmailAddresses.IsOnDomain(email, company.Domain))
             throw new BusinessRuleException($"Until your company's domain is verified, you can only invite @{company.Domain} addresses");
 
+        // An account in another company is invited like any address, so inviting can't be used to find out who has a
+        // Gratia account (#61): its email says the address is taken instead of carrying a link (SendInvitationEmailsCommand)
         var existing = await userRepository.GetByEmailAsync(email);
-        if (existing is not null && existing.CompanyId == company.Id && existing.DeactivatedAt is not null)
-            throw new ConflictException("This person's account was deactivated. Reactivate it instead of inviting them again.");
-        if (existing is not null)
-            throw new ConflictException("User with this email already exists");
+        if (existing is not null && existing.CompanyId == company.Id)
+            throw new ConflictException(existing.DeactivatedAt is not null
+                ? "This person's account was deactivated. Reactivate it instead of inviting them again."
+                : "This person is already a member of your company.");
 
         var existingInvitation = await invitationRepository.GetByEmailAndCompanyIdAsync(email, command.CompanyId);
         if (existingInvitation is not null && existingInvitation.IsValid)

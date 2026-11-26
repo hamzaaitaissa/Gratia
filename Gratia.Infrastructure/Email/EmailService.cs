@@ -21,6 +21,11 @@ namespace Gratia.Infrastructure.Email
             CancellationToken cancellationToken = default) =>
             SendAsync(toEmail, EmailTemplates.Invitation(companyName, inviterName, inviterEmail, AcceptUrl(token)), cancellationToken);
 
+        public Task SendInvitationAccountElsewhereEmailAsync(string toEmail, string companyName, string inviterName, string inviterEmail,
+            CancellationToken cancellationToken = default) =>
+            SendAsync(toEmail, EmailTemplates.InvitationAccountElsewhere(companyName, inviterName, inviterEmail, FrontendUrl("/login")),
+                cancellationToken);
+
         public Task SendCompanySetupEmailAsync(string toEmail, string founderName, string companyName, string token,
             CancellationToken cancellationToken = default) =>
             SendAsync(toEmail, EmailTemplates.CompanySetup(founderName, companyName, AcceptUrl(token)), cancellationToken);
@@ -28,8 +33,10 @@ namespace Gratia.Infrastructure.Email
         public Task SendAccountExistsEmailAsync(string toEmail, CancellationToken cancellationToken = default) =>
             SendAsync(toEmail, EmailTemplates.AccountExists(FrontendUrl("/login")), cancellationToken);
 
-        public Task SendWorkspaceExistsEmailAsync(string toEmail, string companyName, CancellationToken cancellationToken = default) =>
-            SendAsync(toEmail, EmailTemplates.WorkspaceExists(companyName), cancellationToken);
+        public Task SendWorkspaceExistsEmailAsync(string toEmail, string companyName, string domain, string claimToken,
+            CancellationToken cancellationToken = default) =>
+            SendAsync(toEmail, EmailTemplates.WorkspaceExists(companyName, domain, FrontendUrl($"/claim-workspace/{Uri.EscapeDataString(claimToken)}")),
+                cancellationToken);
 
         public Task SendWelcomeEmailAsync(string toEmail, string fullName, string companyName, int monthlyAllowance,
             CancellationToken cancellationToken = default) =>
@@ -47,6 +54,10 @@ namespace Gratia.Infrastructure.Email
 
         public Task SendEmailChangedEmailAsync(string oldEmail, string newEmail, string companyName, CancellationToken cancellationToken = default) =>
             SendAsync(oldEmail, EmailTemplates.EmailChanged(newEmail, companyName), cancellationToken);
+
+        public Task SendDomainVerifiedEmailAsync(string toEmail, string companyName, string domain, string verifiedByEmail, DomainVerifiedBy by,
+            CancellationToken cancellationToken = default) =>
+            SendAsync(toEmail, EmailTemplates.DomainVerified(companyName, domain, verifiedByEmail, by), cancellationToken);
 
         private string AcceptUrl(string token) => FrontendUrl($"/accept-invitation/{Uri.EscapeDataString(token)}");
 

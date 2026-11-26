@@ -15,6 +15,7 @@ namespace Gratia.Application.Features.Companies.Commands;
 /// <summary>
 /// Self-serve signup (TASKS.md #1 and #49). Creates a provisional company and a founding invitation with the Admin
 /// role. The founder becomes the first admin by accepting it, which also proves they control the mailbox.
+/// When the domain's workspace exists already, the notice links to claiming it through DNS (#61).
 /// </summary>
 public sealed record RegisterCompanyCommand(CompanySignupDto Signup) : ICommand;
 
@@ -22,6 +23,7 @@ public sealed class RegisterCompanyCommandHandler(
     ICompanyRepository companyRepository,
     IUserRepository userRepository,
     IInvitationRepository invitationRepository,
+    IDomainVerificationRepository domainVerificationRepository,
     IUnitOfWork unitOfWork,
     IEmailService emailService,
     IOptions<OnboardingOptions> onboardingOptions)
@@ -62,7 +64,7 @@ public sealed class RegisterCompanyCommandHandler(
         else if (await userRepository.AnyInCompanyAsync(company.Id))
         {
             // The domain's workspace is up and running: joining it takes an invitation from one of its admins
-            await emailService.SendWorkspaceExistsEmailAsync(email, company.Name, cancellationToken);
+            await SendWorkspaceExistsAsync(company, email, cancellationToken);
             return Unit.Value;
         }
         else
@@ -83,7 +85,7 @@ public sealed class RegisterCompanyCommandHandler(
             if (await invitationRepository.HasActiveInvitationsAsync(company.Id))
             {
                 // A colleague's setup link is still valid, so they get the chance to finish first
-                await emailService.SendWorkspaceExistsEmailAsync(email, company.Name, cancellationToken);
+                await SendWorkspaceExistsAsync(company, email, cancellationToken);
                 return Unit.Value;
             }
 
@@ -111,5 +113,52 @@ public sealed class RegisterCompanyCommandHandler(
         // Every branch answers 503 when email is down, so this doesn't give anything away either.
         await emailService.SendCompanySetupEmailAsync(email, founderName, company.Name, invitation.InvitationToken, cancellationToken);
         return Unit.Value;
+    }
+
+    // "Your company is already on Gratia", with a link to claim the workspace (#61): whoever manages the domain's DNS can
+    // become an admin of it, so a first signup by the wrong person never locks IT out. The link proves the address is theirs.
+    private async Task SendWorkspaceExistsAsync(Company company, string email, CancellationToken cancellationToken)
+    {
+        // Two signups at the same moment (a double click) take turns, so the second finds the first one's claim. Otherwise
+        // it would hit the unique index, and a 500 would tell the two cases apart.
+        DomainVerification? verification;
+        var token = SecretTokens.Generate();
+        string? previousHash;
+        DateTime? previousExpiry;
+        await using (var dbTransaction = await unitOfWork.BeginTransactionAsync(cancellationToken))
+        {
+            await companyRepository.LockAsync(company.Id, cancellationToken);
+            verification = await domainVerificationRepository.GetClaimAsync(company.Id, email, cancellationToken);
+            if (verification is null)
+            {
+                verification = new DomainVerification(company.Id, userId: null, email, DomainOwnership.NewRecordToken());
+                domainVerificationRepository.Add(verification);
+            }
+            else if (verification.IsSpent)
+            {
+                verification.Renew(DomainOwnership.NewRecordToken());
+            }
+
+            // A new link replaces the last one; the record stays the same until it's spent. Saved before sending, so it
+            // works the moment it arrives; only its hash is stored.
+            (previousHash, previousExpiry) = (verification.LinkTokenHash, verification.LinkExpiresAt);
+            verification.StartLink(SecretTokens.Hash(token), DateTime.UtcNow);
+            await unitOfWork.SaveChangesAsync(cancellationToken);
+            await dbTransaction.CommitAsync(cancellationToken);
+        }
+
+        try
+        {
+            await emailService.SendWorkspaceExistsEmailAsync(email, company.Name, company.Domain!, token, cancellationToken);
+        }
+        catch
+        {
+            // #20: a link nobody received would replace one that may already be on its way. Not cancellable: the
+            // request may be what was cancelled.
+            verification.LinkTokenHash = previousHash;
+            verification.LinkExpiresAt = previousExpiry;
+            await unitOfWork.SaveChangesAsync(CancellationToken.None);
+            throw;
+        }
     }
 }

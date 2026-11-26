@@ -20,6 +20,7 @@ public sealed record UpdateUserCommand(Guid CallerCompanyId, UpdateUserDto User)
 public sealed class UpdateUserCommandHandler(
     IUserRepository userRepository,
     ICompanyRepository companyRepository,
+    IDomainVerificationRepository domainVerificationRepository,
     IUnitOfWork unitOfWork,
     IEmailService emailService,
     ILogger<UpdateUserCommandHandler> logger)
@@ -36,11 +37,15 @@ public sealed class UpdateUserCommandHandler(
         Company? company = null;
         if (email != previousEmail)
         {
-            // The same rule as inviting: an unverified workspace only has addresses on its own domain (#1, #61)
+            // A new address must be on the company's domain, verified or not (#1, #61). The 409 below tells whether an
+            // address has an account anywhere, so it mustn't work for any address: a verified workspace invites contractors
+            // on other domains, but an admin can't move a member to one. Inviting the new address answers the same either way.
             company = await companyRepository.GetByIdAsync(user.CompanyId)
                 ?? throw new NotFoundException("Company not found");
-            if (company.Domain is not null && !company.IsDomainVerified && !EmailAddresses.IsOnDomain(email, company.Domain))
-                throw new BusinessRuleException($"Until your company's domain is verified, members can only have @{company.Domain} addresses");
+            if (company.Domain is not null && !EmailAddresses.IsOnDomain(email, company.Domain))
+                throw new BusinessRuleException(company.IsDomainVerified
+                    ? $"A member's address can only be changed to an @{company.Domain} one. To add someone on another domain, invite them."
+                    : $"Until your company's domain is verified, members can only have @{company.Domain} addresses");
 
             // Emails are unique across all companies, deactivated users included. This used to hit the unique index
             // and answer 500.
@@ -52,6 +57,11 @@ public sealed class UpdateUserCommandHandler(
         await using var dbTransaction = await unitOfWork.BeginTransactionAsync(cancellationToken);
         if (user.Role == UserRole.Admin && dto.Role != UserRole.Admin)
             await LastAdmin.EnsureAnotherRemainsAsync(companyRepository, userRepository, user.CompanyId, user.Id, cancellationToken);
+
+        // The domain's managers may have added the member's verification record for the person at the old address (#61).
+        // With a new address, a forgotten-password link could bring someone else in to finish with it.
+        if (email != previousEmail)
+            await domainVerificationRepository.DeleteForMemberAsync(user.CompanyId, user.Id, cancellationToken);
 
         user.Update(dto.FullName, email, dto.JobTitle ?? string.Empty, dto.Role);
 

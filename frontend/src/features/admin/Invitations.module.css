@@ -130,6 +130,15 @@
   font-size: 13px;
   color: var(--g-ink3);
 }
+.hint a,
+.failure a {
+  color: inherit;
+  font-weight: 600;
+  text-underline-offset: 2px;
+}
+.hint a {
+  color: var(--g-primary-ink);
+}
 .send {
   align-self: flex-start;
   margin-top: auto;

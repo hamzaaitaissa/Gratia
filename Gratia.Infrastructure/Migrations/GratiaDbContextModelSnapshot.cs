@@ -155,6 +155,60 @@ namespace Gratia.Infrastructure.Migrations
                     b.ToTable("CompanyInvitations");
                 });
 
+            modelBuilder.Entity("Gratia.Domain.Entities.DomainVerification", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CompanyId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime?>("LinkExpiresAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("LinkTokenHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("RecordToken")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<Guid?>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("VerifiedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LinkTokenHash")
+                        .IsUnique()
+                        .HasFilter("[LinkTokenHash] IS NOT NULL");
+
+                    b.HasIndex("UserId")
+                        .IsUnique()
+                        .HasFilter("[UserId] IS NOT NULL");
+
+                    b.HasIndex("CompanyId", "Email")
+                        .IsUnique()
+                        .HasFilter("[UserId] IS NULL");
+
+                    b.HasIndex("UserId", "CompanyId");
+
+                    b.ToTable("DomainVerifications");
+                });
+
             modelBuilder.Entity("Gratia.Domain.Entities.LoginAttempt", b =>
                 {
                     b.Property<Guid>("Id")
@@ -329,6 +383,23 @@ namespace Gratia.Infrastructure.Migrations
                     b.Navigation("Company");
 
                     b.Navigation("InvitedByUser");
+                });
+
+            modelBuilder.Entity("Gratia.Domain.Entities.DomainVerification", b =>
+                {
+                    b.HasOne("Gratia.Domain.Entities.Company", "Company")
+                        .WithMany()
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Gratia.Domain.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId", "CompanyId")
+                        .HasPrincipalKey("Id", "CompanyId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Company");
                 });
 
             modelBuilder.Entity("Gratia.Domain.Entities.RefreshToken", b =>

@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
-import { Link, useNavigate, useParams } from 'react-router';
+import { Link, useLocation, useNavigate, useParams } from 'react-router';
 import { api } from '../../api/endpoints';
 import { ApiError, NetworkError } from '../../api/http';
 import { fieldErrors } from '../../api/queries';
@@ -11,6 +11,7 @@ import { Icon, type IconName } from '../../components/Icon';
 import { useToast } from '../../components/Toast';
 import { monogram } from '../../lib/format';
 import styles from './Auth.module.css';
+import type { ClaimedState } from './ClaimWorkspacePage';
 import { PublicLayout } from './PublicLayout';
 
 type Problem = 'expired' | 'used' | 'invalid';
@@ -82,6 +83,8 @@ function AcceptForm({ invitation, token, onProblem }: { invitation: Invitation; 
   const navigate = useNavigate();
   const toast = useToast();
   const queryClient = useQueryClient();
+  // From the claim page (#61): the domain is verified, and this is the admin invitation it brought
+  const claim = (useLocation().state as Partial<ClaimedState> | null)?.claim;
   // What the admin or the spreadsheet filled in (#54), still the invitee's to change
   const [fullName, setFullName] = useState(invitation.fullName ?? '');
   const [jobTitle, setJobTitle] = useState(invitation.jobTitle ?? '');
@@ -91,8 +94,9 @@ function AcceptForm({ invitation, token, onProblem }: { invitation: Invitation; 
   const [failure, setFailure] = useState('');
   const [busy, setBusy] = useState(false);
 
-  // A company's founding invitation comes from nobody: its first admin is setting the workspace up
-  const founding = !invitation.invitedByUserName;
+  // A company's founding invitation comes from nobody: its first admin is setting the workspace up. So does a claim's,
+  // but that workspace exists already.
+  const founding = !invitation.invitedByUserName && !claim;
   const company = invitation.companyName;
 
   const submit = async (e: FormEvent) => {
@@ -139,9 +143,10 @@ function AcceptForm({ invitation, token, onProblem }: { invitation: Invitation; 
           {founding ? `Set up ${company}` : `Join ${company}`}
         </h1>
         <p className={styles.lead}>
-          {founding
+          {claim ??
+            (founding
             ? `You’re creating ${company}’s workspace on Gratia, where colleagues say thank you to each other. You’ll be its first admin.`
-            : `${invitation.invitedByUserName} invited you to Gratia, where colleagues say thank you to each other.`}
+            : `${invitation.invitedByUserName} invited you to Gratia, where colleagues say thank you to each other.`)}
         </p>
       </div>
 
